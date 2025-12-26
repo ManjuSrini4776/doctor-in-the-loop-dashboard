@@ -1,11 +1,17 @@
 import json
+import os
 import streamlit as st
 
 st.set_page_config(page_title="Doctor Dashboard", layout="centered")
-
 st.title("🩺 Doctor Dashboard")
 
-JSON_PATH = "/content/drive/MyDrive/Medical_AI_Project/doctor_review_output.json"
+# JSON file stored in the same GitHub repo
+JSON_PATH = "doctor_review_output.json"
+
+# Safety check
+if not os.path.exists(JSON_PATH):
+    st.error(f"Required file not found: {JSON_PATH}")
+    st.stop()
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
