@@ -1,0 +1,17 @@
+{
+    "patient_context": "Pregnancy",
+    "structured_summary": {
+        "Patient Context": "Pregnancy",
+        "Lab Parameter": "Fasting Blood Sugar",
+        "Patient Value": "92 mg/dL",
+        "Guideline Reference": "WHO Antenatal Care Guidelines",
+        "Guideline Range": "70\u201395 mg/dL",
+        "AI Severity": "Normal",
+        "Validation Status": "PASS",
+        "Risk Level": "Low",
+        "Recommended Action": "Continue routine antenatal follow-up"
+    },
+    "short_summary": "The patient's fasting blood sugar is 92 mg/dL, which is within the WHO guideline range of 70\u201395 mg/dL. The condition is assessed as normal with low risk; routine antenatal follow-up is advised.",
+    "guideline_validation": "PASS",
+    "routing_decision": "ALLOW_SUMMARY_GENERATION"
+}
