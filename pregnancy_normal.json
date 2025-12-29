@@ -1,65 +1,49 @@
 {
-  "patient_id": "PREG_001",
-  "patient_context": "PREGNANCY",
-  "scenario_id": "S1_PREGNANCY_NORMAL",
-
-  "enabled_modalities": {
-    "lab": true,
-    "ultrasound": true,
-    "ct": false
+  "patient_details": {
+    "patient_id": "PREG_001",
+    "age": 26,
+    "gender": "Female",
+    "clinical_context": "PREGNANCY"
   },
 
-  "ai_outputs": {
-    "ultrasound": {
-      "model": "Fetal_Plane_Classifier_v1",
-      "predicted_plane": "Fetal Brain",
-      "interpretation": "Normal fetal brain anatomy observed",
-      "confidence": 0.94
-    },
-    "lab": {
-      "hemoglobin": {
-        "value": 11.8,
-        "unit": "g/dL",
-        "status": "NORMAL"
-      },
-      "blood_pressure": {
-        "value": "110/70",
-        "status": "NORMAL"
-      }
-    }
+  "assigned_doctor": {
+    "doctor_name": "Dr. Ananya Rao",
+    "department": "Obstetrics & Gynecology",
+    "routing_reason": "Routine antenatal review"
   },
 
-  "severity_fusion_engine": {
-    "engine_version": "NB-4",
-    "inputs_used": ["ultrasound", "lab"],
-    "fusion_logic": "rule_based_pregnancy_v1",
-    "final_severity": "NORMAL",
-    "reasoning": "Ultrasound and lab values are within normal antenatal limits"
+  "lab_summary": {
+    "lab_parameter": "Hemoglobin",
+    "patient_value": "11.8 g/dL",
+    "guideline_reference": "WHO Antenatal Guidelines",
+    "guideline_range": "11 – 14 g/dL",
+    "ai_severity": "NORMAL",
+    "risk_level": "Low",
+    "recommended_action": "Continue routine antenatal care"
   },
 
-  "rag_guideline_validation": {
-    "engine": "NB-5",
-    "guidelines_retrieved": [
-      "WHO_Antenatal_Care_Guidelines",
-      "ICMR_Pregnancy_Standards"
-    ],
-    "validation_status": "CONSISTENT",
-    "clinical_summary": "Findings comply with normal pregnancy guidelines"
+  "ultrasound_summary": {
+    "last_ultrasound": "Second Trimester Scan",
+    "ai_note": "Normal fetal brain anatomy detected",
+    "clinical_note": "No abnormal findings observed"
   },
 
-  "doctor_dashboard_view": {
-    "show_ct_section": false,
-    "show_ultrasound_section": true,
-    "show_lab_section": true
+  "system_decisions": {
+    "guideline_validation": "CONSISTENT with WHO & ICMR pregnancy guidelines",
+    "routing_decision": "Doctor review required – routine"
   },
 
-  "doctor_ready_summary": {
-    "impression": "Normal pregnancy case",
-    "recommendation": "Continue routine antenatal follow-up"
+  "doctor_facing_short_summary": "Normal pregnancy case. AI analysis and guideline validation indicate no abnormalities.",
+
+  "doctor_followup_instructions": {
+    "next_visit": "After 4 weeks",
+    "next_ultrasound": "As per routine antenatal schedule"
   },
 
-  "patient_communication": {
-    "status": "READY",
-    "message": "Your pregnancy scan and reports are normal. The baby is developing well. Please continue regular check-ups."
+  "hospital_reports": {
+    "lab_report_pdf": "lab_report_preg_001.pdf",
+    "ultrasound_report_pdf": "ultrasound_report_preg_001.pdf"
   }
 }
+
+   
