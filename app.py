@@ -15,7 +15,7 @@ st.set_page_config(
 # =============================
 # Load JSON Safely
 # =============================
-JSON_PATH = "doctor_review_output.json"
+JSON_PATH = "pregnancy_normal.json"
 
 if not os.path.exists(JSON_PATH):
     st.error("❌ doctor_review_output.json not found. Please upload it.")
