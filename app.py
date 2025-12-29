@@ -75,6 +75,17 @@ st.write("**Guideline Validation:**", data.get("guideline_validation"))
 st.write("**Routing Decision:**", data.get("routing_decision"))
 
 # --------------------------------------------------
+# Doctor Editable Notes
+# --------------------------------------------------
+st.subheader("Doctor Notes / Follow-up Instructions")
+
+doctor_notes = st.text_area(
+    "Edit or add follow-up details (next visit, ultrasound, medication advice, etc.)",
+    value=data.get("doctor_notes", ""),
+    height=120
+)
+
+# --------------------------------------------------
 # Doctor Decision (Approve / Reject)
 # --------------------------------------------------
 st.subheader("Doctor Decision")
