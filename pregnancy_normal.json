@@ -1,48 +1,33 @@
 {
-  "patient_details": {
-    "patient_id": "PREG_1023",
-    "age": 28,
-    "gender": "Female",
-    "clinical_context": "PREGNANCY"
+  "scenario_id": "S1_PREGNANCY_NORMAL",
+  "patient_type": "pregnancy",
+  "modalities_used": ["ultrasound", "lab"],
+  "ai_findings": {
+    "ultrasound": {
+      "plane": "Fetal Brain",
+      "result": "Normal anatomy detected",
+      "confidence": 0.94
+    },
+    "lab": {
+      "hemoglobin": "Normal",
+      "blood_pressure": "Normal"
+    }
   },
-
-  "assigned_doctor": {
-    "doctor_name": "Dr. Kavya",
-    "department": "Obstetrics & Gynecology",
-    "routing_reason": "Ordering doctor unavailable → routed to same department"
+  "severity_fusion": {
+    "final_severity": "NORMAL",
+    "reason": "All pregnancy-related findings are within normal clinical range"
   },
-
-  "lab_summary": {
-    "lab_parameter": "Fasting Blood Sugar",
-    "patient_value": "92 mg/dL",
-    "guideline_reference": "WHO Antenatal Care Guidelines",
-    "guideline_range": "70–95 mg/dL",
-    "ai_severity": "Normal",
-    "risk_level": "Low",
-    "recommended_action": "Continue routine antenatal follow-up"
+  "rag_validation": {
+    "guideline_source": ["WHO", "ICMR"],
+    "validation_status": "CONSISTENT",
+    "summary": "Findings match normal antenatal ultrasound guidelines"
   },
-
-  "ultrasound_summary": {
-    "last_ultrasound": "Normal fetal anatomy scan",
-    "ai_note": "Ultrasound used for triage support only",
-    "clinical_note": "No abnormal indicators detected"
+  "doctor_note": {
+    "clinical_summary": "Normal pregnancy ultrasound. No abnormalities detected.",
+    "recommended_action": "Continue routine antenatal follow-up."
   },
-
-  "system_decisions": {
-    "guideline_validation": "PASS",
-    "routing_decision": "ALLOW_SUMMARY_GENERATION"
-  },
-
-  "doctor_facing_short_summary": "The patient’s fasting blood sugar is 92 mg/dL, which is within the WHO guideline range of 70–95 mg/dL. The pregnancy assessment is normal with low risk. Routine antenatal follow-up is advised.",
-
-  "doctor_followup_instructions": {
-    "next_visit": "Routine antenatal visit in 4 weeks",
-    "next_ultrasound": "Growth Scan (Third Trimester Ultrasound) at 28 weeks"
-  },
-
-  "hospital_reports": {
-    "lab_report_pdf": "hospital_storage/PREG_1023_LAB_REPORT.pdf",
-    "ultrasound_report_pdf": "hospital_storage/PREG_1023_ULTRASOUND_REPORT.pdf",
-    "ct_report_pdf": null
+  "patient_message": {
+    "tone": "reassuring",
+    "text": "Your scan results are normal. The baby is developing well. Please continue regular check-ups."
   }
 }
