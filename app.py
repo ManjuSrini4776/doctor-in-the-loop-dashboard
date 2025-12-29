@@ -13,32 +13,27 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# Custom CSS (UI Styling)
+# Session State Initialization (CRITICAL FIX)
+# --------------------------------------------------
+if "doctor_decision" not in st.session_state:
+    st.session_state.doctor_decision = None
+
+# --------------------------------------------------
+# Custom CSS (Professional Medical UI)
 # --------------------------------------------------
 st.markdown("""
 <style>
-body {
-    background-color: #0e1117;
-}
+body { background-color: #0e1117; }
 .card {
     background-color: #161b22;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 16px;
     border: 1px solid #30363d;
 }
-.card h3 {
-    color: #58a6ff;
-}
-.label {
-    color: #8b949e;
-    font-size: 14px;
-}
-.value {
-    color: #e6edf3;
-    font-size: 16px;
-    font-weight: 500;
-}
+.card h3 { color: #58a6ff; }
+.label { color: #8b949e; font-size: 14px; }
+.value { color: #e6edf3; font-size: 16px; font-weight: 500; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,7 +49,7 @@ st.caption("Evidence-based AI report validation with doctor oversight")
 JSON_PATH = "doctor_review_output.json"
 
 if not os.path.exists(JSON_PATH):
-    st.error("doctor_review_output.json not found")
+    st.error("doctor_review_output.json not found in repository")
     st.stop()
 
 with open(JSON_PATH, "r") as f:
@@ -77,180 +72,138 @@ patient = data.get("patient_details", {})
 summary = data.get("structured_summary", {})
 
 # --------------------------------------------------
-# Layout Columns
+# Layout
 # --------------------------------------------------
 left_col, right_col = st.columns(2)
 
-# --------------------------------------------------
-# LEFT: PATIENT & CLINICAL DETAILS
-# --------------------------------------------------
+# ================= LEFT COLUMN ====================
 with left_col:
-    st.markdown("""
+    st.markdown(f"""
     <div class="card">
         <h3>👤 Patient Details</h3>
-        <div class="label">Patient ID</div>
-        <div class="value">{pid}</div><br>
-        <div class="label">Age</div>
-        <div class="value">{age}</div><br>
-        <div class="label">Gender</div>
-        <div class="value">{gender}</div><br>
-        <div class="label">Clinical Context</div>
-        <div class="value">{context}</div>
+        <div class="label">Patient ID</div><div class="value">{patient.get("patient_id")}</div><br>
+        <div class="label">Age</div><div class="value">{patient.get("age")}</div><br>
+        <div class="label">Gender</div><div class="value">{patient.get("gender")}</div><br>
+        <div class="label">Clinical Context</div><div class="value">{patient.get("context")}</div>
     </div>
-    """.format(
-        pid=patient.get("patient_id"),
-        age=patient.get("age"),
-        gender=patient.get("gender"),
-        context=patient.get("context")
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="card">
         <h3>📄 Structured Clinical Summary</h3>
-        <div class="value">Lab Parameter: {param}</div>
-        <div class="value">Patient Value: {val}</div>
-        <div class="value">Guideline Reference: {guide}</div>
-        <div class="value">Guideline Range: {range}</div>
-        <div class="value">AI Severity: {sev}</div>
-        <div class="value">Risk Level: {risk}</div>
-        <div class="value">Recommended Action: {act}</div>
+        <div class="value">Lab Parameter: {summary.get("Lab Parameter")}</div>
+        <div class="value">Patient Value: {summary.get("Patient Value")}</div>
+        <div class="value">Guideline Reference: {summary.get("Guideline Reference")}</div>
+        <div class="value">Guideline Range: {summary.get("Guideline Range")}</div>
+        <div class="value">AI Severity: {summary.get("AI Severity")}</div>
+        <div class="value">Risk Level: {summary.get("Risk Level")}</div>
+        <div class="value">Recommended Action: {summary.get("Recommended Action")}</div>
     </div>
-    """.format(
-        param=summary.get("Lab Parameter"),
-        val=summary.get("Patient Value"),
-        guide=summary.get("Guideline Reference"),
-        range=summary.get("Guideline Range"),
-        sev=summary.get("AI Severity"),
-        risk=summary.get("Risk Level"),
-        act=summary.get("Recommended Action")
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="card">
         <h3>📝 Doctor-Facing Short Summary</h3>
-        <div class="value">{text}</div>
+        <div class="value">{data.get("short_summary")}</div>
     </div>
-    """.format(
-        text=data.get("short_summary")
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# RIGHT: DOCTOR & DECISIONS
-# --------------------------------------------------
+# ================= RIGHT COLUMN ====================
 with right_col:
-    st.markdown("""
+    st.markdown(f"""
     <div class="card">
         <h3>🧑‍⚕️ Assigned Doctor</h3>
-        <div class="label">Doctor Name</div>
-        <div class="value">{doc}</div><br>
-        <div class="label">Department</div>
-        <div class="value">{dept}</div><br>
-        <div class="label">Routing Reason</div>
-        <div class="value">{reason}</div>
+        <div class="label">Doctor Name</div><div class="value">{assigned_doctor.get("doctor_name")}</div><br>
+        <div class="label">Department</div><div class="value">{assigned_doctor.get("department")}</div><br>
+        <div class="label">Routing Reason</div><div class="value">{routing_reason}</div>
     </div>
-    """.format(
-        doc=assigned_doctor.get("doctor_name"),
-        dept=assigned_doctor.get("department"),
-        reason=routing_reason
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="card">
         <h3>⚙️ System Decisions</h3>
-        <div class="value">Guideline Validation: {gv}</div>
-        <div class="value">Routing Decision: {rd}</div>
+        <div class="value">Guideline Validation: {data.get("guideline_validation")}</div>
+        <div class="value">Routing Decision: {data.get("routing_decision")}</div>
     </div>
-    """.format(
-        gv=data.get("guideline_validation"),
-        rd=data.get("routing_decision")
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("### ✏️ Doctor Notes")
-    doctor_notes = st.text_area(
-        "Add follow-up instructions",
-        value=data.get("doctor_notes", ""),
-        height=120
+    # ---------------- Doctor Notes ----------------
+    st.markdown("### ✏️ Doctor Follow-up Instructions")
+
+    next_ultrasound = st.text_input(
+        "Next Ultrasound Name (exact test name)",
+        placeholder="e.g., Anomaly Scan (Level II Ultrasound)"
     )
 
+    next_ultrasound_week = st.text_input(
+        "Scheduled Gestational Week",
+        placeholder="e.g., 28 weeks"
+    )
+
+    additional_notes = st.text_area(
+        "Additional Clinical Notes",
+        placeholder="Any additional instructions for the patient",
+        height=100
+    )
+
+    # ---------------- Doctor Decision ----------------
     st.markdown("### ✅ Doctor Decision")
     c1, c2 = st.columns(2)
-    decision = None
 
     with c1:
         if st.button("✅ Approve"):
-            decision = "APPROVED"
+            st.session_state.doctor_decision = "APPROVED"
 
     with c2:
         if st.button("❌ Reject"):
-            decision = "REJECTED"
+            st.session_state.doctor_decision = "REJECTED"
 
-    if decision:
-        record = {
+    # ---------------- Save Decision ----------------
+    if st.session_state.doctor_decision:
+        decision = st.session_state.doctor_decision
+
+        decision_record = {
             "patient_id": patient.get("patient_id"),
             "doctor_name": assigned_doctor.get("doctor_name"),
             "department": assigned_doctor.get("department"),
             "decision": decision,
-            "doctor_notes": doctor_notes,
+            "next_ultrasound": next_ultrasound,
+            "scheduled_week": next_ultrasound_week,
+            "additional_notes": additional_notes,
             "timestamp": datetime.now().isoformat()
         }
 
         with open("doctor_decision_log.json", "w") as f:
-            json.dump(record, f, indent=4)
+            json.dump(decision_record, f, indent=4)
 
         st.success(f"Decision recorded: {decision}")
+
+    # ---------------- Patient Communication ----------------
+    st.markdown("### 📢 Patient Communication")
+
+    if st.session_state.doctor_decision == "APPROVED":
+        st.success("Doctor-approved message for patient")
+
+        st.write(
+            "Your test results are within the normal range. "
+            "Please continue routine antenatal follow-up as advised."
+        )
+
+        if next_ultrasound:
+            st.info(
+                f"📅 **Next Scheduled Ultrasound:** {next_ultrasound} "
+                f"at {next_ultrasound_week}"
+            )
+
+        if additional_notes.strip():
+            st.markdown("**Doctor’s Additional Instructions:**")
+            st.info(additional_notes)
+    else:
+        st.warning("Patient communication will be enabled only after doctor approval.")
 
 # --------------------------------------------------
 # Footer
 # --------------------------------------------------
 st.markdown("---")
 st.caption("⚠️ AI outputs are assistive only. Final decisions remain with clinicians.")
-
-# --------------------------------------------------
-# Patient Communication (After Doctor Approval)
-# --------------------------------------------------
-st.markdown("### 📢 Patient Communication")
-
-if decision == "APPROVED":
-    risk_level = summary.get("Risk Level", "Low")
-
-    if risk_level == "Low":
-        patient_message = (
-            "Your test results are within the normal range. "
-            "No immediate medical action is required. "
-            "Please continue routine follow-up as advised."
-        )
-        appointment_required = False
-
-    elif risk_level in ["Moderate", "Severe"]:
-        patient_message = (
-            "Your test results require further medical review. "
-            "Please schedule an appointment with the hospital at the earliest."
-        )
-        appointment_required = True
-
-    else:
-        patient_message = (
-            "Your test results have been reviewed by the doctor. "
-            "Please follow the instructions provided."
-        )
-        appointment_required = False
-
-    # Show patient message
-    st.success("Doctor-approved message for patient")
-    st.write(patient_message)
-
-    # Show doctor notes if any
-    if doctor_notes.strip():
-        st.markdown("**Doctor’s Follow-up Instructions:**")
-        st.info(doctor_notes)
-
-    # Appointment flag
-    st.markdown(
-        f"**Appointment Required:** {'Yes' if appointment_required else 'No'}"
-    )
-
-else:
-    st.warning(
-        "Patient communication will be enabled only after doctor approval."
-    )
 
