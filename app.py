@@ -1,218 +1,149 @@
 import json
-import os
 import streamlit as st
-from datetime import datetime
 
-# =============================
-# Page Configuration
-# =============================
+# -----------------------------
+# Page Config
+# -----------------------------
 st.set_page_config(
     page_title="Doctor-in-the-Loop Clinical Dashboard",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
-# =============================
-# Load JSON Safely
-# =============================
-JSON_PATH = "pregnancy_normal.json"
-
-if not os.path.exists(JSON_PATH):
-    st.error("❌ doctor_review_output.json not found. Please upload it.")
-    st.stop()
+# -----------------------------
+# Load JSON (SCENARIO FILE)
+# -----------------------------
+JSON_PATH = "pregnancy_normal.json"   # CHANGE THIS PER SCENARIO
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
 
-# =============================
-# Extract Core Sections Safely
-# =============================
-patient = data.get("patient_details", {})
-doctor = data.get("assigned_doctor", {})
-summary = data.get("structured_summary", {})
-system = data.get("system_decisions", {})
-short_summary = data.get("short_summary", "")
+# -----------------------------
+# Extract Core Fields
+# -----------------------------
+patient = data["patient_details"]
+doctor = data["doctor_details"]
+ai_outputs = data["ai_outputs"]
+assessment = data["final_assessment"]
 
-# =============================
-# Automatic Hospital Report Fetch
-# (Simulation of LIS / PACS)
-# =============================
-patient_id = patient.get("patient_id", "UNKNOWN")
-clinical_context = patient.get("clinical_context", "GENERAL")
+clinical_context = patient["clinical_context"]
 
-HOSPITAL_STORAGE = "hospital_storage"
-
-lab_pdf = None
-usg_pdf = None
-ct_pdf = None
-
-if clinical_context == "Pregnancy":
-    lab_pdf = f"{HOSPITAL_STORAGE}/{patient_id}_LAB_REPORT.pdf"
-    usg_pdf = f"{HOSPITAL_STORAGE}/{patient_id}_ULTRASOUND_REPORT.pdf"
-
-elif clinical_context == "GENERAL":
-    ct_pdf = f"{HOSPITAL_STORAGE}/{patient_id}_CT_REPORT.pdf"
-    lab_pdf = f"{HOSPITAL_STORAGE}/{patient_id}_LAB_REPORT.pdf"
-
-# =============================
+# -----------------------------
 # Header
-# =============================
+# -----------------------------
 st.markdown(
     """
-    <h1 style='color:#7dd3fc;'>🩺 Doctor-in-the-Loop Clinical Dashboard</h1>
+    <h2 style='color:#1f4e79;'>🩺 Doctor-in-the-Loop Clinical Dashboard</h2>
     <p style='color:gray;'>Evidence-based AI report validation with doctor oversight</p>
     """,
     unsafe_allow_html=True
 )
 
-st.divider()
+st.markdown("---")
 
-# =============================
+# Debug (REMOVE later if you want)
+st.write("🔍 Clinical Context Detected:", clinical_context)
+
+# -----------------------------
 # Layout
-# =============================
-left, right = st.columns([1.3, 1])
+# -----------------------------
+left, right = st.columns([1.2, 1])
 
 # =============================
-# LEFT COLUMN — PATIENT VIEW
+# LEFT COLUMN — PATIENT + AI
 # =============================
 with left:
     st.subheader("👤 Patient Details")
-    st.write(f"**Patient ID:** {patient.get('patient_id', 'PREG_1023')}")
-    st.write(f"**Age:** {patient.get('age', 28)}")
-    st.write(f"**Gender:** {patient.get('gender', 'Female')}")
-    st.write(f"**Clinical Context:** {clinical_context}")
-
-    st.divider()
-
-    st.subheader("📄 Structured Clinical Summary")
-
-    # ---- LAB SUMMARY ----
-    st.markdown("**🧪 Lab Report**")
-    st.write(f"- **Lab Parameter:** {summary.get('lab_parameter', 'Fasting Blood Sugar')}")
-    st.write(f"- **Patient Value:** {summary.get('patient_value', '92 mg/dL')}")
-    st.write(f"- **Guideline Reference:** {summary.get('guideline_reference', 'WHO Antenatal Care Guidelines')}")
-    st.write(f"- **Guideline Range:** {summary.get('guideline_range', '70–95 mg/dL')}")
-    st.write(f"- **AI Severity:** {summary.get('ai_severity', 'Normal')}")
-    st.write(f"- **Risk Level:** {summary.get('risk_level', 'Low')}")
-    st.write(f"- **Recommended Action:** {summary.get('recommended_action', 'Continue routine antenatal follow-up')}")
-
-    # ---- ULTRASOUND SUMMARY (Pregnancy) ----
-    if clinical_context == "Pregnancy":
-        st.divider()
-        st.markdown("**🖥️ Ultrasound Summary**")
-        st.write("- **Purpose:** Pregnancy monitoring")
-        st.write("- **AI Usage:** Triage support only (non-diagnostic)")
-        st.write("- **Clinical Status:** No abnormal indicators detected")
-
-    st.divider()
-
-    st.subheader("📎 Hospital Reports (Auto-fetched)")
-
-    if lab_pdf:
-        st.write(f"🧪 **Lab Report:** {lab_pdf}")
-    if usg_pdf:
-        st.write(f"🖥️ **Ultrasound Report:** {usg_pdf}")
-    if ct_pdf:
-        st.write(f"🧠 **CT Scan Report:** {ct_pdf}")
-
-    st.divider()
-
-    st.subheader("📝 Doctor-Facing Short Summary")
     st.info(
-        short_summary
-        if short_summary
-        else "Patient values are within guideline range. No immediate intervention required."
+        f"""
+        **Patient ID:** {patient['patient_id']}  
+        **Age:** {patient['age']}  
+        **Gender:** {patient['gender']}  
+        **Clinical Context:** {clinical_context}
+        """
     )
 
+    # -------- LAB (ALWAYS SHOWN) --------
+    st.subheader("🧪 Lab Summary")
+    lab = ai_outputs.get("lab_summary", {})
+    st.write(f"**Parameter:** {lab.get('parameter', 'N/A')}")
+    st.write(f"**Value:** {lab.get('value', 'N/A')}")
+    st.write(f"**Severity:** {lab.get('severity', 'N/A')}")
+    st.write(f"**Guideline Range:** {lab.get('guideline_range', 'N/A')}")
+
+    # -------- ULTRASOUND (PREGNANCY ONLY) --------
+    if clinical_context == "PREGNANCY":
+        st.subheader("🖥️ Ultrasound Summary")
+        usg = ai_outputs.get("ultrasound_summary", {})
+        st.write(f"**Finding:** {usg.get('finding', 'N/A')}")
+        st.write(f"**Clinical Note:** {usg.get('clinical_note', 'N/A')}")
+
+    # -------- CT (GENERAL ONLY) --------
+    if clinical_context == "GENERAL":
+        st.subheader("🧠 CT Scan Summary")
+        ct = ai_outputs.get("ct_summary", {})
+        st.write(f"**Finding:** {ct.get('finding', 'N/A')}")
+        st.write(f"**Severity:** {ct.get('severity', 'N/A')}")
+
 # =============================
-# RIGHT COLUMN — DOCTOR VIEW
+# RIGHT COLUMN — DOCTOR
 # =============================
 with right:
     st.subheader("🧑‍⚕️ Assigned Doctor")
-    st.write(f"**Doctor Name:** {doctor.get('doctor_name', 'Dr. Kavya')}")
-    st.write(f"**Department:** {doctor.get('department', 'Obstetrics & Gynecology')}")
-    st.write(
-        f"**Routing Reason:** {doctor.get('routing_reason', 'Ordering doctor unavailable → routed to same department')}"
+    st.success(
+        f"""
+        **Doctor Name:** {doctor['assigned_doctor']}  
+        **Department:** {doctor['department']}  
+        **Routing Reason:** {doctor['routing_reason']}
+        """
     )
-
-    st.divider()
 
     st.subheader("⚙️ System Decisions")
-    st.write(f"**Guideline Validation:** {system.get('guideline_validation', 'PASS')}")
-    st.write(f"**Routing Decision:** {system.get('routing_decision', 'ALLOW_SUMMARY_GENERATION')}")
+    st.write(f"**Guideline Validation:** {assessment['guideline_validation']}")
+    st.write(f"**Routing Decision:** {assessment['routing_decision']}")
+    st.write(f"**Risk Level:** {assessment['risk_level']}")
+    st.write(f"**Recommended Action:** {assessment['recommended_action']}")
 
-    st.divider()
-
-    st.subheader("✏️ Doctor Notes / Follow-up Instructions")
-    follow_up_notes = st.text_area(
-        "Add follow-up instructions (next visit, ultrasound, tests, etc.)",
-        placeholder="Example: Next ultrasound – Growth Scan at 28 weeks",
-        height=120
+    st.subheader("✏️ Doctor Follow-up Instructions")
+    doctor_notes = st.text_area(
+        "Add or edit follow-up details (e.g., next visit, ultrasound name, tests):",
+        placeholder="Example: Next ultrasound – Anomaly Scan at 28 weeks"
     )
 
-    st.divider()
-
     st.subheader("✅ Doctor Decision")
-
     col1, col2 = st.columns(2)
 
-    if "decision" not in st.session_state:
-        st.session_state.decision = None
+    approved = False
 
     with col1:
-        if st.button("✔ Approve"):
-            st.session_state.decision = "APPROVED"
+        if st.button("Approve"):
+            approved = True
+            st.success("Decision Approved")
 
     with col2:
-        if st.button("❌ Reject"):
-            st.session_state.decision = "REJECTED"
-
-    # =============================
-    # After Decision Logic
-    # =============================
-    if st.session_state.decision == "APPROVED":
-        st.success("Decision recorded: APPROVED")
-
-        st.subheader("📨 Patient Communication (Auto-generated)")
-
-        patient_message = f"""
-Dear Patient,
-
-Your hospital lab and imaging reports have been reviewed and approved by the doctor.
-
-• Key Lab Result: {summary.get('patient_value', '92 mg/dL')} (Normal)
-• Risk Level: {summary.get('risk_level', 'Low')}
-
-Doctor Instructions:
-{follow_up_notes if follow_up_notes else "Continue routine antenatal follow-up."}
-
-Please refer to the attached original hospital reports.
-
-— Hospital Care Team
-"""
-
-        st.text_area(
-            "Patient Message Preview (SMS / WhatsApp)",
-            patient_message,
-            height=230
-        )
-
-        st.subheader("📎 Reports to be Shared with Patient")
-        if lab_pdf:
-            st.write(f"🧪 Lab Report Attached: {lab_pdf}")
-        if usg_pdf:
-            st.write(f"🖥️ Ultrasound Report Attached: {usg_pdf}")
-        if ct_pdf:
-            st.write(f"🧠 CT Report Attached: {ct_pdf}")
-
-        st.info("📌 Next Phase: WhatsApp & SMS delivery")
-
-    elif st.session_state.decision == "REJECTED":
-        st.error("Decision recorded: REJECTED")
-        st.warning("Case sent for manual review. No patient communication generated.")
+        if st.button("Reject"):
+            st.error("Decision Rejected – Doctor Review Required")
 
 # =============================
-# Footer
+# PATIENT COMMUNICATION (ONLY AFTER APPROVE)
 # =============================
-st.divider()
-st.caption("Doctor-in-the-Loop | Evidence-based | Safe AI Clinical System")
+if approved:
+    st.markdown("---")
+    st.subheader("📩 Patient Communication (After Doctor Approval)")
+
+    st.info(
+        f"""
+        **Message to Patient:**  
+        Your test results are normal.  
+        Lab values are within guideline limits, and ultrasound findings are reassuring.  
+        Please continue routine antenatal follow-up as advised.
+
+        **Doctor Notes:**  
+        {doctor_notes if doctor_notes else "No additional instructions provided."}
+        """
+    )
+
+    st.write("📎 **Reports shared:**")
+    st.write("- Lab report PDF")
+    if clinical_context == "PREGNANCY":
+        st.write("- Ultrasound report PDF")
+
