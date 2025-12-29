@@ -43,7 +43,7 @@ with left:
 
     st.divider()
 
-    # -------- LAB --------
+    # -------- LAB SUMMARY --------
     if patient_context in ["PREGNANCY", "CHRONIC", "GENERAL"]:
         st.subheader("📄 Lab Summary")
         st.write(f"**Lab Parameter:** {lab['lab_parameter']}")
@@ -56,7 +56,7 @@ with left:
 
     st.divider()
 
-    # -------- ULTRASOUND --------
+    # -------- ULTRASOUND SUMMARY (PREGNANCY ONLY) --------
     if patient_context == "PREGNANCY":
         st.subheader("🖥️ Ultrasound Summary")
         st.write(f"• **Last Ultrasound:** {ultrasound['last_ultrasound']}")
@@ -83,21 +83,9 @@ with right:
 
     st.divider()
 
-    st.subheader("✏️ Doctor Action")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("✅ Approve"):
-            st.session_state.doctor_decision = "APPROVED"
-
-    with col2:
-        if st.button("✏️ Edit"):
-            st.session_state.doctor_decision = "EDIT"
-
-    with col3:
-        if st.button("❌ Reject"):
-            st.session_state.doctor_decision = "REJECTED"
+    st.subheader("✏️ Doctor Follow-up Instructions")
+    st.write(f"**Next Visit:** {data['doctor_followup_instructions']['next_visit']}")
+    st.write(f"**Next Ultrasound:** {data['doctor_followup_instructions']['next_ultrasound']}")
 
     st.divider()
 
@@ -107,30 +95,10 @@ with right:
     if reports["ultrasound_report_pdf"]:
         st.write(f"📄 Ultrasound Report: {reports['ultrasound_report_pdf']}")
 
-# ==================== PATIENT COMMUNICATION ====================
+    st.info("Reports will be shared with the patient only after doctor approval.")
+
+# ==================== DOCTOR ACTION ====================
 st.divider()
-st.subheader("📲 Patient Communication")
-
-if st.session_state.doctor_decision == "APPROVED":
-    st.success("Doctor has approved the report.")
-
-    st.write("**Patient Message:**")
-    st.info(
-        "Your pregnancy scan and lab reports are normal. "
-        "The baby is developing well. Please continue regular antenatal check-ups."
-    )
-
-    st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
-
-elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor chose to edit the report. Patient message is on hold.")
-
-elif st.session_state.doctor_decision == "REJECTED":
-    st.error("Report rejected. Patient communication is blocked.")
-
-else:
-    st.info("Awaiting doctor decision. Patient communication is locked.")
-    st.divider()
 st.subheader("✏️ Doctor Action")
 
 col1, col2, col3 = st.columns(3)
@@ -147,6 +115,7 @@ with col3:
     if st.button("❌ Reject"):
         st.session_state.doctor_decision = "REJECTED"
 
+# ==================== PATIENT COMMUNICATION ====================
 st.divider()
 st.subheader("📲 Patient Communication")
 
@@ -156,10 +125,10 @@ if st.session_state.doctor_decision == "APPROVED":
         "Your pregnancy scan and lab reports are normal. "
         "The baby is developing well. Please continue regular antenatal check-ups."
     )
-    st.caption("This message will be sent via WhatsApp / SMS after approval.")
+    st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
 
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor chose to edit the report. Patient message is on hold.")
+    st.warning("Doctor chose to edit the report. Patient communication is on hold.")
 
 elif st.session_state.doctor_decision == "REJECTED":
     st.error("Report rejected. Patient communication is blocked.")
