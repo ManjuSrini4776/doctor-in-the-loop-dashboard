@@ -6,9 +6,9 @@ import streamlit as st
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-# ----------------------------
+# =====================================================
 # PAGE CONFIG
-# ----------------------------
+# =====================================================
 st.set_page_config(
     page_title="Doctor-in-the-Loop Clinical Dashboard",
     layout="wide"
@@ -17,18 +17,18 @@ st.set_page_config(
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Evidence-based AI report validation with doctor oversight")
 
-# ----------------------------
-# SESSION STATE INIT
-# ----------------------------
+# =====================================================
+# SESSION STATE INITIALIZATION
+# =====================================================
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = None
 
 if "pdf_generated" not in st.session_state:
     st.session_state.pdf_generated = False
 
-# ----------------------------
+# =====================================================
 # LOAD DATA
-# ----------------------------
+# =====================================================
 JSON_PATH = "doctor_review_output.json"
 
 if not os.path.exists(JSON_PATH):
@@ -38,15 +38,15 @@ if not os.path.exists(JSON_PATH):
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
 
-# ----------------------------
+# =====================================================
 # LAYOUT
-# ----------------------------
-left, right = st.columns(2)
+# =====================================================
+left_col, right_col = st.columns(2)
 
-# ----------------------------
-# LEFT — PATIENT DETAILS
-# ----------------------------
-with left:
+# =====================================================
+# LEFT COLUMN — PATIENT DETAILS
+# =====================================================
+with left_col:
     st.subheader("👤 Patient Details")
     st.write(f"**Patient ID:** {data['patient_details']['patient_id']}")
     st.write(f"**Age:** {data['patient_details']['age']}")
@@ -57,10 +57,10 @@ with left:
     for k, v in data["structured_summary"].items():
         st.write(f"**{k}:** {v}")
 
-# ----------------------------
-# RIGHT — DOCTOR DETAILS
-# ----------------------------
-with right:
+# =====================================================
+# RIGHT COLUMN — DOCTOR DETAILS
+# =====================================================
+with right_col:
     st.subheader("🧑‍⚕️ Assigned Doctor")
     st.write(f"**Doctor Name:** {data['doctor_details']['name']}")
     st.write(f"**Department:** {data['doctor_details']['department']}")
@@ -73,11 +73,11 @@ with right:
     st.write("**Guideline Validation:**", data["guideline_validation"])
     st.write("**Routing Decision:**", data["routing_decision"])
 
-# ----------------------------
-# DOCTOR FOLLOW-UP
-# ----------------------------
+# =====================================================
+# DOCTOR FOLLOW-UP SECTION
+# =====================================================
 st.divider()
-st.subheader("✏️ Doctor Follow-up Instructions")
+st.subheader("✏️ Doctor Notes / Follow-up Instructions")
 
 next_ultrasound = st.selectbox(
     "Select Next Ultrasound (Exact Name)",
@@ -92,37 +92,35 @@ next_ultrasound = st.selectbox(
 
 doctor_notes = st.text_area(
     "Additional Doctor Notes",
-    placeholder="Add follow-up instructions, next visit details, tests, etc."
+    placeholder="Add next visit details, medications, investigations, etc."
 )
 
-# ----------------------------
-# DOCTOR DECISION (PERSISTENT)
-# ----------------------------
+# =====================================================
+# STABLE CONTAINER FOR PATIENT COMMUNICATION
+# =====================================================
+patient_comm_container = st.container()
+
+# =====================================================
+# DOCTOR DECISION (LOCKED AFTER APPROVAL)
+# =====================================================
 st.subheader("✅ Doctor Decision")
 
-col1, col2 = st.columns(2)
+if st.session_state.doctor_decision is None:
+    col1, col2 = st.columns(2)
 
-with col1:
-    if st.button("✔ Approve"):
-        st.session_state.doctor_decision = "APPROVED"
+    with col1:
+        if st.button("✔ Approve"):
+            st.session_state.doctor_decision = "APPROVED"
 
-with col2:
-    if st.button("✖ Reject"):
-        st.session_state.doctor_decision = "REJECTED"
+    with col2:
+        if st.button("✖ Reject"):
+            st.session_state.doctor_decision = "REJECTED"
+else:
+    st.success(f"Decision recorded: {st.session_state.doctor_decision}")
 
-# ----------------------------
-# SHOW DECISION
-# ----------------------------
-if st.session_state.doctor_decision == "APPROVED":
-    st.success("Decision recorded: APPROVED")
-
-elif st.session_state.doctor_decision == "REJECTED":
-    st.error("Decision recorded: REJECTED")
-    st.info("Case routed for manual review by senior doctor.")
-
-# ----------------------------
-# PDF GENERATION
-# ----------------------------
+# =====================================================
+# PDF GENERATION FUNCTION
+# =====================================================
 def generate_pdf(filename):
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
@@ -156,25 +154,24 @@ def generate_pdf(filename):
 
         y -= 10
 
-    c.drawString(50, y, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    c.drawString(50, y, f"Approved on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     c.save()
 
-# ----------------------------
-# AFTER APPROVAL — PATIENT COMMUNICATION
-# ----------------------------
+# =====================================================
+# PATIENT COMMUNICATION — GUARANTEED RENDER
+# =====================================================
 if st.session_state.doctor_decision == "APPROVED":
+    with patient_comm_container:
+        st.divider()
+        st.subheader("📲 Patient Communication (WhatsApp)")
 
-    if not st.session_state.pdf_generated:
-        pdf_filename = f"final_report_{data['patient_details']['patient_id']}.pdf"
-        generate_pdf(pdf_filename)
-        st.session_state.pdf_generated = True
-    else:
         pdf_filename = f"final_report_{data['patient_details']['patient_id']}.pdf"
 
-    st.divider()
-    st.subheader("📲 Patient Communication (WhatsApp)")
+        if not st.session_state.pdf_generated:
+            generate_pdf(pdf_filename)
+            st.session_state.pdf_generated = True
 
-    whatsapp_message = f"""
+        whatsapp_message = f"""
 Hello,
 
 Your medical report has been reviewed and approved by the doctor.
@@ -184,21 +181,23 @@ Summary:
 • Risk Level: Low
 • Next Ultrasound: {next_ultrasound}
 
-📎 Please find your doctor-approved report attached.
+📎 Please find your doctor-approved medical report attached.
 
 — Hospital Care Team
 """
 
-    st.text_area(
-        "WhatsApp Message Preview",
-        whatsapp_message,
-        height=180
-    )
+        st.text_area(
+            "WhatsApp Message Preview",
+            whatsapp_message,
+            height=180
+        )
 
-    st.write("📄 **Attached PDF:**", pdf_filename)
+        st.write("📄 **Attached PDF:**", pdf_filename)
 
-    if st.button("📤 Send via WhatsApp (Mock)"):
-        st.success("✅ WhatsApp message sent successfully (simulated)")
-        st.info("Message and PDF recorded in audit log")
+        if st.button("📤 Send via WhatsApp (Mock)"):
+            st.success("✅ WhatsApp message sent successfully (simulated)")
+            st.info("Message and PDF recorded in audit log")
 
-
+elif st.session_state.doctor_decision == "REJECTED":
+    with patient_comm_container:
+        st.error("❌ Report rejected. Routed for senior doctor review.")
