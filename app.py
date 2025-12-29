@@ -4,186 +4,203 @@ from datetime import datetime
 import streamlit as st
 
 # --------------------------------------------------
-# Page Configuration
+# Page Config
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Doctor-in-the-Loop Dashboard",
+    page_title="Doctor-in-the-Loop Clinical Dashboard",
     page_icon="🩺",
-    layout="wide" # Changed to wide for better dashboard feel
+    layout="wide"
 )
 
 # --------------------------------------------------
-# Custom CSS for Modern UI
+# Custom CSS (UI Styling)
 # --------------------------------------------------
 st.markdown("""
-    <style>
-    /* Main background */
-    .stApp {
-        background-color: #F8FAFC;
-    }
-    
-    /* Card styling */
-    .metric-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        border-left: 5px solid #3B82F6;
-        margin-bottom: 20px;
-    }
-    
-    /* Section Headers */
-    .section-header {
-        color: #1E293B;
-        font-weight: 700;
-        border-bottom: 2px solid #E2E8F0;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-    }
-
-    /* Status Badges */
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        background-color: #DBEAFE;
-        color: #1E40AF;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+<style>
+body {
+    background-color: #0e1117;
+}
+.card {
+    background-color: #161b22;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #30363d;
+}
+.card h3 {
+    color: #58a6ff;
+}
+.label {
+    color: #8b949e;
+    font-size: 14px;
+}
+.value {
+    color: #e6edf3;
+    font-size: 16px;
+    font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --------------------------------------------------
-# Load JSON (Kept your existing logic)
+# Title
+# --------------------------------------------------
+st.markdown("## 🩺 Doctor-in-the-Loop Clinical Dashboard")
+st.caption("Evidence-based AI report validation with doctor oversight")
+
+# --------------------------------------------------
+# Load JSON
 # --------------------------------------------------
 JSON_PATH = "doctor_review_output.json"
 
 if not os.path.exists(JSON_PATH):
-    st.error("⚠️ doctor_review_output.json not found in repository")
+    st.error("doctor_review_output.json not found")
     st.stop()
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
 
-# Routing Logic
+# --------------------------------------------------
+# Doctor Routing Logic
+# --------------------------------------------------
 ordering_doctor = data.get("ordering_doctor", {})
 fallback_doctor = data.get("fallback_doctor", {})
 
 if ordering_doctor.get("available", False):
     assigned_doctor = ordering_doctor
-    routing_reason = "Direct Assignment"
-    routing_color = "#10B981" # Green
+    routing_reason = "Ordering doctor available"
 else:
     assigned_doctor = fallback_doctor
-    routing_reason = "Routed to Dept (Fallback)"
-    routing_color = "#F59E0B" # Orange
+    routing_reason = "Ordering doctor unavailable → routed to same department"
+
+patient = data.get("patient_details", {})
+summary = data.get("structured_summary", {})
 
 # --------------------------------------------------
-# HEADER SECTION
+# Layout Columns
 # --------------------------------------------------
-col_title, col_status = st.columns([3, 1])
-with col_title:
-    st.markdown("# 🩺 Clinical Review Portal")
-    st.markdown(f"**Reviewing for:** {assigned_doctor.get('doctor_name')} | *{assigned_doctor.get('department')}*")
-
-with col_status:
-    st.write("") # Spacer
-    st.markdown(f'<p style="text-align:right"><span class="status-badge">Priority: Urgent</span></p>', unsafe_allow_html=True)
-
-st.divider()
+left_col, right_col = st.columns(2)
 
 # --------------------------------------------------
-# MAIN LAYOUT: 2 COLUMNS
+# LEFT: PATIENT & CLINICAL DETAILS
 # --------------------------------------------------
-left_col, right_col = st.columns([1, 1.2], gap="large")
-
 with left_col:
-    st.markdown('<p class="section-header">👤 Patient Information</p>', unsafe_allow_html=True)
-    patient = data.get("patient_details", {})
-    
-    # Using a clean container for patient details
-    with st.container():
-        st.markdown(f"""
-        <div class="metric-card">
-            <h4 style="margin-top:0;">{patient.get("patient_id")}</h4>
-            <p><b>Age:</b> {patient.get("age")} | <b>Gender:</b> {patient.get("gender")}</p>
-            <hr style="margin: 10px 0;">
-            <p style="font-size: 0.9rem; color: #64748B;"><b>Clinical Context:</b><br>{patient.get("context")}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="card">
+        <h3>👤 Patient Details</h3>
+        <div class="label">Patient ID</div>
+        <div class="value">{pid}</div><br>
+        <div class="label">Age</div>
+        <div class="value">{age}</div><br>
+        <div class="label">Gender</div>
+        <div class="value">{gender}</div><br>
+        <div class="label">Clinical Context</div>
+        <div class="value">{context}</div>
+    </div>
+    """.format(
+        pid=patient.get("patient_id"),
+        age=patient.get("age"),
+        gender=patient.get("gender"),
+        context=patient.get("context")
+    ), unsafe_allow_html=True)
 
-    st.markdown('<p class="section-header">⚙️ System Logistics</p>', unsafe_allow_html=True)
-    st.info(f"**Routing Logic:** {routing_reason}")
-    st.success(f"**Validation:** {data.get('guideline_validation')}")
+    st.markdown("""
+    <div class="card">
+        <h3>📄 Structured Clinical Summary</h3>
+        <div class="value">Lab Parameter: {param}</div>
+        <div class="value">Patient Value: {val}</div>
+        <div class="value">Guideline Reference: {guide}</div>
+        <div class="value">Guideline Range: {range}</div>
+        <div class="value">AI Severity: {sev}</div>
+        <div class="value">Risk Level: {risk}</div>
+        <div class="value">Recommended Action: {act}</div>
+    </div>
+    """.format(
+        param=summary.get("Lab Parameter"),
+        val=summary.get("Patient Value"),
+        guide=summary.get("Guideline Reference"),
+        range=summary.get("Guideline Range"),
+        sev=summary.get("AI Severity"),
+        risk=summary.get("Risk Level"),
+        act=summary.get("Recommended Action")
+    ), unsafe_allow_html=True)
 
+    st.markdown("""
+    <div class="card">
+        <h3>📝 Doctor-Facing Short Summary</h3>
+        <div class="value">{text}</div>
+    </div>
+    """.format(
+        text=data.get("short_summary")
+    ), unsafe_allow_html=True)
+
+# --------------------------------------------------
+# RIGHT: DOCTOR & DECISIONS
+# --------------------------------------------------
 with right_col:
-    st.markdown('<p class="section-header">📄 AI Clinical Summary</p>', unsafe_allow_html=True)
-    
-    # Highlight the AI's short summary in a styled box
-    st.markdown(f"""
-    <div style="background-color: #EFF6FF; padding: 20px; border-radius: 10px; border: 1px solid #BFDBFE; margin-bottom: 20px;">
-        <h5 style="color: #1E40AF; margin-top:0;">Doctor-Facing Insights</h5>
-        <p style="font-style: italic;">"{data.get("short_summary")}"</p>
+    st.markdown("""
+    <div class="card">
+        <h3>🧑‍⚕️ Assigned Doctor</h3>
+        <div class="label">Doctor Name</div>
+        <div class="value">{doc}</div><br>
+        <div class="label">Department</div>
+        <div class="value">{dept}</div><br>
+        <div class="label">Routing Reason</div>
+        <div class="value">{reason}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(
+        doc=assigned_doctor.get("doctor_name"),
+        dept=assigned_doctor.get("department"),
+        reason=routing_reason
+    ), unsafe_allow_html=True)
 
-    # Detailed summary in an expander to keep things clean
-    with st.expander("View Full Structured Data", expanded=True):
-        structured_summary = data.get("structured_summary", {})
-        for key, value in structured_summary.items():
-            st.write(f"**{key}:** {value}")
-
-# --------------------------------------------------
-# ACTION AREA (BOTTOM)
-# --------------------------------------------------
-st.markdown('<p class="section-header">✏️ Clinician Feedback & Decision</p>', unsafe_allow_html=True)
-
-# Creating a nice text area with a pre-filled value
-doctor_notes = st.text_area(
-    "Clinical Follow-up Instructions",
-    value=data.get("doctor_notes", ""),
-    height=150,
-    help="Update ultrasound details, test requests, or next visit timing."
-)
-
-# Decision Buttons
-btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
-decision = None
-
-with btn_col1:
-    if st.button("✅ Approve Report", use_container_width=True, type="primary"):
-        decision = "APPROVED"
-
-with btn_col2:
-    if st.button("❌ Reject / Revise", use_container_width=True):
-        decision = "REJECTED"
-
-# --------------------------------------------------
-# SAVE AUDIT LOG (Logic kept exactly as yours)
-# --------------------------------------------------
-if decision:
-    decision_record = {
-        "patient_id": patient.get("patient_id"),
-        "doctor_id": assigned_doctor.get("doctor_id"),
-        "doctor_name": assigned_doctor.get("doctor_name"),
-        "decision": decision,
-        "doctor_notes": doctor_notes,
-        "timestamp": datetime.now().isoformat()
-    }
-
-    # Visual feedback for the decision
-    if decision == "APPROVED":
-        st.balloons()
-        st.success(f"### Report Verified Successfully\nLogged at: {datetime.now().strftime('%H:%M:%S')}")
-    else:
-        st.warning("### Report Rejected\nNotification sent back for revision.")
-
-# --------------------------------------------------
-# FOOTER
-# --------------------------------------------------
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("""
-    <div style="text-align: center; color: #94A3B8; font-size: 0.8rem;">
-        ⚠️ AI Assistive Technology • Final year Project • Decision Support System
+    st.markdown("""
+    <div class="card">
+        <h3>⚙️ System Decisions</h3>
+        <div class="value">Guideline Validation: {gv}</div>
+        <div class="value">Routing Decision: {rd}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(
+        gv=data.get("guideline_validation"),
+        rd=data.get("routing_decision")
+    ), unsafe_allow_html=True)
+
+    st.markdown("### ✏️ Doctor Notes")
+    doctor_notes = st.text_area(
+        "Add follow-up instructions",
+        value=data.get("doctor_notes", ""),
+        height=120
+    )
+
+    st.markdown("### ✅ Doctor Decision")
+    c1, c2 = st.columns(2)
+    decision = None
+
+    with c1:
+        if st.button("✅ Approve"):
+            decision = "APPROVED"
+
+    with c2:
+        if st.button("❌ Reject"):
+            decision = "REJECTED"
+
+    if decision:
+        record = {
+            "patient_id": patient.get("patient_id"),
+            "doctor_name": assigned_doctor.get("doctor_name"),
+            "department": assigned_doctor.get("department"),
+            "decision": decision,
+            "doctor_notes": doctor_notes,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        with open("doctor_decision_log.json", "w") as f:
+            json.dump(record, f, indent=4)
+
+        st.success(f"Decision recorded: {decision}")
+
+# --------------------------------------------------
+# Footer
+# --------------------------------------------------
+st.markdown("---")
+st.caption("⚠️ AI outputs are assistive only. Final decisions remain with clinicians.")
