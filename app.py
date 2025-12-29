@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 import streamlit as st
 
 # --------------------------------------------------
@@ -15,14 +16,14 @@ JSON_PATH = "doctor_review_output.json"
 
 if not os.path.exists(JSON_PATH):
     st.error(f"Required file not found: {JSON_PATH}")
-    st.write("Files available in app directory:", os.listdir("."))
+    st.write("Files available:", os.listdir("."))
     st.stop()
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
 
 # --------------------------------------------------
-# Doctor Routing Logic (Doctor-in-the-Loop)
+# Doctor Routing Logic
 # --------------------------------------------------
 ordering_doctor = data.get("ordering_doctor", {})
 fallback_doctor = data.get("fallback_doctor", {})
@@ -46,7 +47,7 @@ st.write("**Gender:**", patient.get("gender"))
 st.write("**Clinical Context:**", patient.get("context"))
 
 # --------------------------------------------------
-# Assigned Doctor Details
+# Assigned Doctor
 # --------------------------------------------------
 st.subheader("Assigned Doctor")
 st.write("**Doctor Name:**", assigned_doctor.get("doctor_name"))
@@ -57,13 +58,11 @@ st.write("**Routing Reason:**", routing_reason)
 # Structured Clinical Summary
 # --------------------------------------------------
 st.subheader("Structured Clinical Summary")
-structured_summary = data.get("structured_summary", {})
-
-for key, value in structured_summary.items():
+for key, value in data.get("structured_summary", {}).items():
     st.write(f"**{key}:** {value}")
 
 # --------------------------------------------------
-# Doctor-Facing Short Summary
+# Short Doctor Summary
 # --------------------------------------------------
 st.subheader("Doctor-Facing Short Summary")
 st.info(data.get("short_summary"))
@@ -74,4 +73,38 @@ st.info(data.get("short_summary"))
 st.subheader("System Decisions")
 st.write("**Guideline Validation:**", data.get("guideline_validation"))
 st.write("**Routing Decision:**", data.get("routing_decision"))
+
+# --------------------------------------------------
+# Doctor Decision (Approve / Reject)
+# --------------------------------------------------
+st.subheader("Doctor Decision")
+
+col1, col2 = st.columns(2)
+decision = None
+
+with col1:
+    if st.button("✅ Approve"):
+        decision = "APPROVED"
+
+with col2:
+    if st.button("❌ Reject"):
+        decision = "REJECTED"
+
+# --------------------------------------------------
+# Save decision (Audit Trail)
+# --------------------------------------------------
+if decision:
+    decision_record = {
+        "patient_id": patient.get("patient_id"),
+        "doctor_id": assigned_doctor.get("doctor_id"),
+        "doctor_name": assigned_doctor.get("doctor_name"),
+        "department": assigned_doctor.get("department"),
+        "decision": decision,
+        "timestamp": datetime.now().isoformat()
+    }
+
+    with open("doctor_decision_log.json", "w") as f:
+        json.dump(decision_record, f, indent=4)
+
+    st.success(f"Doctor decision recorded: {decision}")
 
