@@ -130,3 +130,40 @@ elif st.session_state.doctor_decision == "REJECTED":
 
 else:
     st.info("Awaiting doctor decision. Patient communication is locked.")
+    st.divider()
+st.subheader("✏️ Doctor Action")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("✅ Approve"):
+        st.session_state.doctor_decision = "APPROVED"
+
+with col2:
+    if st.button("✏️ Edit"):
+        st.session_state.doctor_decision = "EDIT"
+
+with col3:
+    if st.button("❌ Reject"):
+        st.session_state.doctor_decision = "REJECTED"
+
+st.divider()
+st.subheader("📲 Patient Communication")
+
+if st.session_state.doctor_decision == "APPROVED":
+    st.success("Doctor approved the report.")
+    st.info(
+        "Your pregnancy scan and lab reports are normal. "
+        "The baby is developing well. Please continue regular antenatal check-ups."
+    )
+    st.caption("This message will be sent via WhatsApp / SMS after approval.")
+
+elif st.session_state.doctor_decision == "EDIT":
+    st.warning("Doctor chose to edit the report. Patient message is on hold.")
+
+elif st.session_state.doctor_decision == "REJECTED":
+    st.error("Report rejected. Patient communication is blocked.")
+
+else:
+    st.info("Awaiting doctor decision. Patient communication is locked.")
+
