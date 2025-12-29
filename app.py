@@ -15,6 +15,7 @@ JSON_PATH = "pregnancy_normal.json"
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
+st.write("DEBUG JSON KEYS:", data.keys())
 
 # -------------------- EXTRACT SECTIONS --------------------
 patient = data["patient_details"]
