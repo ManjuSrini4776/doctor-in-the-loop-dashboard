@@ -1,33 +1,65 @@
 {
+  "patient_id": "PREG_001",
+  "patient_context": "PREGNANCY",
   "scenario_id": "S1_PREGNANCY_NORMAL",
-  "patient_type": "pregnancy",
-  "modalities_used": ["ultrasound", "lab"],
-  "ai_findings": {
+
+  "enabled_modalities": {
+    "lab": true,
+    "ultrasound": true,
+    "ct": false
+  },
+
+  "ai_outputs": {
     "ultrasound": {
-      "plane": "Fetal Brain",
-      "result": "Normal anatomy detected",
+      "model": "Fetal_Plane_Classifier_v1",
+      "predicted_plane": "Fetal Brain",
+      "interpretation": "Normal fetal brain anatomy observed",
       "confidence": 0.94
     },
     "lab": {
-      "hemoglobin": "Normal",
-      "blood_pressure": "Normal"
+      "hemoglobin": {
+        "value": 11.8,
+        "unit": "g/dL",
+        "status": "NORMAL"
+      },
+      "blood_pressure": {
+        "value": "110/70",
+        "status": "NORMAL"
+      }
     }
   },
-  "severity_fusion": {
+
+  "severity_fusion_engine": {
+    "engine_version": "NB-4",
+    "inputs_used": ["ultrasound", "lab"],
+    "fusion_logic": "rule_based_pregnancy_v1",
     "final_severity": "NORMAL",
-    "reason": "All pregnancy-related findings are within normal clinical range"
+    "reasoning": "Ultrasound and lab values are within normal antenatal limits"
   },
-  "rag_validation": {
-    "guideline_source": ["WHO", "ICMR"],
+
+  "rag_guideline_validation": {
+    "engine": "NB-5",
+    "guidelines_retrieved": [
+      "WHO_Antenatal_Care_Guidelines",
+      "ICMR_Pregnancy_Standards"
+    ],
     "validation_status": "CONSISTENT",
-    "summary": "Findings match normal antenatal ultrasound guidelines"
+    "clinical_summary": "Findings comply with normal pregnancy guidelines"
   },
-  "doctor_note": {
-    "clinical_summary": "Normal pregnancy ultrasound. No abnormalities detected.",
-    "recommended_action": "Continue routine antenatal follow-up."
+
+  "doctor_dashboard_view": {
+    "show_ct_section": false,
+    "show_ultrasound_section": true,
+    "show_lab_section": true
   },
-  "patient_message": {
-    "tone": "reassuring",
-    "text": "Your scan results are normal. The baby is developing well. Please continue regular check-ups."
+
+  "doctor_ready_summary": {
+    "impression": "Normal pregnancy case",
+    "recommendation": "Continue routine antenatal follow-up"
+  },
+
+  "patient_communication": {
+    "status": "READY",
+    "message": "Your pregnancy scan and reports are normal. The baby is developing well. Please continue regular check-ups."
   }
 }
