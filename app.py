@@ -18,12 +18,13 @@ with open(JSON_PATH, "r") as f:
 st.write("DEBUG JSON KEYS:", data.keys())
 
 # -------------------- EXTRACT SECTIONS --------------------
-patient = data["patient_details"]
-doctor = data["assigned_doctor"]
-lab = data["lab_summary"]
-ultrasound = data["ultrasound_summary"]
-system = data["system_decisions"]
-reports = data["hospital_reports"]
+# patient = data["patient_details"]
+# doctor = data["assigned_doctor"]
+# lab = data["lab_summary"]
+# ultrasound = data["ultrasound_summary"]
+# system = data["system_decisions"]
+# reports = data["hospital_reports"]
+
 
 # -------------------- LAYOUT --------------------
 left, right = st.columns(2)
