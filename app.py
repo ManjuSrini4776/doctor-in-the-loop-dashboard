@@ -204,3 +204,53 @@ with right_col:
 # --------------------------------------------------
 st.markdown("---")
 st.caption("⚠️ AI outputs are assistive only. Final decisions remain with clinicians.")
+
+# --------------------------------------------------
+# Patient Communication (After Doctor Approval)
+# --------------------------------------------------
+st.markdown("### 📢 Patient Communication")
+
+if decision == "APPROVED":
+    risk_level = summary.get("Risk Level", "Low")
+
+    if risk_level == "Low":
+        patient_message = (
+            "Your test results are within the normal range. "
+            "No immediate medical action is required. "
+            "Please continue routine follow-up as advised."
+        )
+        appointment_required = False
+
+    elif risk_level in ["Moderate", "Severe"]:
+        patient_message = (
+            "Your test results require further medical review. "
+            "Please schedule an appointment with the hospital at the earliest."
+        )
+        appointment_required = True
+
+    else:
+        patient_message = (
+            "Your test results have been reviewed by the doctor. "
+            "Please follow the instructions provided."
+        )
+        appointment_required = False
+
+    # Show patient message
+    st.success("Doctor-approved message for patient")
+    st.write(patient_message)
+
+    # Show doctor notes if any
+    if doctor_notes.strip():
+        st.markdown("**Doctor’s Follow-up Instructions:**")
+        st.info(doctor_notes)
+
+    # Appointment flag
+    st.markdown(
+        f"**Appointment Required:** {'Yes' if appointment_required else 'No'}"
+    )
+
+else:
+    st.warning(
+        "Patient communication will be enabled only after doctor approval."
+    )
+
