@@ -1,0 +1,35 @@
+{
+  "patient_details": {
+    "patient_id": "PREG_1023",
+    "age": 28,
+    "gender": "Female",
+    "clinical_context": "PREGNANCY"
+  },
+
+  "doctor_details": {
+    "assigned_doctor": "Dr. Kavya",
+    "department": "Obstetrics & Gynecology",
+    "routing_reason": "Ordering doctor unavailable → routed to same department"
+  },
+
+  "ai_outputs": {
+    "lab_summary": {
+      "parameter": "Fasting Blood Sugar",
+      "value": "92 mg/dL",
+      "severity": "Normal",
+      "guideline_range": "70–95 mg/dL"
+    },
+    "ultrasound_summary": {
+      "finding": "Normal fetal anatomy",
+      "ai_note": "Ultrasound used for triage support only",
+      "clinical_note": "No abnormal indicators detected"
+    }
+  },
+
+  "final_assessment": {
+    "risk_level": "Low",
+    "recommended_action": "Continue routine antenatal follow-up",
+    "guideline_validation": "PASS",
+    "routing_decision": "ALLOW_SUMMARY_GENERATION"
+  }
+}
