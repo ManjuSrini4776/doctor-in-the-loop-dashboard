@@ -18,12 +18,21 @@ st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Evidence-based AI report validation with doctor oversight")
 
 # ----------------------------
+# SESSION STATE INIT
+# ----------------------------
+if "doctor_decision" not in st.session_state:
+    st.session_state.doctor_decision = None
+
+if "pdf_generated" not in st.session_state:
+    st.session_state.pdf_generated = False
+
+# ----------------------------
 # LOAD DATA
 # ----------------------------
 JSON_PATH = "doctor_review_output.json"
 
 if not os.path.exists(JSON_PATH):
-    st.error("❌ Doctor review JSON file not found.")
+    st.error("❌ doctor_review_output.json not found in repository.")
     st.stop()
 
 with open(JSON_PATH, "r") as f:
@@ -35,7 +44,7 @@ with open(JSON_PATH, "r") as f:
 left, right = st.columns(2)
 
 # ----------------------------
-# LEFT COLUMN — PATIENT DETAILS
+# LEFT — PATIENT DETAILS
 # ----------------------------
 with left:
     st.subheader("👤 Patient Details")
@@ -49,7 +58,7 @@ with left:
         st.write(f"**{k}:** {v}")
 
 # ----------------------------
-# RIGHT COLUMN — DOCTOR & DECISION
+# RIGHT — DOCTOR DETAILS
 # ----------------------------
 with right:
     st.subheader("🧑‍⚕️ Assigned Doctor")
@@ -65,7 +74,7 @@ with right:
     st.write("**Routing Decision:**", data["routing_decision"])
 
 # ----------------------------
-# DOCTOR NOTES / FOLLOW-UP
+# DOCTOR FOLLOW-UP
 # ----------------------------
 st.divider()
 st.subheader("✏️ Doctor Follow-up Instructions")
@@ -83,56 +92,49 @@ next_ultrasound = st.selectbox(
 
 doctor_notes = st.text_area(
     "Additional Doctor Notes",
-    placeholder="Add any follow-up instructions, medications, or advice..."
+    placeholder="Add follow-up instructions, next visit details, tests, etc."
 )
 
 # ----------------------------
-# DOCTOR DECISION
+# DOCTOR DECISION (PERSISTENT)
 # ----------------------------
 st.subheader("✅ Doctor Decision")
 
-approve = st.button("✔ Approve")
-reject = st.button("✖ Reject")
+col1, col2 = st.columns(2)
 
-if approve:
-    decision_status = "APPROVED"
-elif reject:
-    decision_status = "REJECTED"
-else:
-    decision_status = None
+with col1:
+    if st.button("✔ Approve"):
+        st.session_state.doctor_decision = "APPROVED"
+
+with col2:
+    if st.button("✖ Reject"):
+        st.session_state.doctor_decision = "REJECTED"
 
 # ----------------------------
-# PDF GENERATION FUNCTION
+# SHOW DECISION
 # ----------------------------
-def generate_pdf(report_data, filename):
+if st.session_state.doctor_decision == "APPROVED":
+    st.success("Decision recorded: APPROVED")
+
+elif st.session_state.doctor_decision == "REJECTED":
+    st.error("Decision recorded: REJECTED")
+    st.info("Case routed for manual review by senior doctor.")
+
+# ----------------------------
+# PDF GENERATION
+# ----------------------------
+def generate_pdf(filename):
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
-    y = height - 50
+    y = height - 40
 
     c.setFont("Helvetica-Bold", 14)
     c.drawString(50, y, "Doctor-Validated Medical Report")
     y -= 30
 
     c.setFont("Helvetica", 10)
-    for section, content in report_data.items():
-        c.drawString(50, y, f"{section}:")
-        y -= 15
-        for k, v in content.items():
-            c.drawString(70, y, f"{k}: {v}")
-            y -= 15
-        y -= 10
 
-    c.drawString(50, y, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    c.save()
-
-# ----------------------------
-# AFTER APPROVAL — PATIENT COMMUNICATION
-# ----------------------------
-if decision_status == "APPROVED":
-    st.success("Decision recorded: APPROVED")
-
-    # Prepare report content
-    pdf_data = {
+    sections = {
         "Patient Details": data["patient_details"],
         "Doctor Details": data["doctor_details"],
         "Clinical Summary": data["structured_summary"],
@@ -142,12 +144,33 @@ if decision_status == "APPROVED":
         }
     }
 
-    pdf_filename = f"final_report_{data['patient_details']['patient_id']}.pdf"
-    generate_pdf(pdf_data, pdf_filename)
+    for section, content in sections.items():
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(50, y, section)
+        y -= 18
 
-    # ----------------------------
-    # PATIENT COMMUNICATION
-    # ----------------------------
+        c.setFont("Helvetica", 10)
+        for k, v in content.items():
+            c.drawString(70, y, f"{k}: {v}")
+            y -= 14
+
+        y -= 10
+
+    c.drawString(50, y, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    c.save()
+
+# ----------------------------
+# AFTER APPROVAL — PATIENT COMMUNICATION
+# ----------------------------
+if st.session_state.doctor_decision == "APPROVED":
+
+    if not st.session_state.pdf_generated:
+        pdf_filename = f"final_report_{data['patient_details']['patient_id']}.pdf"
+        generate_pdf(pdf_filename)
+        st.session_state.pdf_generated = True
+    else:
+        pdf_filename = f"final_report_{data['patient_details']['patient_id']}.pdf"
+
     st.divider()
     st.subheader("📲 Patient Communication (WhatsApp)")
 
@@ -176,11 +199,6 @@ Summary:
 
     if st.button("📤 Send via WhatsApp (Mock)"):
         st.success("✅ WhatsApp message sent successfully (simulated)")
-        st.info("Message + PDF logged for audit trail")
-
-elif decision_status == "REJECTED":
-    st.error("Decision recorded: REJECTED")
-    st.info("Case routed for further manual review")
-
+        st.info("Message and PDF recorded in audit log")
 
 
