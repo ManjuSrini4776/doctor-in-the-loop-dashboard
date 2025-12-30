@@ -150,4 +150,29 @@ elif st.session_state.doctor_decision == "REJECTED":
     st.error(
         "Doctor rejected the AI report. No patient communication will be sent."
     )
+# ================== FINAL DOCTOR-APPROVED OUTPUT ==================
+if st.session_state.doctor_decision == "APPROVED":
+    st.divider()
+    st.subheader("📄 Doctor-Approved Final Output (JSON)")
+
+    final_output = {
+        "patient_id": patient.get("patient_id"),
+        "clinical_context": patient.get("clinical_context"),
+        "doctor_decision": "APPROVED",
+        "severity": lab.get("ai_severity", "NA"),
+        "doctor_summary": data.get("doctor_facing_short_summary"),
+        "final_patient_message": (
+            "Your pregnancy report has been reviewed and approved by the doctor. "
+            "Please follow the recommended medical advice and attend follow-up visits."
+        )
+    }
+
+    st.json(final_output)
+
+    st.download_button(
+        label="⬇️ Download Final Doctor Output JSON",
+        data=json.dumps(final_output, indent=4),
+        file_name=f"{patient.get('patient_id')}_final_output.json",
+        mime="application/json"
+    )
 
