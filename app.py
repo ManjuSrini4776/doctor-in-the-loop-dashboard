@@ -11,6 +11,7 @@ st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Evidence-based AI report validation with doctor oversight")
 
 # -------------------- LOAD JSON --------------------
+# Switch between pregnancy_normal.json / pregnancy_abnormal.json as needed
 JSON_PATH = "pregnancy_abnormal.json"
 
 with open(JSON_PATH, "r") as f:
@@ -29,6 +30,11 @@ patient_context = patient["clinical_context"]
 # -------------------- SESSION STATE --------------------
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = "PENDING"
+
+# -------------------- FINAL OUTPUT SAVE FUNCTION --------------------
+def save_final_doctor_output(final_data, filename):
+    with open(filename, "w") as f:
+        json.dump(final_data, f, indent=2)
 
 # -------------------- LAYOUT --------------------
 left, right = st.columns(2)
@@ -107,6 +113,28 @@ with col1:
     if st.button("✅ Approve"):
         st.session_state.doctor_decision = "APPROVED"
 
+        final_output = {
+            "patient_id": patient["patient_id"],
+            "clinical_context": patient_context,
+            "doctor_decision": "APPROVED",
+            "severity": lab["ai_severity"],
+            "doctor_summary": data["doctor_facing_short_summary"],
+            "final_patient_message": (
+                "Your pregnancy scan and lab reports are normal. "
+                "The baby is developing well. Please continue regular antenatal check-ups."
+                if lab["ai_severity"] == "NORMAL"
+                else
+                "Your pregnancy report shows some findings that need closer follow-up. "
+                "The doctor has reviewed the report and will guide you on the next steps. "
+                "Please attend the recommended follow-up visit."
+            )
+        }
+
+        save_final_doctor_output(
+            final_output,
+            f"final_doctor_output_{patient['patient_id']}.json"
+        )
+
 with col2:
     if st.button("✏️ Edit"):
         st.session_state.doctor_decision = "EDIT"
@@ -122,7 +150,6 @@ st.subheader("📲 Patient Communication")
 if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
 
-    # Severity-aware patient message
     if lab["ai_severity"] == "NORMAL":
         st.info(
             "Your pregnancy scan and lab reports are normal. "
