@@ -196,12 +196,16 @@ Hospital Care Team
 
     if reports.get("lab_report_pdf"):
         media_urls.append(
-            f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['lab_report_pdf']}"
+    "https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/lab_report_preg_002.pdf"
+
+
         )
 
     if reports.get("ultrasound_report_pdf"):
         media_urls.append(
-            f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['ultrasound_report_pdf']}"
+    "https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/lab_report_preg_002.pdf"
+
+
         )
 
     for url in media_urls:
