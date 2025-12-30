@@ -122,12 +122,12 @@ st.subheader("📲 Patient Communication")
 if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
 
+    # Severity-aware patient message
     if lab["ai_severity"] == "NORMAL":
         st.info(
             "Your pregnancy scan and lab reports are normal. "
             "The baby is developing well. Please continue regular antenatal check-ups."
         )
-
     else:
         st.warning(
             "Your pregnancy report shows some findings that need closer follow-up. "
@@ -137,15 +137,20 @@ if st.session_state.doctor_decision == "APPROVED":
 
     st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
 
-    )
-    st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
-
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor chose to edit the report. Patient communication is on hold.")
+    st.warning(
+        "Doctor has chosen to edit the report. "
+        "Patient communication is temporarily on hold."
+    )
 
 elif st.session_state.doctor_decision == "REJECTED":
-    st.error("Report rejected. Patient communication is blocked.")
+    st.error(
+        "The report has been rejected by the doctor. "
+        "No patient communication will be sent."
+    )
 
 else:
-    st.info("Awaiting doctor decision. Patient communication is locked.")
-
+    st.info(
+        "Awaiting doctor decision. "
+        "Patient communication is locked until approval."
+    )
