@@ -175,4 +175,30 @@ if st.session_state.doctor_decision == "APPROVED":
         file_name=f"{patient.get('patient_id')}_final_output.json",
         mime="application/json"
     )
+# ================== AUDIT & TRACEABILITY ==================
+if st.session_state.doctor_decision == "APPROVED":
+    st.divider()
+    st.subheader("🧾 Audit & Traceability Log")
+
+    from datetime import datetime
+
+    audit_log = {
+        "patient_id": patient.get("patient_id"),
+        "clinical_context": patient.get("clinical_context"),
+        "ai_severity": lab.get("ai_severity", "NA"),
+        "doctor_decision": "APPROVED",
+        "reviewed_by": doctor.get("doctor_name", "Doctor"),
+        "department": doctor.get("department", "NA"),
+        "review_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "decision_source": "Doctor-in-the-Loop Dashboard"
+    }
+
+    st.json(audit_log)
+
+    st.download_button(
+        label="⬇️ Download Audit Log (JSON)",
+        data=json.dumps(audit_log, indent=4),
+        file_name=f"{patient.get('patient_id')}_audit_log.json",
+        mime="application/json"
+    )
 
