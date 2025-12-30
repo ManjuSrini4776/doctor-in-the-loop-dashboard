@@ -166,28 +166,22 @@ if st.session_state.doctor_decision == "APPROVED":
     # ---- WHATSAPP MESSAGE ----
     st.subheader("📱 WhatsApp Message Preview")
 
-    whatsapp_text = f"""
+   secure_link = f"https://doctor-in-the-loop-dashboard.streamlit.app/?patient_id={patient['patient_id']}"
+
+whatsapp_text = f"""
 Hello,
 
-This is an update regarding your recent hospital visit.
+Your medical report has been reviewed by the doctor.
 
-Patient ID: {final_json['patient_id']}
-Clinical Context: Pregnancy
+Patient ID: {patient['patient_id']}
+Clinical Context: {patient['clinical_context']}
 
-Doctor’s Message:
-{final_json['final_patient_message']}
-
-Attached Reports:
-• Lab Report
-• Ultrasound Report
-
-Please attend the recommended follow-up visit.
+Please view your report securely at the link below:
+{secure_link}
 
 Regards,
 Hospital Care Team
-""".strip()
-
-    st.text_area("Message to be sent", whatsapp_text, height=240)
+"""
 
     # ---- ATTACHMENTS ----
     st.subheader("📎 WhatsApp Attachments Preview")
