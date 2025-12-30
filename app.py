@@ -192,19 +192,18 @@ Hospital Care Team
     # ---- ATTACHMENTS ----
     st.subheader("📎 WhatsApp Attachments Preview")
 
-    media_urls = []
+  # ---- ATTACHMENTS ----
+media_urls = []
 
-   if reports.get("lab_report_pdf"):
+if reports.get("lab_report_pdf"):
     media_urls.append(
-        "https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/lab_report_preg_002.pdf"
+        f"https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/{reports['lab_report_pdf']}"
     )
 
-   if reports.get("ultrasound_report_pdf"):
+if reports.get("ultrasound_report_pdf"):
     media_urls.append(
-        "https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/ultrasound_report_preg_002.pdf"
+        f"https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/{reports['ultrasound_report_pdf']}"
     )
-
-
 
     for url in media_urls:
         st.write(f"📄 {url}")
