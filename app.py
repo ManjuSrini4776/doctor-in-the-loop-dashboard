@@ -11,7 +11,7 @@ st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Evidence-based AI report validation with doctor oversight")
 
 # -------------------- LOAD JSON --------------------
-JSON_PATH = "pregnancy_normal.json"
+JSON_PATH = "pregnancy_abnormal.json"
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
