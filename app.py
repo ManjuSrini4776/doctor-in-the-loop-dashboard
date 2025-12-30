@@ -11,7 +11,7 @@ st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Evidence-based AI report validation with doctor oversight")
 
 # -------------------- LOAD JSON --------------------
-# Switch between pregnancy_normal.json / pregnancy_abnormal.json as needed
+# Switch between pregnancy_normal.json / pregnancy_abnormal.json
 JSON_PATH = "pregnancy_abnormal.json"
 
 with open(JSON_PATH, "r") as f:
@@ -31,7 +31,7 @@ patient_context = patient["clinical_context"]
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = "PENDING"
 
-# -------------------- FINAL OUTPUT SAVE FUNCTION --------------------
+# -------------------- SAVE FUNCTION --------------------
 def save_final_doctor_output(final_data, filename):
     with open(filename, "w") as f:
         json.dump(final_data, f, indent=2)
@@ -49,7 +49,7 @@ with left:
 
     st.divider()
 
-    # -------- LAB SUMMARY --------
+    # -------- LAB --------
     if patient_context in ["PREGNANCY", "CHRONIC", "GENERAL"]:
         st.subheader("📄 Lab Summary")
         st.write(f"**Lab Parameter:** {lab['lab_parameter']}")
@@ -62,7 +62,7 @@ with left:
 
     st.divider()
 
-    # -------- ULTRASOUND SUMMARY (PREGNANCY ONLY) --------
+    # -------- ULTRASOUND --------
     if patient_context == "PREGNANCY":
         st.subheader("🖥️ Ultrasound Summary")
         st.write(f"• **Last Ultrasound:** {ultrasound['last_ultrasound']}")
@@ -86,12 +86,6 @@ with right:
     st.subheader("⚙️ System Decisions")
     st.write(f"**Guideline Validation:** {system['guideline_validation']}")
     st.write(f"**Routing Decision:** {system['routing_decision']}")
-
-    st.divider()
-
-    st.subheader("✏️ Doctor Follow-up Instructions")
-    st.write(f"**Next Visit:** {data['doctor_followup_instructions']['next_visit']}")
-    st.write(f"**Next Ultrasound:** {data['doctor_followup_instructions']['next_ultrasound']}")
 
     st.divider()
 
@@ -130,10 +124,12 @@ with col1:
             )
         }
 
-        save_final_doctor_output(
-            final_output,
-            f"final_doctor_output_{patient['patient_id']}.json"
-        )
+        filename = f"final_doctor_output_{patient['patient_id']}.json"
+
+        save_final_doctor_output(final_output, filename)
+
+        st.session_state.final_output = final_output
+        st.session_state.final_filename = filename
 
 with col2:
     if st.button("✏️ Edit"):
@@ -162,22 +158,23 @@ if st.session_state.doctor_decision == "APPROVED":
             "Please attend the recommended follow-up visit."
         )
 
-    st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
+    # ---------- FINAL JSON DISPLAY + DOWNLOAD ----------
+    if "final_output" in st.session_state:
+        st.subheader("📄 Doctor-Approved Final Output (JSON)")
+        st.json(st.session_state.final_output)
+
+        st.download_button(
+            label="⬇️ Download Final Doctor Output JSON",
+            data=json.dumps(st.session_state.final_output, indent=2),
+            file_name=st.session_state.final_filename,
+            mime="application/json"
+        )
 
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning(
-        "Doctor has chosen to edit the report. "
-        "Patient communication is temporarily on hold."
-    )
+    st.warning("Doctor has chosen to edit the report. Patient communication is on hold.")
 
 elif st.session_state.doctor_decision == "REJECTED":
-    st.error(
-        "The report has been rejected by the doctor. "
-        "No patient communication will be sent."
-    )
+    st.error("Report rejected. Patient communication is blocked.")
 
 else:
-    st.info(
-        "Awaiting doctor decision. "
-        "Patient communication is locked until approval."
-    )
+    st.info("Awaiting doctor decision. Patient communication is locked.")
