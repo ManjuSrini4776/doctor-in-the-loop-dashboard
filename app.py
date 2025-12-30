@@ -121,9 +121,22 @@ st.subheader("📲 Patient Communication")
 
 if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
-    st.info(
-        "Your pregnancy scan and lab reports are normal. "
-        "The baby is developing well. Please continue regular antenatal check-ups."
+
+    if lab["ai_severity"] == "NORMAL":
+        st.info(
+            "Your pregnancy scan and lab reports are normal. "
+            "The baby is developing well. Please continue regular antenatal check-ups."
+        )
+
+    else:
+        st.warning(
+            "Your pregnancy report shows some findings that need closer follow-up. "
+            "The doctor has reviewed the report and will guide you on the next steps. "
+            "Please attend the recommended follow-up visit."
+        )
+
+    st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
+
     )
     st.caption("This message will be sent via WhatsApp / SMS in the next phase.")
 
