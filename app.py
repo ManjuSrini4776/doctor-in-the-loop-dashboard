@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
-st.caption("Evidence-based AI report validation with doctor oversight")
+st.caption("Doctor-approved AI medical reporting with secure patient access")
 
 # -------------------- READ PATIENT ID FROM URL --------------------
 query_params = st.query_params
@@ -60,7 +60,7 @@ with left:
 
     st.subheader("📄 Lab Summary")
     st.write(f"**Parameter:** {lab['lab_parameter']}")
-    st.write(f"**Value:** {lab['patient_value']}")
+    st.write(f"**Patient Value:** {lab['patient_value']}")
     st.write(f"**Guideline Range:** {lab['guideline_range']}")
     st.write(f"**AI Severity:** {lab['ai_severity']}")
     st.write(f"**Risk Level:** {lab['risk_level']}")
@@ -69,7 +69,7 @@ with left:
     st.divider()
 
     st.subheader("🖥️ Ultrasound Summary")
-    st.write(f"**Last Scan:** {ultrasound['last_ultrasound']}")
+    st.write(f"**Last Ultrasound:** {ultrasound['last_ultrasound']}")
     st.write(f"**AI Note:** {ultrasound['ai_note']}")
     st.write(f"**Clinical Note:** {ultrasound['clinical_note']}")
 
@@ -81,7 +81,7 @@ with left:
 # ==================== RIGHT COLUMN ====================
 with right:
     st.subheader("🧑‍⚕️ Assigned Doctor")
-    st.write(f"**Name:** {doctor['doctor_name']}")
+    st.write(f"**Doctor Name:** {doctor['doctor_name']}")
     st.write(f"**Department:** {doctor['department']}")
     st.write(f"**Routing Reason:** {doctor['routing_reason']}")
 
@@ -127,13 +127,13 @@ with c3:
 st.divider()
 st.subheader("📲 Patient Communication")
 
-if st.session_state.doctor_decision == "APPROVED":
-    secure_link = f"https://doctor-in-the-loop-dashboard.streamlit.app/?patient_id={patient_id}"
+secure_link = f"https://doctor-in-the-loop-dashboard.streamlit.app/?patient_id={patient_id}"
 
+if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
 
     st.text_area(
-        "WhatsApp Message Preview",
+        "WhatsApp Notification Preview (Text Only)",
         f"""
 Hello,
 
@@ -148,16 +148,19 @@ Please view your report securely at the link below:
 Regards,
 Hospital Care Team
 """,
-        height=200
+        height=220
     )
 
-    st.info("WhatsApp notification will be sent in production using approved templates.")
+    st.info(
+        "In production, this notification will be sent via WhatsApp using "
+        "Meta-approved templates. For this demo, secure link–based access is shown."
+    )
 
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor chose to edit the report. Patient communication is on hold.")
+    st.warning("Doctor chose to edit the report. Patient notification is on hold.")
 
 elif st.session_state.doctor_decision == "REJECTED":
-    st.error("Doctor rejected the report. No patient communication will be sent.")
+    st.error("Doctor rejected the report. No patient notification will be sent.")
 
 else:
     st.info("Awaiting doctor decision.")
