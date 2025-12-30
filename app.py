@@ -107,3 +107,47 @@ with right:
         st.write(f"📄 Ultrasound Report: {reports['ultrasound_report_pdf']}")
 
     st.info("Reports will be shared with the patient only after doctor approval.")
+
+    st.divider()
+st.subheader("✏️ Doctor Action")
+
+# Initialize session state
+if "doctor_decision" not in st.session_state:
+    st.session_state.doctor_decision = None
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("✅ Approve"):
+        st.session_state.doctor_decision = "APPROVED"
+
+with col2:
+    if st.button("✏️ Edit"):
+        st.session_state.doctor_decision = "EDIT"
+
+with col3:
+    if st.button("❌ Reject"):
+        st.session_state.doctor_decision = "REJECTED"
+st.divider()
+st.subheader("📲 Patient Communication")
+
+if st.session_state.doctor_decision is None:
+    st.warning("Awaiting doctor decision. Patient communication is locked.")
+
+elif st.session_state.doctor_decision == "APPROVED":
+    st.success("Doctor approved the report.")
+    st.info(
+        "Your pregnancy report has been reviewed by the doctor. "
+        "Please follow the recommended medical advice and attend follow-up visits as scheduled."
+    )
+
+elif st.session_state.doctor_decision == "EDIT":
+    st.warning(
+        "Doctor chose to edit the report. Patient communication is temporarily on hold."
+    )
+
+elif st.session_state.doctor_decision == "REJECTED":
+    st.error(
+        "Doctor rejected the AI report. No patient communication will be sent."
+    )
+
