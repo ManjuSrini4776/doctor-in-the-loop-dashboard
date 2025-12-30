@@ -202,3 +202,29 @@ if st.session_state.doctor_decision == "APPROVED":
         mime="application/json"
     )
 
+# ================== PATIENT COMMUNICATION PREVIEW ==================
+if st.session_state.doctor_decision == "APPROVED":
+    st.divider()
+    st.subheader("📲 Patient Communication (Preview)")
+
+    patient_message = (
+        f"Hello,\n\n"
+        f"Your medical report has been reviewed and approved by your doctor.\n\n"
+        f"Patient ID: {patient.get('patient_id')}\n"
+        f"Clinical Context: {patient.get('clinical_context')}\n"
+        f"Overall Assessment: {lab.get('ai_severity', 'NA')}\n\n"
+        f"Please follow the medical advice provided and attend scheduled follow-ups.\n\n"
+        f"Regards,\n"
+        f"Hospital Care Team"
+    )
+
+    st.text_area(
+        "Patient Message Preview (WhatsApp / SMS)",
+        patient_message,
+        height=220
+    )
+
+    st.info(
+        "This message will be sent to the patient only after doctor approval. "
+        "Actual WhatsApp/SMS delivery will use approved templates in production."
+    )
