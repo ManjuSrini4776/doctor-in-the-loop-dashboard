@@ -2,22 +2,25 @@ import json
 import streamlit as st
 from twilio.rest import Client
 
-# -------------------- PAGE CONFIG --------------------
+# --------------------------------------------------
+# PAGE CONFIG
+# --------------------------------------------------
 st.set_page_config(
     page_title="Doctor-in-the-Loop Clinical Dashboard",
     layout="wide"
 )
 
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
-st.caption("Doctor-approved AI medical reporting & patient communication")
+st.caption("Doctor-approved AI reporting & patient communication")
 
-# -------------------- LOAD SCENARIO JSON --------------------
-JSON_PATH = "pregnancy_abnormal.json"   # or pregnancy_normal.json
+# --------------------------------------------------
+# LOAD SCENARIO JSON
+# --------------------------------------------------
+JSON_PATH = "pregnancy_abnormal.json"  # switch to pregnancy_normal.json if needed
 
 with open(JSON_PATH, "r") as f:
     data = json.load(f)
 
-# -------------------- EXTRACT DATA --------------------
 patient = data["patient_details"]
 doctor = data["assigned_doctor"]
 lab = data["lab_summary"]
@@ -25,33 +28,38 @@ ultrasound = data["ultrasound_summary"]
 system = data["system_decisions"]
 reports = data["hospital_reports"]
 
-# -------------------- SESSION STATE --------------------
+# --------------------------------------------------
+# SESSION STATE
+# --------------------------------------------------
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = "PENDING"
 
 if "final_output" not in st.session_state:
     st.session_state.final_output = None
 
-# -------------------- TWILIO FUNCTION --------------------
-def send_whatsapp_message(message_body, media_urls):
+# --------------------------------------------------
+# TWILIO SENDER
+# --------------------------------------------------
+def send_whatsapp(message_body, media_urls):
     client = Client(
         st.secrets["TWILIO_ACCOUNT_SID"],
         st.secrets["TWILIO_AUTH_TOKEN"]
     )
 
-    msg = client.messages.create(
+    message = client.messages.create(
         from_=st.secrets["TWILIO_WHATSAPP_FROM"],
         to=st.secrets["TWILIO_WHATSAPP_TO"],
         body=message_body,
         media_url=media_urls
     )
+    return message.sid
 
-    return msg.sid
-
-# -------------------- LAYOUT --------------------
+# --------------------------------------------------
+# LAYOUT
+# --------------------------------------------------
 left, right = st.columns(2)
 
-# ==================== LEFT COLUMN ====================
+# ---------------- LEFT ----------------
 with left:
     st.subheader("👤 Patient Details")
     st.write(f"**Patient ID:** {patient['patient_id']}")
@@ -65,9 +73,8 @@ with left:
     for k, v in lab.items():
         st.write(f"**{k.replace('_',' ').title()}:** {v}")
 
-    st.divider()
-
     if patient["clinical_context"] == "PREGNANCY":
+        st.divider()
         st.subheader("🖥️ Ultrasound Summary")
         for k, v in ultrasound.items():
             st.write(f"**{k.replace('_',' ').title()}:** {v}")
@@ -76,7 +83,7 @@ with left:
     st.subheader("📝 Doctor-Facing Short Summary")
     st.info(data["doctor_facing_short_summary"])
 
-# ==================== RIGHT COLUMN ====================
+# ---------------- RIGHT ----------------
 with right:
     st.subheader("🧑‍⚕️ Assigned Doctor")
     st.write(f"**Name:** {doctor['doctor_name']}")
@@ -91,11 +98,13 @@ with right:
 
     st.divider()
     st.subheader("📎 Reports")
-    for k, v in reports.items():
+    for _, v in reports.items():
         if v:
             st.write(f"📄 {v}")
 
-# ==================== DOCTOR ACTION ====================
+# --------------------------------------------------
+# DOCTOR ACTION
+# --------------------------------------------------
 st.divider()
 st.subheader("✏️ Doctor Action")
 
@@ -132,16 +141,18 @@ with c3:
     if st.button("❌ Reject"):
         st.session_state.doctor_decision = "REJECTED"
 
-# ==================== PATIENT COMMUNICATION ====================
+# --------------------------------------------------
+# PATIENT COMMUNICATION
+# --------------------------------------------------
 st.divider()
 st.subheader("📲 Patient Communication")
 
 if st.session_state.doctor_decision == "APPROVED":
-    st.success("Doctor approved the report.")
 
     final_json = st.session_state.final_output
+    st.success("Doctor approved the report.")
 
-    # -------- JSON OUTPUT --------
+    # ---- FINAL JSON ----
     st.subheader("📄 Doctor-Approved Final Output (JSON)")
     st.json(final_json)
 
@@ -152,10 +163,10 @@ if st.session_state.doctor_decision == "APPROVED":
         mime="application/json"
     )
 
-    # -------- WHATSAPP MESSAGE --------
+    # ---- WHATSAPP MESSAGE ----
     st.subheader("📱 WhatsApp Message Preview")
 
-    whatsapp_message = f"""
+    whatsapp_text = f"""
 Hello,
 
 This is an update regarding your recent hospital visit.
@@ -176,28 +187,33 @@ Regards,
 Hospital Care Team
 """.strip()
 
-    st.text_area("Message to be sent", whatsapp_message, height=240)
+    st.text_area("Message to be sent", whatsapp_text, height=240)
 
-    # -------- ATTACHMENTS --------
+    # ---- ATTACHMENTS ----
     st.subheader("📎 WhatsApp Attachments Preview")
 
     media_urls = []
+
     if reports.get("lab_report_pdf"):
-        media_urls.append(f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['lab_report_pdf']}")
+        media_urls.append(
+            f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['lab_report_pdf']}"
+        )
 
     if reports.get("ultrasound_report_pdf"):
-        media_urls.append(f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['ultrasound_report_pdf']}")
+        media_urls.append(
+            f"https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/{reports['ultrasound_report_pdf']}"
+        )
 
     for url in media_urls:
         st.write(f"📄 {url}")
 
-    # -------- SEND BUTTON --------
+    # ---- SEND ----
     if st.button("📤 Send WhatsApp Message"):
-        sid = send_whatsapp_message(whatsapp_message, media_urls)
+        sid = send_whatsapp(whatsapp_text, media_urls)
         st.success(f"WhatsApp sent successfully. SID: {sid}")
 
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor is editing the report. Patient communication on hold.")
+    st.warning("Doctor chose to edit the report. Patient communication is on hold.")
 
 elif st.session_state.doctor_decision == "REJECTED":
     st.error("Report rejected. Patient communication blocked.")
