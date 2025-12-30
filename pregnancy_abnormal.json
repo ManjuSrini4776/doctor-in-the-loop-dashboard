@@ -1,0 +1,48 @@
+{
+  "patient_details": {
+    "patient_id": "PREG_002",
+    "age": 28,
+    "gender": "Female",
+    "clinical_context": "PREGNANCY"
+  },
+
+  "assigned_doctor": {
+    "doctor_name": "Dr. Ananya Rao",
+    "department": "Obstetrics & Gynecology",
+    "routing_reason": "Abnormal antenatal finding"
+  },
+
+  "lab_summary": {
+    "lab_parameter": "Hemoglobin",
+    "patient_value": "9.2 g/dL",
+    "guideline_reference": "WHO Antenatal Guidelines",
+    "guideline_range": "11 – 14 g/dL",
+    "ai_severity": "MODERATE",
+    "risk_level": "Medium",
+    "recommended_action": "Iron supplementation and closer monitoring"
+  },
+
+  "ultrasound_summary": {
+    "last_ultrasound": "Second Trimester Scan",
+    "ai_note": "Mild ventriculomegaly suspected",
+    "clinical_note": "Requires specialist review and follow-up scan"
+  },
+
+  "system_decisions": {
+    "guideline_validation": "DEVIATES from normal WHO & ICMR pregnancy guidelines",
+    "routing_decision": "Immediate obstetrician review required"
+  },
+
+  "doctor_facing_short_summary": 
+    "Abnormal pregnancy case. AI detected deviation from normal antenatal parameters. Further clinical evaluation recommended.",
+
+  "doctor_followup_instructions": {
+    "next_visit": "Within 1 week",
+    "next_ultrasound": "Repeat targeted ultrasound in 2 weeks"
+  },
+
+  "hospital_reports": {
+    "lab_report_pdf": "lab_report_preg_002.pdf",
+    "ultrasound_report_pdf": "ultrasound_report_preg_002.pdf"
+  }
+}
