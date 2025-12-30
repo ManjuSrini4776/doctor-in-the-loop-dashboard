@@ -49,20 +49,19 @@ with left:
 
     st.divider()
 
-    # -------- LAB --------
-    if patient_context in ["PREGNANCY", "CHRONIC", "GENERAL"]:
-        st.subheader("📄 Lab Summary")
-        st.write(f"**Lab Parameter:** {lab['lab_parameter']}")
-        st.write(f"**Patient Value:** {lab['patient_value']}")
-        st.write(f"**Guideline Reference:** {lab['guideline_reference']}")
-        st.write(f"**Guideline Range:** {lab['guideline_range']}")
-        st.write(f"**AI Severity:** {lab['ai_severity']}")
-        st.write(f"**Risk Level:** {lab['risk_level']}")
-        st.write(f"**Recommended Action:** {lab['recommended_action']}")
+    # -------- LAB SUMMARY --------
+    st.subheader("📄 Lab Summary")
+    st.write(f"**Lab Parameter:** {lab['lab_parameter']}")
+    st.write(f"**Patient Value:** {lab['patient_value']}")
+    st.write(f"**Guideline Reference:** {lab['guideline_reference']}")
+    st.write(f"**Guideline Range:** {lab['guideline_range']}")
+    st.write(f"**AI Severity:** {lab['ai_severity']}")
+    st.write(f"**Risk Level:** {lab['risk_level']}")
+    st.write(f"**Recommended Action:** {lab['recommended_action']}")
 
     st.divider()
 
-    # -------- ULTRASOUND --------
+    # -------- ULTRASOUND (PREGNANCY ONLY) --------
     if patient_context == "PREGNANCY":
         st.subheader("🖥️ Ultrasound Summary")
         st.write(f"• **Last Ultrasound:** {ultrasound['last_ultrasound']}")
@@ -90,12 +89,12 @@ with right:
     st.divider()
 
     st.subheader("📎 Reports to be Shared with Patient")
-    if reports["lab_report_pdf"]:
+    if reports.get("lab_report_pdf"):
         st.write(f"📄 Lab Report: {reports['lab_report_pdf']}")
-    if reports["ultrasound_report_pdf"]:
+    if reports.get("ultrasound_report_pdf"):
         st.write(f"📄 Ultrasound Report: {reports['ultrasound_report_pdf']}")
 
-    st.info("Reports will be shared with the patient only after doctor approval.")
+    st.info("Reports will be shared only after doctor approval.")
 
 # ==================== DOCTOR ACTION ====================
 st.divider()
@@ -125,7 +124,6 @@ with col1:
         }
 
         filename = f"final_doctor_output_{patient['patient_id']}.json"
-
         save_final_doctor_output(final_output, filename)
 
         st.session_state.final_output = final_output
@@ -146,29 +144,65 @@ st.subheader("📲 Patient Communication")
 if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
 
-    if lab["ai_severity"] == "NORMAL":
-        st.info(
-            "Your pregnancy scan and lab reports are normal. "
-            "The baby is developing well. Please continue regular antenatal check-ups."
-        )
-    else:
-        st.warning(
-            "Your pregnancy report shows some findings that need closer follow-up. "
-            "The doctor has reviewed the report and will guide you on the next steps. "
-            "Please attend the recommended follow-up visit."
-        )
+    final_json = st.session_state.final_output
 
-    # ---------- FINAL JSON DISPLAY + DOWNLOAD ----------
-    if "final_output" in st.session_state:
-        st.subheader("📄 Doctor-Approved Final Output (JSON)")
-        st.json(st.session_state.final_output)
+    # ---------- PATIENT MESSAGE ----------
+    st.warning(final_json["final_patient_message"])
 
-        st.download_button(
-            label="⬇️ Download Final Doctor Output JSON",
-            data=json.dumps(st.session_state.final_output, indent=2),
-            file_name=st.session_state.final_filename,
-            mime="application/json"
-        )
+    # ---------- FINAL JSON ----------
+    st.subheader("📄 Doctor-Approved Final Output (JSON)")
+    st.json(final_json)
+
+    st.download_button(
+        label="⬇️ Download Final Doctor Output JSON",
+        data=json.dumps(final_json, indent=2),
+        file_name=st.session_state.final_filename,
+        mime="application/json"
+    )
+
+    # ==================== WHATSAPP MESSAGE PREVIEW ====================
+    st.subheader("📱 WhatsApp Message Preview")
+
+    whatsapp_message = f"""
+Hello,
+
+This is an update regarding your recent hospital visit.
+
+Patient ID: {final_json['patient_id']}
+Clinical Context: Pregnancy
+
+Doctor’s Message:
+{final_json['final_patient_message']}
+
+Attached Reports:
+• Lab Report
+• Ultrasound Report
+
+Please attend the recommended follow-up visit.
+
+Regards,
+Hospital Care Team
+"""
+
+    st.text_area(
+        "Message to be sent via WhatsApp",
+        whatsapp_message.strip(),
+        height=240
+    )
+
+    # ==================== WHATSAPP ATTACHMENTS ====================
+    st.subheader("📎 WhatsApp Attachments Preview")
+
+    attachments = []
+    if reports.get("lab_report_pdf"):
+        attachments.append(reports["lab_report_pdf"])
+    if reports.get("ultrasound_report_pdf"):
+        attachments.append(reports["ultrasound_report_pdf"])
+
+    for file in attachments:
+        st.write(f"📄 {file}")
+
+    st.info("WhatsApp message and attachments will be sent only after final integration.")
 
 elif st.session_state.doctor_decision == "EDIT":
     st.warning("Doctor has chosen to edit the report. Patient communication is on hold.")
