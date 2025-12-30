@@ -1,166 +1,173 @@
-import json
 import streamlit as st
+import json
+import os
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
 
-# -------------------- PAGE CONFIG --------------------
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Doctor-in-the-Loop Clinical Dashboard",
     layout="wide"
 )
 
+# ---------------- HEADER ----------------
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Doctor-approved AI medical reporting with secure patient access")
 
-# -------------------- READ PATIENT ID FROM URL --------------------
+# ---------------- LOAD DATA ----------------
+DATA_FILES = {
+    "PREG_001": "pregnancy_normal.json",
+    "PREG_002": "pregnancy_abnormal.json"
+}
+
+# ---------------- URL PARAM SUPPORT ----------------
 query_params = st.query_params
-patient_id = query_params.get("patient_id")
+url_patient_id = query_params.get("patient_id")
+
+# ---------------- SIDEBAR PATIENT SELECT ----------------
+st.sidebar.header("👤 Select Patient")
+
+selected_patient = st.sidebar.selectbox(
+    "Patient ID",
+    options=["-- Select --"] + list(DATA_FILES.keys()),
+    index=1 if url_patient_id in DATA_FILES else 0
+)
+
+# Priority: URL > Dropdown
+patient_id = url_patient_id if url_patient_id in DATA_FILES else (
+    selected_patient if selected_patient != "-- Select --" else None
+)
 
 if not patient_id:
-    st.warning("No patient ID provided in the URL.")
+    st.warning("Please select a patient from the sidebar.")
     st.stop()
 
-# -------------------- MAP PATIENT ID TO JSON --------------------
-if patient_id == "PREG_001":
-    JSON_PATH = "pregnancy_normal.json"
-elif patient_id == "PREG_002":
-    JSON_PATH = "pregnancy_abnormal.json"
-else:
-    st.error("Invalid or unknown patient ID.")
-    st.stop()
-
-# -------------------- LOAD JSON --------------------
-with open(JSON_PATH, "r") as f:
+# ---------------- LOAD PATIENT JSON ----------------
+with open(DATA_FILES[patient_id]) as f:
     data = json.load(f)
 
-# -------------------- EXTRACT DATA --------------------
 patient = data["patient_details"]
-doctor = data["assigned_doctor"]
-lab = data["lab_summary"]
-ultrasound = data["ultrasound_summary"]
-system = data["system_decisions"]
-doctor_summary = data["doctor_facing_short_summary"]
-followup = data["doctor_followup_instructions"]
-reports = data["hospital_reports"]
+doctor = data["doctor_details"]
+reports = data["reports"]
 
-# -------------------- SESSION STATE --------------------
+# ---------------- SESSION STATE ----------------
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = None
 
-# -------------------- LAYOUT --------------------
-left, right = st.columns(2)
+# ---------------- PATIENT DETAILS ----------------
+st.subheader("👤 Patient Details")
+st.write(f"**Patient ID:** {patient['patient_id']}")
+st.write(f"**Age:** {patient['age']}")
+st.write(f"**Gender:** {patient['gender']}")
+st.write(f"**Clinical Context:** {patient['clinical_context']}")
 
-# ==================== LEFT COLUMN ====================
-with left:
-    st.subheader("👤 Patient Details")
-    st.write(f"**Patient ID:** {patient['patient_id']}")
-    st.write(f"**Age:** {patient['age']}")
-    st.write(f"**Gender:** {patient['gender']}")
-    st.write(f"**Clinical Context:** {patient['clinical_context']}")
+# ---------------- LAB SUMMARY ----------------
+st.subheader("📄 Lab Summary")
+lab = reports["lab_summary"]
+st.write(f"**Parameter:** {lab['parameter']}")
+st.write(f"**Value:** {lab['value']}")
+st.write(f"**Guideline Range:** {lab['guideline_range']}")
+st.write(f"**AI Severity:** {lab['ai_severity']}")
 
-    st.divider()
+# ---------------- ULTRASOUND ----------------
+st.subheader("🖥️ Ultrasound Summary")
+us = reports["ultrasound_summary"]
+st.write(us["ai_note"])
+st.write(us["clinical_note"])
 
-    st.subheader("📄 Lab Summary")
-    st.write(f"**Parameter:** {lab['lab_parameter']}")
-    st.write(f"**Patient Value:** {lab['patient_value']}")
-    st.write(f"**Guideline Range:** {lab['guideline_range']}")
-    st.write(f"**AI Severity:** {lab['ai_severity']}")
-    st.write(f"**Risk Level:** {lab['risk_level']}")
-    st.write(f"**Recommended Action:** {lab['recommended_action']}")
+# ---------------- DOCTOR SUMMARY ----------------
+st.subheader("📝 Doctor-Facing Short Summary")
+st.info(reports["doctor_summary"])
 
-    st.divider()
-
-    st.subheader("🖥️ Ultrasound Summary")
-    st.write(f"**Last Ultrasound:** {ultrasound['last_ultrasound']}")
-    st.write(f"**AI Note:** {ultrasound['ai_note']}")
-    st.write(f"**Clinical Note:** {ultrasound['clinical_note']}")
-
-    st.divider()
-
-    st.subheader("📝 Doctor-Facing Short Summary")
-    st.info(doctor_summary)
-
-# ==================== RIGHT COLUMN ====================
-with right:
-    st.subheader("🧑‍⚕️ Assigned Doctor")
-    st.write(f"**Doctor Name:** {doctor['doctor_name']}")
-    st.write(f"**Department:** {doctor['department']}")
-    st.write(f"**Routing Reason:** {doctor['routing_reason']}")
-
-    st.divider()
-
-    st.subheader("⚙️ System Decisions")
-    st.write(f"**Guideline Validation:** {system['guideline_validation']}")
-    st.write(f"**Routing Decision:** {system['routing_decision']}")
-
-    st.divider()
-
-    st.subheader("✏️ Doctor Follow-up Instructions")
-    st.write(f"**Next Visit:** {followup['next_visit']}")
-    st.write(f"**Next Ultrasound:** {followup['next_ultrasound']}")
-
-    st.divider()
-
-    st.subheader("📎 Reports Available in Hospital System")
-    if reports.get("lab_report_pdf"):
-        st.write(f"📄 Lab Report: {reports['lab_report_pdf']}")
-    if reports.get("ultrasound_report_pdf"):
-        st.write(f"📄 Ultrasound Report: {reports['ultrasound_report_pdf']}")
-
-# -------------------- DOCTOR ACTION --------------------
-st.divider()
+# ---------------- DOCTOR ACTION ----------------
 st.subheader("✏️ Doctor Action")
 
-c1, c2, c3 = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
-with c1:
+with col1:
     if st.button("✅ Approve"):
         st.session_state.doctor_decision = "APPROVED"
 
-with c2:
+with col2:
     if st.button("✏️ Edit"):
         st.session_state.doctor_decision = "EDIT"
 
-with c3:
+with col3:
     if st.button("❌ Reject"):
         st.session_state.doctor_decision = "REJECTED"
 
-# -------------------- PATIENT COMMUNICATION (PREVIEW ONLY) --------------------
-st.divider()
+# ---------------- PATIENT COMMUNICATION ----------------
 st.subheader("📲 Patient Communication")
-
-secure_link = f"https://doctor-in-the-loop-dashboard.streamlit.app/?patient_id={patient_id}"
 
 if st.session_state.doctor_decision == "APPROVED":
     st.success("Doctor approved the report.")
-
-    st.text_area(
-        "WhatsApp Notification Preview (Text Only)",
-        f"""
-Hello,
-
-Your medical report has been reviewed by the doctor.
-
-Patient ID: {patient['patient_id']}
-Clinical Context: {patient['clinical_context']}
-
-Please view your report securely at the link below:
-{secure_link}
-
-Regards,
-Hospital Care Team
-""",
-        height=220
-    )
-
-    st.info(
-        "In production, this notification will be sent via WhatsApp using "
-        "Meta-approved templates. For this demo, secure link–based access is shown."
-    )
+    final_message = reports["patient_message"]
 
 elif st.session_state.doctor_decision == "EDIT":
-    st.warning("Doctor chose to edit the report. Patient notification is on hold.")
+    st.warning("Doctor chose to edit the report. Communication on hold.")
+    st.stop()
 
 elif st.session_state.doctor_decision == "REJECTED":
-    st.error("Doctor rejected the report. No patient notification will be sent.")
-
+    st.error("Report rejected. Patient will be contacted separately.")
+    st.stop()
 else:
     st.info("Awaiting doctor decision.")
+    st.stop()
+
+st.write(final_message)
+
+# ---------------- FINAL JSON OUTPUT ----------------
+final_output = {
+    "patient_id": patient_id,
+    "clinical_context": patient["clinical_context"],
+    "doctor_decision": st.session_state.doctor_decision,
+    "severity": lab["ai_severity"],
+    "doctor_summary": reports["doctor_summary"],
+    "final_patient_message": final_message
+}
+
+st.subheader("📄 Doctor-Approved Final Output (JSON)")
+st.json(final_output)
+
+st.download_button(
+    "⬇️ Download Final Doctor Output JSON",
+    json.dumps(final_output, indent=2),
+    file_name="doctor_review_output.json"
+)
+
+# ---------------- WHATSAPP (SAFE MODE) ----------------
+st.subheader("📎 WhatsApp Attachments Preview")
+
+media_urls = []
+if reports.get("lab_report_pdf"):
+    media_urls.append(
+        f"https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/{reports['lab_report_pdf']}"
+    )
+if reports.get("ultrasound_report_pdf"):
+    media_urls.append(
+        f"https://raw.githubusercontent.com/ManjuSrini4776/doctor-in-the-loop-dashboard/main/{reports['ultrasound_report_pdf']}"
+    )
+
+for url in media_urls:
+    st.write(f"📄 {url}")
+
+# ---------------- OPTIONAL WHATSAPP SEND ----------------
+def send_whatsapp_message(text, media_urls=None):
+    try:
+        client = Client(
+            os.environ["TWILIO_ACCOUNT_SID"],
+            os.environ["TWILIO_AUTH_TOKEN"]
+        )
+        message = client.messages.create(
+            body=text,
+            from_=os.environ["TWILIO_WHATSAPP_FROM"],
+            to=os.environ["TWILIO_WHATSAPP_TO"],
+            media_url=media_urls
+        )
+        return message.sid
+    except TwilioRestException as e:
+        return f"Twilio Error: {e}"
+
+if st.button("📤 Send WhatsApp Message"):
+    sid = send_whatsapp_message(final_message, media_urls)
+    st.info(f"WhatsApp status: {sid}")
