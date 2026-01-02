@@ -1,6 +1,7 @@
 import json
 import streamlit as st
 from pathlib import Path
+from datetime import datetime
 
 # -------------------- PAGE CONFIG --------------------
 st.set_page_config(
@@ -24,6 +25,11 @@ patient_choice = st.sidebar.selectbox(
     list(PATIENT_FILES.keys())
 )
 
+page = st.sidebar.radio(
+    "🧭 Navigation",
+    ["🏠 Home", "📋 Clinical Details", "✏️ Doctor Actions", "📲 Patient Communication"]
+)
+
 json_file = PATIENT_FILES[patient_choice]
 
 if not Path(json_file).exists():
@@ -41,13 +47,18 @@ lab = data.get("lab_summary", {})
 ultrasound = data.get("ultrasound_summary", {})
 system = data.get("system_decisions", {})
 reports = data.get("hospital_reports", {})
+followup = data.get("doctor_followup_instructions", {})
 
-# -------------------- LAYOUT --------------------
-left, right = st.columns(2)
+# -------------------- SESSION STATE --------------------
+if "doctor_decision" not in st.session_state:
+    st.session_state.doctor_decision = None
 
-# ==================== LEFT ====================
-with left:
-    st.subheader("👤 Patient Details")
+# =====================================================
+# 🏠 HOME SCREEN
+# =====================================================
+if page == "🏠 Home":
+    st.subheader("🏠 Patient Overview")
+
     st.write(f"**Patient ID:** {patient.get('patient_id', '-')}")
     st.write(f"**Age:** {patient.get('age', '-')}")
     st.write(f"**Gender:** {patient.get('gender', '-')}")
@@ -55,176 +66,144 @@ with left:
 
     st.divider()
 
-    if lab:
-        st.subheader("📄 Lab Summary")
-        st.write(f"**Parameter:** {lab.get('lab_parameter', '-')}")
-        st.write(f"**Patient Value:** {lab.get('patient_value', '-')}")
-        st.write(f"**Guideline:** {lab.get('guideline_reference', '-')}")
-        st.write(f"**Range:** {lab.get('guideline_range', '-')}")
-        st.write(f"**AI Severity:** {lab.get('ai_severity', '-')}")
-        st.write(f"**Risk Level:** {lab.get('risk_level', '-')}")
-        st.write(f"**Action:** {lab.get('recommended_action', '-')}")
-
-    st.divider()
-
-    if ultrasound:
-        st.subheader("🖥️ Ultrasound Summary")
-        st.write(f"**Last Scan:** {ultrasound.get('last_ultrasound', '-')}")
-        st.write(f"**AI Note:** {ultrasound.get('ai_note', '-')}")
-        st.write(f"**Clinical Note:** {ultrasound.get('clinical_note', '-')}")
+    st.metric(
+        label="Final Severity",
+        value=lab.get("ai_severity", "NA")
+    )
 
     st.divider()
 
     st.subheader("📝 Doctor-Facing Summary")
     st.info(data.get("doctor_facing_short_summary", "Not available"))
 
-# ==================== RIGHT ====================
-with right:
-    st.subheader("🧑‍⚕️ Assigned Doctor")
-    st.write(f"**Doctor Name:** {doctor.get('doctor_name', '-')}")
-    st.write(f"**Department:** {doctor.get('department', '-')}")
-    st.write(f"**Routing Reason:** {doctor.get('routing_reason', '-')}")
-
     st.divider()
 
-    st.subheader("⚙️ System Decisions")
-    st.write(f"**Guideline Validation:** {system.get('guideline_validation', '-')}")
-    st.write(f"**Routing Decision:** {system.get('routing_decision', '-')}")
+    st.subheader("⚙️ Guideline Status")
+    st.write(system.get("guideline_validation", "-"))
+
+# =====================================================
+# 📋 CLINICAL DETAILS
+# =====================================================
+elif page == "📋 Clinical Details":
+    st.subheader("📋 Clinical Evidence")
+
+    if lab:
+        st.subheader("📄 Lab Summary")
+        st.write(lab)
+
+    if ultrasound:
+        st.divider()
+        st.subheader("🖥️ Ultrasound Summary")
+        st.write(ultrasound)
 
     st.divider()
-
-    st.subheader("✏️ Follow-up Instructions")
-    followup = data.get("doctor_followup_instructions", {})
-    st.write(f"**Next Visit:** {followup.get('next_visit', '-')}")
-    st.write(f"**Next Ultrasound:** {followup.get('next_ultrasound', '-')}")
-
-    st.divider()
-
     st.subheader("📎 Reports")
     if reports.get("lab_report_pdf"):
         st.write(f"📄 Lab Report: {reports['lab_report_pdf']}")
     if reports.get("ultrasound_report_pdf"):
         st.write(f"📄 Ultrasound Report: {reports['ultrasound_report_pdf']}")
 
-    st.info("Reports will be shared with the patient only after doctor approval.")
+# =====================================================
+# ✏️ DOCTOR ACTIONS
+# =====================================================
+elif page == "✏️ Doctor Actions":
+    st.subheader("🧑‍⚕️ Assigned Doctor")
+    st.write(f"**Doctor Name:** {doctor.get('doctor_name', '-')}")
+    st.write(f"**Department:** {doctor.get('department', '-')}")
+    st.write(f"**Routing Reason:** {doctor.get('routing_reason', '-')}")
 
     st.divider()
-st.subheader("✏️ Doctor Action")
+    st.subheader("✏️ Doctor Decision")
 
-# Initialize session state
-if "doctor_decision" not in st.session_state:
-    st.session_state.doctor_decision = None
+    col1, col2, col3 = st.columns(3)
 
-col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("✅ Approve"):
+            st.session_state.doctor_decision = "APPROVED"
 
-with col1:
-    if st.button("✅ Approve"):
-        st.session_state.doctor_decision = "APPROVED"
+    with col2:
+        if st.button("✏️ Edit"):
+            st.session_state.doctor_decision = "EDIT"
 
-with col2:
-    if st.button("✏️ Edit"):
-        st.session_state.doctor_decision = "EDIT"
+    with col3:
+        if st.button("❌ Reject"):
+            st.session_state.doctor_decision = "REJECTED"
 
-with col3:
-    if st.button("❌ Reject"):
-        st.session_state.doctor_decision = "REJECTED"
-st.divider()
-st.subheader("📲 Patient Communication")
+    if st.session_state.doctor_decision == "APPROVED":
+        st.success("Doctor approved the report.")
 
-if st.session_state.doctor_decision is None:
-    st.warning("Awaiting doctor decision. Patient communication is locked.")
+        st.divider()
+        st.subheader("📄 Doctor-Approved Final Output (JSON)")
 
-elif st.session_state.doctor_decision == "APPROVED":
-    st.success("Doctor approved the report.")
-    st.info(
-        "Your pregnancy report has been reviewed by the doctor. "
-        "Please follow the recommended medical advice and attend follow-up visits as scheduled."
-    )
+        final_output = {
+            "patient_id": patient.get("patient_id"),
+            "clinical_context": patient.get("clinical_context"),
+            "doctor_decision": "APPROVED",
+            "severity": lab.get("ai_severity", "NA"),
+            "doctor_summary": data.get("doctor_facing_short_summary"),
+            "final_patient_message": (
+                "Your pregnancy report has been reviewed and approved by the doctor. "
+                "Please follow the recommended medical advice and attend follow-up visits."
+            )
+        }
 
-elif st.session_state.doctor_decision == "EDIT":
-    st.warning(
-        "Doctor chose to edit the report. Patient communication is temporarily on hold."
-    )
+        st.json(final_output)
 
-elif st.session_state.doctor_decision == "REJECTED":
-    st.error(
-        "Doctor rejected the AI report. No patient communication will be sent."
-    )
-# ================== FINAL DOCTOR-APPROVED OUTPUT ==================
-if st.session_state.doctor_decision == "APPROVED":
-    st.divider()
-    st.subheader("📄 Doctor-Approved Final Output (JSON)")
-
-    final_output = {
-        "patient_id": patient.get("patient_id"),
-        "clinical_context": patient.get("clinical_context"),
-        "doctor_decision": "APPROVED",
-        "severity": lab.get("ai_severity", "NA"),
-        "doctor_summary": data.get("doctor_facing_short_summary"),
-        "final_patient_message": (
-            "Your pregnancy report has been reviewed and approved by the doctor. "
-            "Please follow the recommended medical advice and attend follow-up visits."
+        st.download_button(
+            label="⬇️ Download Final Doctor Output JSON",
+            data=json.dumps(final_output, indent=4),
+            file_name=f"{patient.get('patient_id')}_final_output.json",
+            mime="application/json"
         )
-    }
 
-    st.json(final_output)
+        st.divider()
+        st.subheader("🧾 Audit & Traceability Log")
 
-    st.download_button(
-        label="⬇️ Download Final Doctor Output JSON",
-        data=json.dumps(final_output, indent=4),
-        file_name=f"{patient.get('patient_id')}_final_output.json",
-        mime="application/json"
-    )
-# ================== AUDIT & TRACEABILITY ==================
-if st.session_state.doctor_decision == "APPROVED":
-    st.divider()
-    st.subheader("🧾 Audit & Traceability Log")
+        audit_log = {
+            "patient_id": patient.get("patient_id"),
+            "clinical_context": patient.get("clinical_context"),
+            "ai_severity": lab.get("ai_severity", "NA"),
+            "doctor_decision": "APPROVED",
+            "reviewed_by": doctor.get("doctor_name", "Doctor"),
+            "department": doctor.get("department", "NA"),
+            "review_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "decision_source": "Doctor-in-the-Loop Dashboard"
+        }
 
-    from datetime import datetime
+        st.json(audit_log)
 
-    audit_log = {
-        "patient_id": patient.get("patient_id"),
-        "clinical_context": patient.get("clinical_context"),
-        "ai_severity": lab.get("ai_severity", "NA"),
-        "doctor_decision": "APPROVED",
-        "reviewed_by": doctor.get("doctor_name", "Doctor"),
-        "department": doctor.get("department", "NA"),
-        "review_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "decision_source": "Doctor-in-the-Loop Dashboard"
-    }
+# =====================================================
+# 📲 PATIENT COMMUNICATION
+# =====================================================
+elif page == "📲 Patient Communication":
+    st.subheader("📲 Patient Communication")
 
-    st.json(audit_log)
+    if st.session_state.doctor_decision != "APPROVED":
+        st.warning("Patient communication is locked until doctor approval.")
 
-    st.download_button(
-        label="⬇️ Download Audit Log (JSON)",
-        data=json.dumps(audit_log, indent=4),
-        file_name=f"{patient.get('patient_id')}_audit_log.json",
-        mime="application/json"
-    )
+    else:
+        patient_message = (
+            f"Hello,\n\n"
+            f"Your medical report has been reviewed and approved by your doctor.\n\n"
+            f"Patient ID: {patient.get('patient_id')}\n"
+            f"Clinical Context: {patient.get('clinical_context')}\n"
+            f"Overall Assessment: {lab.get('ai_severity', 'NA')}\n\n"
+            f"Please follow the medical advice provided and attend scheduled follow-ups.\n\n"
+            f"Regards,\nHospital Care Team"
+        )
 
-# ================== PATIENT COMMUNICATION PREVIEW ==================
-if st.session_state.doctor_decision == "APPROVED":
-    st.divider()
-    st.subheader("📲 Patient Communication (Preview)")
+        st.text_area(
+            "Patient Message Preview (WhatsApp / SMS)",
+            patient_message,
+            height=220
+        )
 
-    patient_message = (
-        f"Hello,\n\n"
-        f"Your medical report has been reviewed and approved by your doctor.\n\n"
-        f"Patient ID: {patient.get('patient_id')}\n"
-        f"Clinical Context: {patient.get('clinical_context')}\n"
-        f"Overall Assessment: {lab.get('ai_severity', 'NA')}\n\n"
-        f"Please follow the medical advice provided and attend scheduled follow-ups.\n\n"
-        f"Regards,\n"
-        f"Hospital Care Team"
-    )
+        st.info(
+            "This message will be sent to the patient only after doctor approval. "
+            "Actual WhatsApp/SMS delivery will use approved templates in production."
+        )
 
-    st.text_area(
-        "Patient Message Preview (WhatsApp / SMS)",
-        patient_message,
-        height=220
-    )
 
-    st.info(
-        "This message will be sent to the patient only after doctor approval. "
-        "Actual WhatsApp/SMS delivery will use approved templates in production."
-    )
+
+  
+
