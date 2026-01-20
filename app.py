@@ -12,6 +12,10 @@ st.set_page_config(
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Doctor-approved AI medical reporting with secure patient access")
 
+# ==================== BASE PATHS (FIXED) ====================
+BASE_DIR = Path(__file__).resolve().parent
+REPORTS_DIR = BASE_DIR / "reports"   # ✅ always correct, not dependent on run location
+
 # ==================== PATIENT FILE MAP ====================
 PATIENT_FILES = {
     "PREG_001 (Normal Pregnancy)": "pregnancy_normal.json",
@@ -36,14 +40,17 @@ page = st.sidebar.radio(
     ]
 )
 
-json_file = PATIENT_FILES[patient_choice]
+# Optional debug toggle (very helpful)
+debug = st.sidebar.checkbox("🛠️ Debug mode", value=False)
 
-if not Path(json_file).exists():
+json_file = BASE_DIR / PATIENT_FILES[patient_choice]
+
+if not json_file.exists():
     st.error(f"Required JSON file not found: {json_file}")
     st.stop()
 
 # ==================== LOAD JSON ====================
-with open(json_file, "r") as f:
+with open(json_file, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 # ==================== SAFE EXTRACTION ====================
@@ -55,11 +62,10 @@ system = data.get("system_decisions", {})
 reports = data.get("hospital_reports", {})
 followup = data.get("doctor_followup_instructions", {})
 
-REPORTS_DIR = Path("reports")
-
 # ==================== SESSION STATE ====================
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = None
+
 
 # =====================================================
 # 🏠 HOME OVERVIEW
@@ -91,6 +97,7 @@ if page == "🏠 Home Overview":
     st.subheader("⚙️ Guideline Validation Status")
     st.write(system.get("guideline_validation", "-"))
 
+
 # =====================================================
 # 📋 CLINICAL EVIDENCE
 # =====================================================
@@ -109,8 +116,23 @@ elif page == "📋 Clinical Evidence":
     st.divider()
     st.subheader("📎 Diagnostic Reports (Download & Verify)")
 
-    if reports.get("lab_report_pdf"):
-        lab_path = REPORTS_DIR / reports["lab_report_pdf"]
+    if debug:
+        st.write("🧾 Debug info")
+        st.write("BASE_DIR:", str(BASE_DIR))
+        st.write("REPORTS_DIR:", str(REPORTS_DIR))
+        st.write("Reports JSON block:", reports)
+
+    # ---------- LAB REPORT ----------
+    lab_pdf_name = reports.get("lab_report_pdf")
+
+    if lab_pdf_name:
+        lab_path = REPORTS_DIR / lab_pdf_name
+
+        if debug:
+            st.write("Expected lab_report_pdf:", lab_pdf_name)
+            st.write("Resolved lab_path:", str(lab_path))
+            st.write("Lab exists:", lab_path.exists())
+
         if lab_path.exists():
             with open(lab_path, "rb") as f:
                 st.download_button(
@@ -120,10 +142,21 @@ elif page == "📋 Clinical Evidence":
                     mime="application/pdf"
                 )
         else:
-            st.warning("Lab report file not found.")
+            st.warning(f"Lab report file not found: {lab_path.name}")
+    else:
+        st.warning("No lab_report_pdf key found for this patient in JSON (hospital_reports).")
 
-    if reports.get("ultrasound_report_pdf"):
-        us_path = REPORTS_DIR / reports["ultrasound_report_pdf"]
+    # ---------- ULTRASOUND REPORT ----------
+    us_pdf_name = reports.get("ultrasound_report_pdf")
+
+    if us_pdf_name:
+        us_path = REPORTS_DIR / us_pdf_name
+
+        if debug:
+            st.write("Expected ultrasound_report_pdf:", us_pdf_name)
+            st.write("Resolved us_path:", str(us_path))
+            st.write("Ultrasound exists:", us_path.exists())
+
         if us_path.exists():
             with open(us_path, "rb") as f:
                 st.download_button(
@@ -133,7 +166,10 @@ elif page == "📋 Clinical Evidence":
                     mime="application/pdf"
                 )
         else:
-            st.warning("Ultrasound report file not found.")
+            st.warning(f"Ultrasound report file not found: {us_path.name}")
+    else:
+        st.warning("No ultrasound_report_pdf key found for this patient in JSON (hospital_reports).")
+
 
 # =====================================================
 # ✏️ DOCTOR ACTIONS
@@ -204,6 +240,7 @@ elif page == "✏️ Doctor Actions":
 
         st.json(audit_log)
 
+
 # =====================================================
 # 📲 PATIENT COMMUNICATION
 # =====================================================
@@ -234,4 +271,5 @@ elif page == "📲 Patient Communication":
             "This message will be sent to the patient only after doctor approval. "
             "Actual WhatsApp/SMS delivery will use approved templates in production."
         )
+
 
