@@ -100,11 +100,21 @@ elif page == "📋 Clinical Evidence":
     if lab:
         st.subheader("📄 Lab Summary")
         st.json(lab)
+if ultrasound:
+    st.divider()
+    st.subheader("🖥️ Ultrasound Summary")
 
-    if ultrasound:
-        st.divider()
-        st.subheader("🖥️ Ultrasound Summary")
-        st.json(ultrasound)
+    # ✅ Explicit image-level identifiers
+    st.write(f"**Ultrasound Image ID:** {ultrasound.get('image_id', '-')}")
+    st.write(f"**Plane:** {ultrasound.get('plane', '-')}")
+
+    # Existing summary
+    st.json({
+        "last_ultrasound": ultrasound.get("last_ultrasound", "-"),
+        "ai_note": ultrasound.get("ai_note", "-"),
+        "clinical_note": ultrasound.get("clinical_note", "-")
+    })
+
 
     st.divider()
     st.subheader("📎 Diagnostic Reports (Download & Verify)")
