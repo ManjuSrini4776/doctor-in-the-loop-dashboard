@@ -147,9 +147,6 @@ if ultrasound.get("image_file"):
     else:
         st.warning("Ultrasound image file not found.")
 
-        else:
-            st.warning("Ultrasound report file not found.")
-
 # =====================================================
 # ✏️ DOCTOR ACTIONS
 # =====================================================
