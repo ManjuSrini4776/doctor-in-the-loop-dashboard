@@ -97,25 +97,26 @@ if page == "🏠 Home Overview":
 elif page == "📋 Clinical Evidence":
     st.subheader("📋 Clinical Evidence for Doctor Verification")
 
+    # ---------- LAB SUMMARY ----------
     if lab:
         st.subheader("📄 Lab Summary")
         st.json(lab)
-if ultrasound:
-    st.divider()
-    st.subheader("🖥️ Ultrasound Summary")
 
-    # ✅ Explicit image-level identifiers
-    st.write(f"**Ultrasound Image ID:** {ultrasound.get('image_id', '-')}")
-    st.write(f"**Plane:** {ultrasound.get('plane', '-')}")
+    # ---------- ULTRASOUND SUMMARY ----------
+    if ultrasound:
+        st.divider()
+        st.subheader("🖥️ Ultrasound Summary")
 
-    # Existing summary
-    st.json({
-        "last_ultrasound": ultrasound.get("last_ultrasound", "-"),
-        "ai_note": ultrasound.get("ai_note", "-"),
-        "clinical_note": ultrasound.get("clinical_note", "-")
-    })
+        st.write(f"**Ultrasound Image ID:** {ultrasound.get('image_id', '-')}")
+        st.write(f"**Plane:** {ultrasound.get('plane', '-')}")
 
+        st.json({
+            "last_ultrasound": ultrasound.get("last_ultrasound", "-"),
+            "ai_note": ultrasound.get("ai_note", "-"),
+            "clinical_note": ultrasound.get("clinical_note", "-")
+        })
 
+    # ---------- REPORT DOWNLOADS ----------
     st.divider()
     st.subheader("📎 Diagnostic Reports (Download & Verify)")
 
@@ -183,10 +184,7 @@ elif page == "✏️ Doctor Actions":
             "doctor_decision": "APPROVED",
             "severity": lab.get("ai_severity", "NA"),
             "doctor_summary": data.get("doctor_facing_short_summary"),
-            "final_patient_message": (
-                "Your medical report has been reviewed and approved by the doctor. "
-                "Please follow the recommended medical advice."
-            )
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
         st.json(final_output)
@@ -198,22 +196,6 @@ elif page == "✏️ Doctor Actions":
             mime="application/json"
         )
 
-        st.divider()
-        st.subheader("🧾 Audit & Traceability Log")
-
-        audit_log = {
-            "patient_id": patient.get("patient_id"),
-            "clinical_context": patient.get("clinical_context"),
-            "ai_severity": lab.get("ai_severity", "NA"),
-            "doctor_decision": "APPROVED",
-            "reviewed_by": doctor.get("doctor_name", "Doctor"),
-            "department": doctor.get("department", "NA"),
-            "review_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "decision_source": "Doctor-in-the-Loop Dashboard"
-        }
-
-        st.json(audit_log)
-
 # =====================================================
 # 📲 PATIENT COMMUNICATION
 # =====================================================
@@ -222,7 +204,6 @@ elif page == "📲 Patient Communication":
 
     if st.session_state.doctor_decision != "APPROVED":
         st.warning("Patient communication is locked until doctor approval.")
-
     else:
         patient_message = (
             f"Hello,\n\n"
@@ -230,7 +211,7 @@ elif page == "📲 Patient Communication":
             f"Patient ID: {patient.get('patient_id')}\n"
             f"Clinical Context: {patient.get('clinical_context')}\n"
             f"Overall Assessment: {lab.get('ai_severity', 'NA')}\n\n"
-            f"Please follow the medical advice provided and attend scheduled follow-ups.\n\n"
+            f"Please follow the medical advice provided.\n\n"
             f"Regards,\nHospital Care Team"
         )
 
@@ -239,9 +220,3 @@ elif page == "📲 Patient Communication":
             patient_message,
             height=220
         )
-
-        st.info(
-            "This message will be sent to the patient only after doctor approval. "
-            "Actual WhatsApp/SMS delivery will use approved templates in production."
-        )
-
