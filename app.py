@@ -132,17 +132,21 @@ elif page == "📋 Clinical Evidence":
                 )
         else:
             st.warning("Lab report file not found.")
+# ---------- ULTRASOUND IMAGE DOWNLOAD ----------
+if ultrasound.get("image_file"):
+    image_path = REPORTS_DIR / ultrasound["image_file"]
 
-    if reports.get("ultrasound_report_pdf"):
-        us_path = REPORTS_DIR / reports["ultrasound_report_pdf"]
-        if us_path.exists():
-            with open(us_path, "rb") as f:
-                st.download_button(
-                    label="⬇️ Download Ultrasound Report",
-                    data=f,
-                    file_name=us_path.name,
-                    mime="application/pdf"
-                )
+    if image_path.exists():
+        with open(image_path, "rb") as f:
+            st.download_button(
+                label="⬇️ Download Ultrasound Image (Used for AI Inference)",
+                data=f,
+                file_name=image_path.name,
+                mime="image/png"
+            )
+    else:
+        st.warning("Ultrasound image file not found.")
+
         else:
             st.warning("Ultrasound report file not found.")
 
