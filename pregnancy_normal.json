@@ -23,10 +23,12 @@
   },
 
   "ultrasound_summary": {
-    "last_ultrasound": "Second Trimester Scan",
-    "ai_note": "Normal fetal brain anatomy detected",
-    "clinical_note": "No abnormal findings observed"
-  },
+  "image_id": "Patient01018_Plane3_2_of_3",
+  "plane": "Fetal brain",
+  "last_ultrasound": "Second Trimester Scan",
+  "ai_note": "Normal fetal brain anatomy detected",
+  "clinical_note": "No abnormal findings observed"
+}
 
   "system_decisions": {
     "guideline_validation": "CONSISTENT with WHO & ICMR pregnancy guidelines",
