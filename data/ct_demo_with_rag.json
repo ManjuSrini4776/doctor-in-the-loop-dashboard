@@ -9,30 +9,25 @@
         "image_id": "Te-noTr_0000.jpg",
         "image_path": "/content/drive/MyDrive/Medical_AI_Project/Ct_data/Testing/notumor/Te-noTr_0000.jpg",
         "prediction": "notumor",
-        "confidence": 0.7532036304473877
+        "confidence": 0.5991402268409729
     },
     "ai_severity_fusion": {
-        "patient_context": "GENERAL",
-        "ct_severity": "Normal",
-        "final_severity": "Normal",
-        "generated_by": "Multimodal AI Severity Fusion Engine",
-        "generated_at": "2026-01-30 07:58:40"
+        "derived_severity": "Normal",
+        "fusion_reason": "Derived from CT AI prediction and confidence"
     },
     "system_metadata": {
         "model_name": "EfficientNet-B0 CT Brain",
-        "generated_at": "2026-01-30 07:45:45"
+        "generated_at": "2026-01-30 10:46:31"
+    },
+    "imaging_evidence": {
+        "image_id": "Te-noTr_0000.jpg",
+        "image_path": "/content/drive/MyDrive/Medical_AI_Project/Ct_data/Testing/notumor/Te-noTr_0000.jpg"
     },
     "rag_guideline_validation": {
-        "guideline_source": "WHO / Standard radiology CT brain guidelines",
-        "validation_status": "validated",
-        "clinical_summary": {
-            "patient_context": "GENERAL",
-            "imaging_modality": "CT Brain",
-            "ai_prediction": "notumor",
-            "ai_confidence": 0.7532036304473877,
-            "ai_severity": "Normal"
-        },
-        "recommendation": "No further imaging is required based on the current AI assessment indicating no tumor presence.",
-        "generated_at": "2026-01-30 08:21:15"
+        "guideline_source": "CT Brain Imaging Guidelines",
+        "validation_status": "Compliant",
+        "clinical_summary": "The CT brain imaging results indicate no evidence of a tumor, with an AI prediction of 'notumor' and a confidence level of approximately 59.9%. The overall assessment suggests a normal finding.",
+        "recommendation": "Consider correlating these findings with clinical symptoms and history. If there are ongoing concerns or symptoms, further evaluation or follow-up imaging may be warranted.",
+        "generated_at": "2026-01-30 11:20:41"
     }
 }
