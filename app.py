@@ -99,6 +99,24 @@ if page == "🏠 Home Overview":
 elif page == "📋 Clinical Evidence":
     st.subheader("📋 Clinical Evidence for Doctor Verification")
 
+    # ==============================
+# Ultrasound Evidence (AUTO)
+# ==============================
+
+imaging = data.get("imaging_evidence", {})
+model_out = data.get("model_output", {})
+
+st.subheader("🖥️ Ultrasound AI Evidence")
+
+st.write(f"**Modality:** {imaging.get('modality', '-')}")
+st.write(f"**Ultrasound Image ID:** {imaging.get('image_id', '-')}")
+
+st.write(f"**AI Prediction:** {model_out.get('prediction', '-')}")
+st.write(
+    f"**Confidence:** {round(model_out.get('confidence', 0) * 100, 2)} %"
+)
+
+
     # ---------- LAB SUMMARY ----------
     if lab:
         st.subheader("📄 Lab Summary")
