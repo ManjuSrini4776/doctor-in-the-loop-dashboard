@@ -33,7 +33,10 @@ page = st.sidebar.radio(
 )
 
 # ==================== JSON SOURCE ====================
-DATA_PATH = Path("data/ct_demo_with_rag.json")
+DATA_PATH = Path(
+    "/content/gdrive/MyDrive/Medical_AI_Project/auto_evidence/ct_demo_with_rag.json"
+)
+
 
 if not DATA_PATH.exists():
     st.error("Required CT review JSON not found: data/ct_demo_with_rag.json")
