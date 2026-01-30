@@ -209,16 +209,20 @@ elif page == "📲 Patient Communication":
 
     if st.session_state.doctor_decision != "APPROVED":
         st.warning("Patient communication is locked until doctor approval.")
-    else:
-
         patient_message = (
-            f"Hello,\n\n"
-            f"Your CT brain report has been reviewed and approved by the doctor.\n\n"
-            f"Patient ID: {patient.get('patient_id')}\n"
-            f"Finding: {ct_out.get('prediction')}\n"
-            f"Severity: {fusion.get('final_severity')}\n\n"
-            f"Regards,\nHospital Care Team"
-        )
+    f"Hello,\n\n"
+    f"Your CT brain report has been reviewed and approved by your doctor.\n\n"
+    f"Patient ID: {patient.get('patient_id', '-')}\n"
+    f"Result: No abnormal findings were detected.\n"
+    f"Severity: {fusion.get('final_severity', '-')}\n\n"
+    f"This means your report appears normal and there is no urgent need to "
+    f"visit the hospital at this time.\n\n"
+    f"If you have any symptoms, concerns, or would like further clarification, "
+    f"you may schedule a follow-up appointment with your doctor.\n\n"
+    f"Please continue to follow any clinical advice already provided by your healthcare team.\n\n"
+    f"Regards,\n"
+    f"Hospital Care Team"
+)
 
         st.text_area(
             "Patient Message Preview (SMS / WhatsApp)",
