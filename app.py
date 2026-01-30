@@ -111,30 +111,6 @@ elif page == "📋 Clinical Evidence":
 
     st.divider()
 
-    # ---------- CT IMAGE PREVIEW ----------
-    image_path = imaging.get("image_path")
-
-    if image_path and Path(image_path).exists():
-        st.subheader("🖼️ CT Image Used for AI Inference")
-
-        st.image(
-            image_path,
-            caption="CT image used by the AI model",
-            use_column_width=True
-        )
-
-        with open(image_path, "rb") as f:
-            st.download_button(
-                label="⬇️ Download CT Image",
-                data=f,
-                file_name=Path(image_path).name,
-                mime="image/jpeg"
-            )
-    else:
-        st.warning("CT image file path not found in JSON or file not available.")
-
-    st.divider()
-
     st.subheader("📘 RAG – Clinical Summary")
 
     clinical_summary = rag.get("clinical_summary", {})
