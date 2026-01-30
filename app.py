@@ -12,19 +12,21 @@ st.set_page_config(
 st.title("🩺 Doctor-in-the-Loop Clinical Dashboard")
 st.caption("Doctor-approved AI medical reporting with secure patient access")
 
-# ==================== PATIENT FILE MAP ====================
-PATIENT_FILES = {
-    "PREG_001 (Normal Pregnancy)": "pregnancy_normal.json",
-    "PREG_002 (Abnormal Pregnancy)": "pregnancy_abnormal.json"
-}
+# ==================== AUTO ULTRASOUND CASE ====================
+st.sidebar.header("👤 Case Selection")
 
-# ==================== SIDEBAR ====================
-st.sidebar.header("👤 Patient Selection")
-
-patient_choice = st.sidebar.selectbox(
-    "Select Patient",
-    list(PATIENT_FILES.keys())
+case_choice = st.sidebar.selectbox(
+    "Select Case",
+    ["Latest Ultrasound Case"]
 )
+
+AUTO_JSON_PATH = (
+    "/content/drive/MyDrive/Medical_AI_Project/"
+    "auto_evidence/ultrasound_latest.json"
+)
+
+json_file = AUTO_JSON_PATH
+
 
 page = st.sidebar.radio(
     "🧭 Navigation",
