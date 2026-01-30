@@ -84,8 +84,8 @@ if page == "🏠 Home Overview":
     st.divider()
 
     st.subheader("🧠 AI Severity (Fusion)")
-    st.write("**Final Severity:**", fusion.get("final_severity", "-"))
-    st.write("**Patient Context:**", fusion.get("patient_context", "-"))
+    st.write("**Final Severity:**", fusion.get("derived_severity", "-"))
+    st.write("**Patient Context:**", patient.get("context", "-"))
 
     st.divider()
 
@@ -183,8 +183,8 @@ elif page == "✏️ Doctor Actions":
                 "image_id": imaging.get("image_id"),
                 "ct_prediction": ct_out.get("prediction"),
                 "confidence": ct_out.get("confidence"),
-                "final_severity": fusion.get("final_severity"),
-                "patient_context": fusion.get("patient_context"),
+                "final_severity": fusion.get("derived_severity"),
+                "patient_context": patient.get("context"),
                 "rag_validation": rag,
                 "doctor_decision": "APPROVED",
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -216,7 +216,7 @@ elif page == "📲 Patient Communication":
             f"Your CT brain report has been reviewed and approved by your doctor.\n\n"
             f"Patient ID: {patient.get('patient_id', '-')}\n"
             f"Result: No abnormal findings were detected.\n"
-            f"Severity: {fusion.get('final_severity', '-')}\n\n"
+            f"Severity: {fusion.get('derived_severity', '-')}\n\n"
             f"This means your report appears normal and there is no urgent need to "
             f"visit the hospital at this time.\n\n"
             f"If you have any symptoms, concerns, or would like further clarification, "
