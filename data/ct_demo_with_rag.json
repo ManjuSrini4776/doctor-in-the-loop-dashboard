@@ -23,11 +23,14 @@
         "image_id": "Te-noTr_0000.jpg",
         "image_path": "/content/drive/MyDrive/Medical_AI_Project/Ct_data/Testing/notumor/Te-noTr_0000.jpg"
     },
-    "rag_guideline_validation": {
-        "guideline_source": "CT Brain Imaging Guidelines",
-        "validation_status": "Compliant",
-        "clinical_summary": "The CT brain imaging results indicate no evidence of a tumor, with an AI prediction of 'notumor' and a confidence level of approximately 59.9%. The overall assessment suggests a normal finding.",
-        "recommendation": "Consider correlating these findings with clinical symptoms and history. If there are ongoing concerns or symptoms, further evaluation or follow-up imaging may be warranted.",
-        "generated_at": "2026-01-30 11:20:41"
-    }
+    "validation_decision": "ALLOW_GENERATION",
+    "validation_reason": "No tumor prediction with normal severity and no red-flag context",
+    "rag_imaging_sources": [
+        "normal_ct.txt"
+    ],
+    "rag_pathway_sources": [
+        "brain_tumour_referral_ct.txt"
+    ],
+    "doctor_facing_summary": "**Imaging summary:**  \nCT brain imaging demonstrates preserved grey\u2013white matter differentiation with no evidence of focal mass lesions, abnormal attenuation, or mass effect. The basal cisterns and cortical sulci are intact, and the ventricular system is normal in size and configuration for age.\n\n**Clinical pathway summary:**  \nThere is a low index of suspicion for brain tumor, as the patient does not present with any of the high-risk symptoms such as seizures, progressive symptoms, focal neurological deficits, severe headache, recurrent vomiting, blurring of vision, altered sensorium, or abnormal posturing.",
+    "rag_generated_at": "2026-01-30 15:39:54"
 }
