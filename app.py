@@ -210,7 +210,7 @@ if page == "Overview":
 
         img_path = imaging.get("image_path")
         if img_path and Path(img_path).exists():
-        st.image(img_path, use_container_width=True)
+           st.image(img_path, use_container_width=True)
 
 
         st.markdown("</div>",unsafe_allow_html=True)
