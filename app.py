@@ -5,37 +5,23 @@ from datetime import datetime
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
-    page_title="Doctor-in-the-Loop – Clinical Review Dashboard",
+    page_title="Doctor-in-the-Loop Clinical Review Dashboard",
     layout="wide"
 )
 
-st.title("🩺 Doctor-in-the-Loop – Clinical Review Dashboard")
-st.caption("Doctor-approved AI medical reporting with secure patient access")
+st.title("Doctor-in-the-Loop Clinical Review Dashboard")
+st.caption("Doctor-approved AI medical reporting with controlled patient communication")
 
 # ==================== SIDEBAR ====================
-st.sidebar.header("📂 Case Selection")
+st.sidebar.header("Case Selection")
 
 case_choice = st.sidebar.selectbox(
-    "Select Case",
+    "Select case",
     ["Latest CT Brain Case"]
-)
-
-st.sidebar.divider()
-
-page = st.sidebar.radio(
-    "🧭 Navigation",
-    [
-        "🏠 Home Overview",
-        "📋 Clinical Evidence",
-        "✏️ Doctor Actions",
-        "📲 Patient Communication"
-    ]
 )
 
 # ==================== JSON SOURCE ====================
 DATA_PATH = Path("data/ct_demo_with_rag.json")
-
-
 
 if not DATA_PATH.exists():
     st.error("Required CT review JSON not found: data/ct_demo_with_rag.json")
@@ -50,7 +36,6 @@ ct_out = data.get("ct_model_output", {})
 fusion = data.get("ai_severity_fusion", {})
 imaging = data.get("imaging_evidence", {})
 
-# New pipeline fields
 validation_decision = data.get("validation_decision", "-")
 validation_reason   = data.get("validation_reason", "-")
 rag_imaging_sources = data.get("rag_imaging_sources", [])
@@ -61,171 +46,222 @@ doctor_summary      = data.get("doctor_facing_summary", "-")
 if "doctor_decision" not in st.session_state:
     st.session_state.doctor_decision = None
 
-# =====================================================
-# 🏠 HOME OVERVIEW
-# =====================================================
-if page == "🏠 Home Overview":
+if "case_status" not in st.session_state:
+    st.session_state.case_status = "PENDING"
 
-    st.subheader("👤 Patient Overview")
+if "timeline" not in st.session_state:
+    st.session_state.timeline = []
+
+def log_event(msg):
+    st.session_state.timeline.append(
+        f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {msg}"
+    )
+
+# ==================== STATUS BAR ====================
+if st.session_state.case_status == "PENDING":
+    st.warning("Case status: Pending doctor review")
+elif st.session_state.case_status == "APPROVED":
+    st.success("Case status: Approved by doctor")
+elif st.session_state.case_status == "REJECTED":
+    st.error("Case status: Rejected by doctor")
+
+# ==================== MAIN TABS ====================
+tab_overview, tab_evidence, tab_rag, tab_action, tab_comm = st.tabs(
+    [
+        "Overview",
+        "Clinical Evidence",
+        "Guideline Summary",
+        "Doctor Decision",
+        "Patient Communication"
+    ]
+)
+
+# =====================================================
+# OVERVIEW
+# =====================================================
+with tab_overview:
+
+    st.subheader("Patient overview")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("**Patient ID:**", patient.get("patient_id", "-"))
-        st.write("**Modality:**", patient.get("modality", "CT Brain"))
+        st.write("Patient ID:", patient.get("patient_id", "-"))
+        st.write("Modality:", patient.get("modality", "CT Brain"))
 
     with col2:
         st.metric(
-            label="CT AI Prediction",
+            label="CT AI prediction",
             value=ct_out.get("prediction", "-")
         )
 
     st.divider()
 
-    st.subheader("🧠 AI Summary")
-
     try:
         conf = round(float(ct_out.get("confidence", 0)) * 100, 2)
     except:
         conf = "-"
 
-    st.info(
-        f"CT Brain image classified as **{ct_out.get('prediction','-')}** "
-        f"with **{conf}% confidence**."
-    )
+    st.subheader("AI model output")
+    st.write("Prediction:", ct_out.get("prediction", "-"))
+    st.write("Confidence:", conf, "%")
 
     st.divider()
 
-    st.subheader("🧠 AI Severity (Fusion)")
-    st.write("**Final Severity:**", fusion.get("derived_severity", "-"))
-    st.write("**Patient Context:**", patient.get("context", "-"))
+    st.subheader("Final severity (fusion engine)")
+    st.write("Derived severity:", fusion.get("derived_severity", "-"))
+    st.write("Patient context:", patient.get("context", "-"))
 
     st.divider()
 
-    st.subheader("📘 Guideline & Safety Validation (New CT-RAG Pipeline)")
+    st.subheader("Guideline and safety validation (CT-RAG pipeline)")
+    st.write("Validation decision:", validation_decision)
+    st.write("Reason:", validation_reason)
 
-    st.write("**Validation decision:**", validation_decision)
-    st.write("**Reason:**", validation_reason)
+    st.divider()
 
-    st.subheader("📚 Retrieved reference sources (audit)")
+    st.subheader("Case activity log")
 
-    st.markdown("**Imaging references**")
+    if len(st.session_state.timeline) == 0:
+        st.write("No activity yet.")
+    else:
+        for t in st.session_state.timeline:
+            st.write("-", t)
+
+# =====================================================
+# CLINICAL EVIDENCE
+# =====================================================
+with tab_evidence:
+
+    st.subheader("Clinical evidence for doctor verification")
+
+    st.write("Modality: CT Brain")
+    st.write("CT image ID:", imaging.get("image_id", "-"))
+    st.write("Prediction:", ct_out.get("prediction", "-"))
+    st.write("Confidence:", conf, "%")
+
+    st.divider()
+
+    st.subheader("Imaging evidence references")
+
     if rag_imaging_sources:
         for s in rag_imaging_sources:
             st.write("-", s)
     else:
-        st.write("- None")
-
-    st.markdown("**Pathway references**")
-    if rag_pathway_sources:
-        for s in rag_pathway_sources:
-            st.write("-", s)
-    else:
-        st.write("- None")
+        st.write("No imaging references available.")
 
 # =====================================================
-# 📋 CLINICAL EVIDENCE
+# GUIDELINE SUMMARY (RAG)
 # =====================================================
-elif page == "📋 Clinical Evidence":
+with tab_rag:
 
-    st.subheader("📋 Clinical Evidence for Doctor Verification")
-
-    st.subheader("🖥️ CT AI Evidence")
-
-    st.write("**Modality:** CT Brain")
-    st.write("**CT Image ID:**", imaging.get("image_id", "-"))
-    st.write("**Prediction:**", ct_out.get("prediction", "-"))
-
-    try:
-        conf = round(float(ct_out.get("confidence", 0)) * 100, 2)
-    except:
-        conf = "-"
-
-    st.write("**Confidence:**", conf, "%")
-
-    st.divider()
-
-    st.subheader("📘 RAG – Doctor-facing grounded summary")
+    st.subheader("Doctor-facing guideline grounded summary")
 
     st.write(doctor_summary)
 
     st.divider()
 
-    st.subheader("📚 Evidence used for this summary")
+    with st.expander("Retrieved guideline evidence (audit view)"):
 
-    st.markdown("**Imaging references**")
-    for s in rag_imaging_sources:
-        st.write("-", s)
+        st.markdown("Imaging guideline sources")
+        if rag_imaging_sources:
+            for s in rag_imaging_sources:
+                st.write("-", s)
+        else:
+            st.write("None")
 
-    st.markdown("**Pathway references**")
-    for s in rag_pathway_sources:
-        st.write("-", s)
+        st.markdown("Clinical pathway sources")
+        if rag_pathway_sources:
+            for s in rag_pathway_sources:
+                st.write("-", s)
+        else:
+            st.write("None")
 
 # =====================================================
-# ✏️ DOCTOR ACTIONS
+# DOCTOR DECISION
 # =====================================================
-elif page == "✏️ Doctor Actions":
+with tab_action:
 
-    st.subheader("🧑‍⚕️ Doctor Decision")
+    st.subheader("Doctor decision and verification")
+
+    edited_summary = st.text_area(
+        "Editable clinical summary",
+        doctor_summary,
+        height=220
+    )
+
+    reject_reason = st.text_area(
+        "Rejection reason (required only if rejecting)",
+        height=120
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("✅ Approve"):
-            st.session_state.doctor_decision = "APPROVED"
+        approve = st.button("Approve")
 
     with col2:
-        if st.button("✏️ Edit"):
-            st.session_state.doctor_decision = "EDIT"
+        save_edit = st.button("Save edited summary")
 
     with col3:
-        if st.button("❌ Reject"):
-            st.session_state.doctor_decision = "REJECTED"
+        reject = st.button("Reject")
 
-    if st.session_state.doctor_decision is not None:
+    if save_edit:
+        doctor_summary = edited_summary
+        log_event("Doctor edited the clinical summary")
+        st.success("Edited summary saved.")
+
+    if approve:
+        st.session_state.case_status = "APPROVED"
+        st.session_state.doctor_decision = "APPROVED"
+        log_event("Doctor approved the case")
+        st.success("Case approved.")
+
+        final_output = {
+            "patient_id": patient.get("patient_id"),
+            "modality": "CT Brain",
+            "image_id": imaging.get("image_id"),
+            "ct_prediction": ct_out.get("prediction"),
+            "confidence": ct_out.get("confidence"),
+            "final_severity": fusion.get("derived_severity"),
+            "patient_context": patient.get("context"),
+            "validation_decision": validation_decision,
+            "validation_reason": validation_reason,
+            "rag_imaging_sources": rag_imaging_sources,
+            "rag_pathway_sources": rag_pathway_sources,
+            "doctor_facing_summary": edited_summary,
+            "doctor_decision": "APPROVED",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
         st.divider()
-        st.write("### Doctor Decision:", st.session_state.doctor_decision)
+        st.subheader("Doctor approved output")
+        st.json(final_output)
 
-        if st.session_state.doctor_decision == "APPROVED":
+        st.download_button(
+            label="Download doctor approved JSON",
+            data=json.dumps(final_output, indent=4),
+            file_name=f"{patient.get('patient_id','CT')}_doctor_output.json",
+            mime="application/json"
+        )
 
-            st.success("Doctor approved the RAG-grounded AI report.")
-
-            final_output = {
-                "patient_id": patient.get("patient_id"),
-                "modality": "CT Brain",
-                "image_id": imaging.get("image_id"),
-                "ct_prediction": ct_out.get("prediction"),
-                "confidence": ct_out.get("confidence"),
-                "final_severity": fusion.get("derived_severity"),
-                "patient_context": patient.get("context"),
-                "validation_decision": validation_decision,
-                "validation_reason": validation_reason,
-                "rag_imaging_sources": rag_imaging_sources,
-                "rag_pathway_sources": rag_pathway_sources,
-                "doctor_facing_summary": doctor_summary,
-                "doctor_decision": "APPROVED",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-
-            st.subheader("📄 Doctor-approved final output")
-            st.json(final_output)
-
-            st.download_button(
-                label="⬇️ Download doctor-approved JSON",
-                data=json.dumps(final_output, indent=4),
-                file_name=f"{patient.get('patient_id','CT')}_doctor_output.json",
-                mime="application/json"
-            )
+    if reject:
+        if reject_reason.strip() == "":
+            st.error("Rejection reason is required.")
+        else:
+            st.session_state.case_status = "REJECTED"
+            st.session_state.doctor_decision = "REJECTED"
+            log_event("Doctor rejected the case")
+            st.error("Case rejected.")
 
 # =====================================================
-# 📲 PATIENT COMMUNICATION
+# PATIENT COMMUNICATION
 # =====================================================
-elif page == "📲 Patient Communication":
+with tab_comm:
 
-    st.subheader("📲 Patient Communication")
+    st.subheader("Patient communication")
 
-    if st.session_state.doctor_decision != "APPROVED":
+    if st.session_state.case_status != "APPROVED":
         st.warning("Patient communication is locked until doctor approval.")
 
     else:
@@ -236,14 +272,12 @@ elif page == "📲 Patient Communication":
             f"Patient ID: {patient.get('patient_id', '-')}\n"
             f"Result: {ct_out.get('prediction','-')}\n"
             f"Severity: {fusion.get('derived_severity', '-')}\n\n"
-            f"If you have symptoms, concerns, or would like further clarification, "
-            f"please schedule a follow-up appointment with your doctor.\n\n"
-            f"Regards,\n"
+            f"If you have symptoms or concerns, please schedule a follow-up appointment with your doctor.\n\n"
             f"Hospital Care Team"
         )
 
         st.text_area(
-            "Patient Message Preview (SMS / WhatsApp)",
+            "Patient message preview (SMS / WhatsApp)",
             patient_message,
             height=220
         )
