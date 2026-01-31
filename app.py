@@ -12,16 +12,12 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------
-# CSS (dashboard look)
+# CSS
 # -------------------------------------------------------
 st.markdown("""
 <style>
 
 .block-container { padding-top: 1rem; }
-
-.sidebar .sidebar-content {
-    background-color: #111827;
-}
 
 .card {
     padding:16px;
@@ -30,16 +26,8 @@ st.markdown("""
     border:1px solid #e5e7eb;
 }
 
-.card-title{
-    font-size:14px;
-    color:#374151;
-}
-
-.card-value{
-    font-size:26px;
-    font-weight:700;
-    color:#111827;
-}
+.card-title{font-size:14px;color:#374151;}
+.card-value{font-size:26px;font-weight:700;color:#111827;}
 
 .card-blue{ background:#eef4ff; }
 .card-green{ background:#ecfdf3; }
@@ -51,10 +39,6 @@ st.markdown("""
     border:1px solid #e5e7eb;
     background:#0b1220;
     color:white;
-}
-
-.section-box h3{
-    margin-top:0px;
 }
 
 .header-bar{
@@ -98,7 +82,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------
-# Sidebar – navigation + case selection
+# Sidebar
 # -------------------------------------------------------
 st.sidebar.markdown("## Clinical workflow")
 
@@ -135,8 +119,11 @@ rag_imaging_sources = data.get("rag_imaging_sources",[])
 rag_pathway_sources = data.get("rag_pathway_sources",[])
 doctor_summary      = data.get("doctor_facing_summary","-")
 
+# -------------------------------------------------------
+# Session state  (IMPORTANT FIX)
+# -------------------------------------------------------
 if "case_status" not in st.session_state:
-    st.session_state.case_status = "APPROVED"
+    st.session_state.case_status = "PENDING"
 
 try:
     conf = round(float(ct_out.get("confidence",0))*100,2)
@@ -161,12 +148,14 @@ st.markdown(
 st.write("")
 
 # -------------------------------------------------------
-# Case status
+# Case status (shown on ALL pages)
 # -------------------------------------------------------
 if st.session_state.case_status == "APPROVED":
     st.markdown('<div class="status-ok">Case status: Approved by doctor</div>',unsafe_allow_html=True)
+elif st.session_state.case_status == "REJECTED":
+    st.markdown('<div class="status-warn">Case status: Rejected by doctor</div>',unsafe_allow_html=True)
 else:
-    st.markdown('<div class="status-warn">Case status: Pending review</div>',unsafe_allow_html=True)
+    st.markdown('<div class="status-warn">Case status: Pending doctor review</div>',unsafe_allow_html=True)
 
 st.write("")
 
@@ -324,7 +313,7 @@ elif page == "Doctor Decision":
     st.markdown("</div>",unsafe_allow_html=True)
 
 # ======================================================
-# PATIENT COMMUNICATION
+# PATIENT COMMUNICATION  (UPDATED MESSAGE)
 # ======================================================
 elif page == "Patient Communication":
 
@@ -333,23 +322,26 @@ elif page == "Patient Communication":
     st.markdown("### Patient communication")
 
     if st.session_state.case_status!="APPROVED":
-        st.warning("Locked until doctor approval")
+        st.warning("Patient communication is locked until doctor approval.")
     else:
 
-        msg = f"""Hello,
+        patient_message = f"""Hello,
 
 Your CT brain report has been reviewed and approved by your doctor.
 
-Patient ID: {pid}
-Result: {ct_out.get('prediction')}
-Severity: {fusion.get('derived_severity')}
+Patient ID : {pid}
+Result     : {ct_out.get("prediction")}
+Severity   : {fusion.get("derived_severity")}
 
-If you have concerns, please schedule a follow-up appointment.
+The findings are normal and there is no indication of a brain tumour in this scan.
+At this time, there is no need for an immediate hospital visit.
 
+If you notice any new symptoms or would like further clarification, please contact your doctor or schedule a follow-up consultation.
+
+Regards,
 Hospital Care Team
 """
 
-        st.text_area("Message preview",msg,height=220)
+        st.text_area("Patient message preview",patient_message,height=260)
 
     st.markdown("</div>",unsafe_allow_html=True)
-
