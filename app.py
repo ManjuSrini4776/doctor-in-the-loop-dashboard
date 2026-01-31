@@ -2,6 +2,7 @@ import json
 import streamlit as st
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
 
 # =====================================================
 # Page config
@@ -49,13 +50,25 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("Doctor-in-the-Loop Clinical Review Dashboard")
-st.caption("Workflow-based AI clinical triage and reporting system")
+st.caption("Workflow-driven AI clinical triage and reporting system")
 
 # =====================================================
-# Sidebar
+# Sidebar (left navigation)
 # =====================================================
-st.sidebar.header("Case selection")
-case_choice = st.sidebar.selectbox("Select case", ["Latest CT Brain Case"])
+st.sidebar.header("Clinical workflow")
+
+page = st.sidebar.radio(
+    "",
+    [
+        "Overview",
+        "Clinical Evidence",
+        "Guideline Summary",
+        "Doctor Decision",
+        "Patient Communication"
+    ]
+)
+
+st.sidebar.divider()
 
 # =====================================================
 # Load JSON
@@ -83,6 +96,11 @@ rag_imaging_sources = data.get("rag_imaging_sources", [])
 rag_pathway_sources = data.get("rag_pathway_sources", [])
 doctor_summary      = data.get("doctor_facing_summary", "-")
 
+# Sidebar case info
+st.sidebar.markdown("### Case information")
+st.sidebar.write("Patient ID:", patient.get("patient_id", "-"))
+st.sidebar.write("Modality:", patient.get("modality", "CT Brain"))
+
 # =====================================================
 # Session
 # =====================================================
@@ -98,28 +116,53 @@ def log_event(msg):
     )
 
 # =====================================================
-# Tabs
+# Header bar + workflow progress
 # =====================================================
-tab_overview, tab_evidence, tab_rag, tab_action, tab_comm = st.tabs(
-    ["Overview", "Clinical Evidence", "Guideline Summary", "Doctor Decision", "Patient Communication"]
-)
+st.markdown(f"""
+<div style="
+padding:12px;
+border-radius:10px;
+background:#f1f5f9;
+border:1px solid #e5e7eb;
+font-size:14px;">
+<b>Clinical review workspace</b> &nbsp; | &nbsp;
+Case: {patient.get("patient_id","-")} &nbsp; | &nbsp;
+Modality: {patient.get("modality","CT Brain")} &nbsp; | &nbsp;
+Workflow: Doctor-in-the-loop validation
+</div>
+""", unsafe_allow_html=True)
+
+progress_map = {
+    "Overview": 20,
+    "Clinical Evidence": 40,
+    "Guideline Summary": 60,
+    "Doctor Decision": 80,
+    "Patient Communication": 100
+}
+st.progress(progress_map[page])
+
+st.write("")
 
 # =====================================================
-# OVERVIEW DASHBOARD
+# Status banner
 # =====================================================
-with tab_overview:
+if st.session_state.case_status == "PENDING":
+    st.warning("Case status: Pending doctor review")
+elif st.session_state.case_status == "APPROVED":
+    st.success("Case status: Approved by doctor")
+elif st.session_state.case_status == "REJECTED":
+    st.error("Case status: Rejected by doctor")
 
-    if st.session_state.case_status == "PENDING":
-        st.warning("Case status: Pending doctor review")
-    elif st.session_state.case_status == "APPROVED":
-        st.success("Case status: Approved by doctor")
-    elif st.session_state.case_status == "REJECTED":
-        st.error("Case status: Rejected by doctor")
+# Common confidence
+try:
+    conf = round(float(ct_out.get("confidence", 0)) * 100, 2)
+except:
+    conf = "-"
 
-    try:
-        conf = round(float(ct_out.get("confidence", 0))*100,2)
-    except:
-        conf = "-"
+# =====================================================
+# OVERVIEW
+# =====================================================
+if page == "Overview":
 
     c1, c2, c3, c4 = st.columns(4)
 
@@ -155,29 +198,26 @@ with tab_overview:
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("")
+    st.write("")
 
-    left, right = st.columns([1.2,1])
+    left, right = st.columns([1.2, 1])
 
     with left:
-
         st.markdown("<div class='section-box'>", unsafe_allow_html=True)
         st.subheader("Imaging evidence")
 
-        st.write("Modality: CT Brain")
-        st.write("Image ID:", imaging.get("image_id","-"))
+        st.write("Modality:", "CT Brain")
+        st.write("Image ID:", imaging.get("image_id", "-"))
 
         img_path = imaging.get("image_path", None)
-
         if img_path and Path(img_path).exists():
             st.image(img_path, use_container_width=True)
         else:
-            st.info("CT image preview not available in demo JSON.")
+            st.info("CT image preview not available in this demo JSON.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-
         st.markdown("<div class='section-box'>", unsafe_allow_html=True)
         st.subheader("Clinical validation")
 
@@ -188,47 +228,64 @@ with tab_overview:
         st.write(validation_reason)
 
         st.write("Patient context:")
-        st.write(patient.get("context","-"))
+        st.write(patient.get("context", "-"))
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+    st.subheader("Model confidence overview")
+
+    try:
+        df = pd.DataFrame({
+            "Stage": ["CT model"],
+            "Confidence": [float(conf)]
+        })
+    except:
+        df = pd.DataFrame({"Stage": ["CT model"], "Confidence": [0]})
+
+    st.bar_chart(df.set_index("Stage"))
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='section-box'>", unsafe_allow_html=True)
     st.subheader("Case activity log")
 
-    if len(st.session_state.timeline)==0:
+    if len(st.session_state.timeline) == 0:
         st.write("No activity yet.")
     else:
         for t in st.session_state.timeline:
-            st.write("•",t)
+            st.write("-", t)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =====================================================
 # CLINICAL EVIDENCE
 # =====================================================
-with tab_evidence:
+elif page == "Clinical Evidence":
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 
     st.subheader("Model evidence")
-    st.write("Prediction:", ct_out.get("prediction","-"))
+    st.write("Prediction:", ct_out.get("prediction", "-"))
     st.write("Confidence:", conf, "%")
-    st.write("Image ID:", imaging.get("image_id","-"))
+    st.write("Image ID:", imaging.get("image_id", "-"))
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+    st.subheader("Imaging guideline sources")
 
-    st.subheader("Guideline evidence sources")
-    for s in rag_imaging_sources:
-        st.write("-", s)
+    if rag_imaging_sources:
+        for s in rag_imaging_sources:
+            st.write("-", s)
+    else:
+        st.write("No imaging sources available.")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =====================================================
-# GUIDELINE SUMMARY (RAG)
+# GUIDELINE SUMMARY
 # =====================================================
-with tab_rag:
+elif page == "Guideline Summary":
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 
@@ -241,19 +298,25 @@ with tab_rag:
     st.subheader("Audit trail - retrieved guideline sources")
 
     st.write("Imaging sources")
-    for s in rag_imaging_sources:
-        st.write("-", s)
+    if rag_imaging_sources:
+        for s in rag_imaging_sources:
+            st.write("-", s)
+    else:
+        st.write("None")
 
     st.write("Clinical pathway sources")
-    for s in rag_pathway_sources:
-        st.write("-", s)
+    if rag_pathway_sources:
+        for s in rag_pathway_sources:
+            st.write("-", s)
+    else:
+        st.write("None")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =====================================================
 # DOCTOR DECISION
 # =====================================================
-with tab_action:
+elif page == "Doctor Decision":
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 
@@ -319,7 +382,7 @@ with tab_action:
         )
 
     if reject:
-        if reject_reason.strip()=="":
+        if reject_reason.strip() == "":
             st.error("Rejection reason is required.")
         else:
             st.session_state.case_status = "REJECTED"
@@ -331,7 +394,7 @@ with tab_action:
 # =====================================================
 # PATIENT COMMUNICATION
 # =====================================================
-with tab_comm:
+elif page == "Patient Communication":
 
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 
