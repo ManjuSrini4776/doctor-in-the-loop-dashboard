@@ -1,31 +1,67 @@
-import json
 import streamlit as st
-import pandas as pd
+from pipeline import run_clinical_pipeline
+
+st.set_page_config(
+    page_title="Doctor-in-the-Loop Clinical AI Dashboard",
+    layout="wide"
+)
 
 st.title("Doctor-in-the-Loop Clinical AI Dashboard")
 
-# Load RAG output
-with open("rag_output.json") as f:
-    rag_data = json.load(f)
+st.markdown("---")
 
-st.subheader("Clinical Query")
-st.write(rag_data["query"])
+# Patient selector
+st.subheader("Select Patient")
 
-st.subheader("Retrieved Guideline Evidence")
-st.write(rag_data["retrieved_context"])
+patient_id = st.selectbox(
+    "Patient ID",
+    ["P001", "P002", "P003"]
+)
 
-st.subheader("Clinical Explanation")
-st.write(rag_data["generated_explanation"])
+st.markdown("---")
 
-st.subheader("RAG Evaluation Metrics")
+# Run pipeline button
+if st.button("Run AI Clinical Analysis"):
 
-metrics = rag_data["metrics"]
+    result = run_clinical_pipeline(patient_id)
 
-metrics_df = pd.DataFrame({
-    "Metric": list(metrics.keys()),
-    "Score": list(metrics.values())
-})
+    # Patient context
+    st.subheader("Patient Clinical Context")
+    st.info(result["context"])
 
-st.table(metrics_df)
+    col1, col2 = st.columns(2)
 
-st.bar_chart(metrics_df.set_index("Metric"))
+    with col1:
+        st.subheader("Model Prediction")
+        st.write(result["prediction"])
+
+    with col2:
+        st.subheader("Severity Assessment")
+        st.write(result["severity"])
+
+    st.markdown("---")
+
+    # AI explanation
+    st.subheader("AI Generated Clinical Explanation")
+
+    edited_summary = st.text_area(
+        "Doctor Review (editable)",
+        result["explanation"],
+        height=200
+    )
+
+    st.markdown("---")
+
+    # Doctor review buttons
+    st.subheader("Doctor Decision")
+
+    col1, col2, col3 = st.columns(3)
+
+    if col1.button("Approve Diagnosis"):
+        st.success("Diagnosis approved. Report sent to patient.")
+
+    if col2.button("Reject Diagnosis"):
+        st.error("Diagnosis rejected. Case returned for re-evaluation.")
+
+    if col3.button("Save Edited Summary"):
+        st.info("Edited summary saved.")
