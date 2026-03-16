@@ -1,25 +1,16 @@
 # ============================================================
 # pipeline.py — RAG Pipeline for Doctor Dashboard
-# Called by app.py to generate clinical reports
-# Works without GPU — uses pre-built FAISS index
 # ============================================================
 
 import os
-import json
+import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from openai import OpenAI
 
-# ── Config
-VECTOR_DB_PATH = "data/vector_db"
+VECTOR_DB_PATH  = "data/vector_db"
 EMBEDDING_MODEL = "BAAI/bge-base-en-v1.5"
-RAG_TYPE = "Page Index RAG"
-
-# ── Lazy-load embedding model (cached across calls)
-_embedding_model = None
-_vector_db       = None
-client           = OpenAI()
 
 DOMAIN_KEYWORDS = {
     "diabetes": ["diabetes","glucose","insulin","hba1c","glycated",
@@ -33,28 +24,28 @@ DOMAIN_KEYWORDS = {
     "lab":      ["laboratory","lab value","blood test","hemoglobin",
                  "platelet","electrolyte","sodium","potassium"],
 }
+SEVERITY_TEXT = {0:"Normal",1:"Mild",2:"Moderate",3:"Severe"}
 
-SEVERITY_TEXT = {0:"Normal", 1:"Mild", 2:"Moderate", 3:"Severe"}
-
+@st.cache_resource
 def get_embedding_model():
-    global _embedding_model
-    if _embedding_model is None:
-        _embedding_model = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            encode_kwargs={"normalize_embeddings": True}
-        )
-    return _embedding_model
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        encode_kwargs={"normalize_embeddings": True}
+    )
 
+@st.cache_resource
 def get_vector_db():
-    global _vector_db
-    if _vector_db is None:
-        emb = get_embedding_model()
-        if os.path.exists(VECTOR_DB_PATH):
-            _vector_db = FAISS.load_local(
-                VECTOR_DB_PATH, emb,
-                allow_dangerous_deserialization=True
-            )
-    return _vector_db
+    emb = get_embedding_model()
+    if os.path.exists(VECTOR_DB_PATH):
+        return FAISS.load_local(
+            VECTOR_DB_PATH, emb,
+            allow_dangerous_deserialization=True
+        )
+    return None
+
+def get_client():
+    api_key = os.environ.get("OPENAI_API_KEY","")
+    return OpenAI(api_key=api_key)
 
 def assign_domain(text: str) -> str:
     t = text.lower()
@@ -64,70 +55,56 @@ def assign_domain(text: str) -> str:
     return best if scores[best] > 0 else "general"
 
 def build_query(patient: dict) -> str:
-    """Build clinical query from patient dict"""
     parts = []
-    lab = patient.get("lab_score")
-    ct  = patient.get("ct_score")
-    us  = patient.get("ultrasound_score")
-    sev = patient.get("final_severity","")
+    for key, label, prefix in [
+        ("lab_score",        None, "Laboratory findings indicate {sev} abnormality"),
+        ("ct_score",         "ct_disease", "CT imaging suggests {dis} with {sev} severity"),
+        ("ultrasound_score", "ultrasound_disease", "Ultrasound indicates {dis} with {sev} severity"),
+    ]:
+        val = patient.get(key)
+        if val and str(val) not in ["nan","None",""]:
+            sev = SEVERITY_TEXT.get(int(float(val)),"unknown")
+            if "{dis}" in prefix:
+                dis = patient.get(label,"finding")
+                parts.append(prefix.format(sev=sev, dis=dis))
+            else:
+                parts.append(prefix.format(sev=sev))
+    sev_label = patient.get("final_severity","")
+    if sev_label and str(sev_label) not in ["nan","None",""]:
+        parts.append(f"Overall clinical severity is {sev_label}")
 
-    if lab and str(lab) not in ["nan","None",""]:
-        s = SEVERITY_TEXT.get(int(float(lab)),"unknown")
-        parts.append(f"Laboratory findings indicate {s} abnormality")
-
-    if ct and str(ct) not in ["nan","None",""]:
-        s    = SEVERITY_TEXT.get(int(float(ct)),"unknown")
-        dis  = patient.get("ct_disease","brain finding")
-        parts.append(f"CT imaging suggests {dis} with {s} severity")
-
-    if us and str(us) not in ["nan","None",""]:
-        s    = SEVERITY_TEXT.get(int(float(us)),"unknown")
-        dis  = patient.get("ultrasound_disease","ultrasound finding")
-        parts.append(f"Ultrasound examination indicates {dis} with {s} severity")
-
-    if sev and str(sev) not in ["nan","None",""]:
-        parts.append(f"Overall clinical severity is {sev}")
-
-    query = (". ".join(parts) + "." if parts else
-             "General patient assessment.")
-    return (f"Patient clinical assessment based on multimodal AI analysis.\n"
-            f"{query}\n"
+    body = ". ".join(parts) + "." if parts else "General patient assessment."
+    return (f"Patient clinical assessment based on multimodal AI analysis.\n{body}\n"
             f"Retrieve relevant clinical guideline recommendations for "
             f"diagnosis, monitoring and management.")
 
 def retrieve_context(query: str, k: int = 5) -> list:
-    """Retrieve relevant guideline chunks"""
     db = get_vector_db()
     if db is None:
         return []
     domain = assign_domain(query)
     docs   = db.similarity_search(query, k=k*3)
-    # Domain filter with fallback
     filtered = [d for d in docs if d.metadata.get("domain") == domain]
-    return (filtered[:k] if filtered else docs[:k])
+    return filtered[:k] if filtered else docs[:k]
 
 def generate_report(query: str, context_docs: list) -> str:
-    """Generate clinical report using GPT-4o-mini"""
+    client = get_client()
     if not context_docs:
-        return ("No guideline evidence retrieved. "
-                "Please ensure the knowledge base is loaded.")
+        return "No guideline evidence retrieved. Ensure knowledge base is loaded in data/vector_db/"
 
-    context_blocks = [
-        f"[Evidence {i+1}] Source: "
-        f"{d.metadata.get('source_file','guideline')} | "
-        f"Domain: {d.metadata.get('domain','general')}\n"
-        f"{d.page_content}"
+    context = "\n\n".join([
+        f"[Evidence {i+1}] Source: {d.metadata.get('source_file','guideline')} "
+        f"| Domain: {d.metadata.get('domain','general')}\n{d.page_content}"
         for i, d in enumerate(context_docs)
-    ]
-    context = "\n\n".join(context_blocks)
+    ])
 
     prompt = f"""You are a clinical decision support assistant helping a doctor.
 
 STRICT RULES:
 1. Answer ONLY using the provided evidence. Do NOT use prior knowledge.
-2. Cite Evidence numbers for each recommendation e.g. [Evidence 1].
+2. Cite Evidence numbers for each point e.g. [Evidence 1].
 3. Be concise — maximum 4 sentences total.
-4. If evidence doesn't support a claim, say "No guideline evidence available."
+4. If evidence doesn't support a claim write: "No guideline evidence available."
 
 --- PATIENT ASSESSMENT ---
 {query}
@@ -135,8 +112,8 @@ STRICT RULES:
 --- CLINICAL EVIDENCE ---
 {context}
 
---- FORMAT ---
-Clinical Interpretation: [1 sentence summarising findings]
+--- FORMAT (follow exactly) ---
+Clinical Interpretation: [1 sentence]
 Recommended Actions:
   • [Action 1 with citation]
   • [Action 2 with citation]
@@ -146,33 +123,27 @@ Monitoring: [1 sentence on follow-up]"""
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system",
-             "content": ("You are a clinical AI assistant. "
-                         "Only use provided evidence. Always cite evidence numbers.")},
-            {"role": "user", "content": prompt}
+            {"role":"system",
+             "content":"You are a clinical AI assistant. Only use provided evidence. Always cite."},
+            {"role":"user","content":prompt}
         ],
-        max_tokens=400,
-        temperature=0.0,
+        max_tokens=400, temperature=0.0,
     )
     return response.choices[0].message.content
 
 def run_rag_pipeline(patient: dict) -> dict:
-    """
-    Main entry point called by app.py
-    Returns dict with report + metadata
-    """
+    """Main entry point called by app.py"""
     case_id = str(patient.get("case_id","unknown"))
     query   = build_query(patient)
     docs    = retrieve_context(query, k=5)
     report  = generate_report(query, docs)
-    sources = list({d.metadata.get("source_file","") for d in docs
-                    if d.metadata.get("source_file","")})
-
+    sources = list({d.metadata.get("source_file","")
+                    for d in docs if d.metadata.get("source_file","")})
     return {
         "case_id":      case_id,
         "query":        query,
         "report":       report,
-        "rag_type":     RAG_TYPE,
+        "rag_type":     "Page Index RAG",
         "faithfulness": 0.692,
         "sources":      sources[:5],
         "num_chunks":   len(docs),
