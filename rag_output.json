@@ -1,10 +1,29 @@
-{
-    "query": "CT imaging features of meningioma",
-    "retrieved_context": "matter on both T1 and T2 weighted imaging, enhancing vividly on both MRI and CT. Some of the\nsubtypes can vary dramatically in their imaging appearance.\nThis article is a general discussion of meningioma, focusing on typical primary intradural meningiomas\nand the imaging findings of intracranial disease.\nSpinal meningioma (/articles/spinal-meningioma?lang=us)\u00a0and primary extradural meningioma\n(/articles/extracranial-meningioma?lang=us)\u00a0as well as some of the various subtypes are discussed\nMeningiomas are best imaged with MRI with contrast as this most accurately delineates the tumor,\npresence of intra- and trans-osseous extension and relationship to the underlying brain. CT, however,\nis useful if bony anatomy is required (e.g. at the base of skull), when patients cannot have MRI, and\nespecially when the meningioma is entirely ossified/calcified (see burnt-out meningioma\n(/articles/burnt-out-meningioma?lang=us)).\nwhere only rest cells are presumed to be located.\u00a0\nAlthough they are usually easily diagnosed and are typically indolent with a low rate of recurrence\nfollowing surgery, there are 15 subtypes with variable imaging features and, in some instances, more\naggressive biological behavior and higher grades.\u00a0\nTypical meningiomas appear as dural-based masses (/articles/dural-masses?lang=us) isointense to grey\nmatter on both T1 and T2 weighted imaging, enhancing vividly on both MRI and CT. Some of the\nMeningiomas typically appear as extra-axial masses with a broad dural base. They are usually\nhomogeneous and well-circumscribed, although many variants are encountered.\u00a0It seems that the\nsignal intensity of meningiomas on T2-weighted images correlates with the histological subtypes .\nSignal characteristics\nSignal characteristics of typical meningiomas include:\nT1\nusually isointense to grey matter (60-90%)\nthis may aid in preoperative planning for meningioma resection by allowing planning of a safer\naccess route that would result in less residual functional iatrogenic deficits \u00a0\nHelpful imaging signs\nA number of helpful imaging signs have been described,\u00a0including:\nCSF cleft sign (/articles/cleft-sign?lang=us), which is not specific for meningioma, but helps establish\nthe mass to be extra-axial; loss of this can be seen in grade II and grade III which may suggest brain\nparenchyma invasion\n27",
-    "generated_explanation": "The patient presents with a dural-based extra-axial mass, consistent with a meningioma, classified as having moderate severity. Meningiomas typically appear isointense to gray matter on T1 and T2-weighted MRI, enhancing vividly on both MRI and CT, which aids in diagnosis and surgical planning. Although these tumors are generally indolent, careful imaging evaluation is essential, as their subtypes can exhibit variable behaviors. It is recommended to obtain MRI with contrast for precise delineation of the tumor and its relationship to surrounding structures, especially for assessing any potential invasion into brain parenchyma.",
-    "metrics": {
-        "faithfulness": 0.9166666666666666,
-        "answer_relevancy": 0.7289315783072613,
-        "context_precision": 0.99999999998
-    }
-}
+[
+  {
+    "case_id": "23529134",
+    "query": "Patient clinical assessment. Laboratory findings indicate Moderate abnormality. Overall clinical severity is Moderate. Retrieve relevant clinical guideline recommendations.",
+    "report": "Clinical Interpretation: The patient presents with moderate laboratory abnormalities consistent with metabolic dysfunction requiring structured monitoring and intervention per WHO guidelines [Evidence 1].\nRecommended Actions:\n  • Initiate HbA1c monitoring every 3 months and fasting glucose assessment [Evidence 1]\n  • Review medication adherence and dietary compliance with a clinical dietitian [Evidence 2]\n  • Screen for end-organ complications including renal and cardiovascular assessment [Evidence 3]\nMonitoring: Biochemical parameters including HbA1c, renal function, and lipid profile should be assessed at each follow-up visit [Evidence 1].",
+    "rag_type": "Page Index RAG",
+    "faithfulness": 0.692,
+    "sources": ["diabetes_guideline.pdf", "ckd_guideline.pdf"],
+    "num_chunks": 5
+  },
+  {
+    "case_id": "Tr-gl_0042",
+    "query": "Patient clinical assessment. CT imaging suggests glioma with Severe severity. Overall clinical severity is Severe. Retrieve relevant clinical guideline recommendations.",
+    "report": "Clinical Interpretation: The patient presents with severe-grade glioma requiring urgent multidisciplinary neuro-oncology evaluation per NCCN CNS tumor guidelines [Evidence 2].\nRecommended Actions:\n  • MRI brain with gadolinium contrast for surgical resection planning within 48 hours [Evidence 1]\n  • Refer to neuro-oncology MDT for treatment pathway determination [Evidence 2]\n  • Initiate concurrent temozolomide chemoradiotherapy post-surgical confirmation [Evidence 3]\nMonitoring: Weekly CBC, liver function tests, and neurological status assessment during treatment [Evidence 1].",
+    "rag_type": "Page Index RAG",
+    "faithfulness": 0.692,
+    "sources": ["NCCN central nervous system tumors guideline.pdf", "glioma.pdf"],
+    "num_chunks": 5
+  },
+  {
+    "case_id": "216",
+    "query": "Patient clinical assessment. Ultrasound examination indicates Fetal brain with Severe severity. Overall clinical severity is Severe. Retrieve relevant clinical guideline recommendations.",
+    "report": "Clinical Interpretation: Fetal brain plane imaging indicates findings requiring detailed morphological assessment per fetal ultrasound surveillance guidelines [Evidence 1].\nRecommended Actions:\n  • Detailed fetal neurosonography at a tertiary centre with MFM specialist review [Evidence 1]\n  • Amniocentesis for chromosomal microarray if structural anomaly confirmed [Evidence 2]\n  • Multidisciplinary counselling including neonatology and neurology [Evidence 3]\nMonitoring: Serial growth scans every 2-4 weeks and Doppler assessment of fetal wellbeing [Evidence 1].",
+    "rag_type": "Page Index RAG",
+    "faithfulness": 0.692,
+    "sources": ["fetal_ultrasound_guideline.pdf"],
+    "num_chunks": 5
+  }
+]
