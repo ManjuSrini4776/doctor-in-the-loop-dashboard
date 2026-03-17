@@ -1,0 +1,201 @@
+hadm_id,final_severity_label,ckd_severity,diabetes_severity_final,thyroid_severity_final,lab_score
+29279256,Unknown,,Unknown,,
+26543543,Mild,G3a (Mild-Moderate),Normal,,1.0
+26092000,Unknown,,,Unknown,
+20535571,Unknown,,Unknown,,
+21682290,Unknown,,Unknown,,
+25546525,Severe,,Severe,,3.0
+27851270,Stable,,Normal,,
+27261844,Unknown,Unknown,,,
+25391244,Unknown,,Unknown,,
+26634301,Stable,,Normal,,
+28772748,Unknown,,,Unknown,
+29604829,Unknown,,,Unknown,
+29193376,Severe,,,Hyperthyroid,3.0
+22827314,Moderate,G3b (Moderate-Severe),Mild,,2.0
+20064335,Unknown,,Unknown,,
+25497799,Unknown,,,Unknown,
+26466487,Unknown,,Unknown,,
+26051015,Unknown,,,Unknown,
+21964501,Unknown,,Unknown,,
+29404849,Unknown,,Unknown,,
+25721504,Mild,,Prediabetes,,1.0
+22369459,Moderate,G3b (Moderate-Severe),Mild,Unknown,2.0
+28121102,Severe,,Severe,,3.0
+28165107,Unknown,,Unknown,,
+24910015,Unknown,,Unknown,,
+29003466,Unknown,,Unknown,,
+22626724,Moderate,G2 (Mild),Moderate,,2.0
+26473073,Mild,,Mild,,1.0
+28219289,Severe,G3b (Moderate-Severe),Severe,,3.0
+25314337,Stable,,Normal,,
+24726522,Unknown,,Unknown,,
+25871339,Unknown,,,Unknown,
+22638942,Unknown,,Unknown,Unknown,
+26271927,Severe,,Severe,,3.0
+20052469,Mild,,Prediabetes,,1.0
+29334387,Severe,G5 (Kidney Failure),,,3.0
+21702700,Unknown,,Unknown,,
+26259402,Unknown,,,Unknown,
+23748533,Unknown,,,Unknown,
+22263045,Severe,G5 (Kidney Failure),Normal,,3.0
+24944670,Unknown,,,Unknown,
+22144279,Unknown,,,Unknown,
+20821114,Unknown,,Unknown,,
+27488897,Unknown,,Unknown,,
+21311334,Mild,G2 (Mild),Mild,,1.0
+23352243,Unknown,,Unknown,,
+22957569,Unknown,,Unknown,,
+25054429,Unknown,,Unknown,,
+27082083,Unknown,,Unknown,,
+29116786,Mild,,Mild,,1.0
+29863359,Unknown,,,Unknown,
+21013634,Unknown,,,Unknown,
+28786936,Unknown,Unknown,,,
+24393430,Severe,G3b (Moderate-Severe),Severe,,3.0
+29735546,Unknown,,,Unknown,
+24968143,Unknown,,Unknown,,
+25204329,Unknown,,Unknown,,
+26771699,Unknown,,Unknown,,
+25017913,Unknown,,Unknown,,
+20401127,Unknown,,Unknown,,
+28788721,Unknown,,Unknown,,
+29384721,Stable,,Normal,,
+25387409,Unknown,,Unknown,,
+20771571,Mild,G3a (Mild-Moderate),Unknown,,1.0
+23693533,Unknown,,Unknown,,
+25362358,Unknown,,,Unknown,
+25301765,Unknown,,,Unknown,
+20848646,Severe,,Severe,,3.0
+23005349,Stable,G2 (Mild),,,
+20210432,Unknown,,Unknown,,
+29683767,Moderate,G3b (Moderate-Severe),Prediabetes,,2.0
+20390702,Severe,G5 (Kidney Failure),Prediabetes,Unknown,3.0
+26711102,Mild,,Prediabetes,,1.0
+20578073,Mild,,Mild,,1.0
+20271400,Moderate,,Moderate,,2.0
+20957848,Moderate,G3b (Moderate-Severe),,,2.0
+26858182,Unknown,Unknown,,,
+25537488,Unknown,Unknown,Unknown,,
+22919481,Unknown,Unknown,,,
+24066863,Severe,G4 (Severe),Moderate,,3.0
+21822261,Mild,G3a (Mild-Moderate),,,1.0
+25106492,Mild,,Mild,,1.0
+26218391,Unknown,,Unknown,,
+21884832,Unknown,,,Unknown,
+24102913,Mild,,Mild,,1.0
+24565651,Severe,,Severe,,3.0
+24180395,Unknown,,,Unknown,
+23172107,Unknown,,Unknown,,
+28239588,Mild,G3a (Mild-Moderate),Mild,Unknown,1.0
+28514243,Unknown,,Unknown,,
+25138469,Severe,G4 (Severe),,,3.0
+25800579,Unknown,,,Unknown,
+27490482,Unknown,,Unknown,,
+24874732,Moderate,,Moderate,Unknown,2.0
+25425200,Unknown,,,Unknown,
+21740151,Unknown,,Unknown,,
+28254741,Mild,,Prediabetes,,1.0
+27591504,Severe,G4 (Severe),Severe,Unknown,3.0
+29277573,Moderate,G3a (Mild-Moderate),Moderate,,2.0
+21939404,Unknown,,,Unknown,
+25212799,Unknown,Unknown,Unknown,,
+23577388,Moderate,,Moderate,,2.0
+27144189,Moderate,,Moderate,,2.0
+21516177,Unknown,,Unknown,,
+29757887,Unknown,,,Unknown,
+29888544,Stable,,Normal,,
+25142508,Unknown,Unknown,Unknown,,
+29877248,Moderate,G3b (Moderate-Severe),Unknown,,2.0
+20656830,Unknown,,Unknown,,
+22617110,Unknown,,Unknown,,
+27223072,Moderate,G3b (Moderate-Severe),Mild,,2.0
+27935167,Unknown,,Unknown,,
+26574688,Unknown,,Unknown,,
+27011070,Unknown,,Unknown,,
+25030784,Unknown,,Unknown,,
+21173368,Unknown,,,Unknown,
+20840628,Unknown,,Unknown,,
+26009757,Stable,,Normal,,
+24323417,Unknown,Unknown,Unknown,,
+21575517,Severe,G5 (Kidney Failure),Mild,,3.0
+20420955,Unknown,,,Unknown,
+24642890,Unknown,,,Unknown,
+29369012,Mild,,Prediabetes,Unknown,1.0
+25745829,Mild,G3a (Mild-Moderate),Mild,,1.0
+28743639,Mild,G3a (Mild-Moderate),,,1.0
+26066714,Severe,G5 (Kidney Failure),,,3.0
+25880927,Severe,G4 (Severe),,,3.0
+23014472,Moderate,,Moderate,,2.0
+29823215,Stable,G2 (Mild),,,
+23980680,Stable,,Normal,,
+28682898,Mild,,Prediabetes,,1.0
+24233153,Mild,,Mild,Unknown,1.0
+28789251,Unknown,,Unknown,,
+22352901,Severe,,Severe,,3.0
+27867470,Unknown,,Unknown,,
+25463309,Mild,,Mild,,1.0
+24845767,Unknown,,Unknown,,
+25691162,Unknown,Unknown,,,
+21400368,Severe,G5 (Kidney Failure),Mild,,3.0
+23059403,Unknown,Unknown,,Unknown,
+28814242,Moderate,G3b (Moderate-Severe),Normal,,2.0
+23284177,Stable,,Normal,,
+21274912,Unknown,,,Unknown,
+26785803,Unknown,,Unknown,,
+28848211,Unknown,Unknown,,,
+24666858,Severe,,Severe,,3.0
+21201677,Mild,,Prediabetes,,1.0
+20121412,Moderate,G3b (Moderate-Severe),Prediabetes,,2.0
+26056378,Unknown,,,Unknown,
+22857894,Moderate,,Moderate,,2.0
+29591551,Severe,,Severe,,3.0
+27464034,Moderate,,Moderate,,2.0
+26366224,Stable,,Normal,,
+22412222,Unknown,,Unknown,,
+22168296,Mild,,Prediabetes,Mild Hypothyroid,1.0
+21619952,Moderate,,Moderate,,2.0
+27732051,Mild,,Prediabetes,,1.0
+25577516,Mild,,Prediabetes,,1.0
+27406348,Unknown,,,Unknown,
+23530410,Moderate,G3b (Moderate-Severe),,,2.0
+21611528,Unknown,,Unknown,,
+21228843,Severe,,,Hyperthyroid,3.0
+27783607,Unknown,,,Unknown,
+27171474,Mild,G3a (Mild-Moderate),Unknown,,1.0
+24364612,Unknown,,,Unknown,
+22314656,Mild,,Mild,,1.0
+22529320,Unknown,,,Unknown,
+26253392,Mild,G3a (Mild-Moderate),,,1.0
+23983135,Unknown,,,Unknown,
+24847882,Unknown,,Unknown,,
+26144694,Mild,,Mild,,1.0
+28265930,Unknown,,Unknown,,
+20307470,Unknown,,Unknown,,
+22143417,Unknown,,,Unknown,
+24291657,Severe,G5 (Kidney Failure),Moderate,,3.0
+27595146,Unknown,,Unknown,,
+23020307,Unknown,,Unknown,,
+29640176,Unknown,,,Unknown,
+23343894,Stable,G2 (Mild),,Unknown,
+27690153,Severe,G4 (Severe),Mild,Unknown,3.0
+28093866,Unknown,,,Unknown,
+26863642,Unknown,Unknown,,,
+28210160,Unknown,,Unknown,,
+22977622,Unknown,Unknown,Unknown,,
+28413424,Unknown,,,Unknown,
+21282356,Mild,,Prediabetes,,1.0
+27155678,Stable,,Normal,,
+25505328,Severe,G5 (Kidney Failure),Unknown,,3.0
+20449486,Moderate,G3b (Moderate-Severe),,,2.0
+29600419,Unknown,,Unknown,,
+27589375,Mild,,Prediabetes,,1.0
+23292569,Severe,,Severe,,3.0
+26482997,Unknown,,,Unknown,
+28300081,Unknown,,,Unknown,
+25868039,Severe,G2 (Mild),Severe,,3.0
+23846896,Unknown,Unknown,Unknown,,
+25878015,Unknown,,Unknown,,
+27171982,Mild,,Prediabetes,,1.0
+29011321,Mild,,Prediabetes,,1.0
+20040797,Unknown,Unknown,Unknown,,
