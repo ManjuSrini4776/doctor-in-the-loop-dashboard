@@ -40,43 +40,76 @@ def render():
         unsafe_allow_html=True
     )
 
-    sc1, sc2, sc3 = st.columns([2, 1, 1])
-    with sc1:
-        search_id = st.text_input(
-            'Patient Reference Number',
-            placeholder='e.g. 24992831  or  MM-001  or  168',
-            label_visibility='collapsed',
-            key='portal_search_id'
-        )
-    with sc2:
-        test_type = st.selectbox(
-            'Test Type',
-            ['All Types'] + list(loaded.keys()),
-            key='portal_test_type',
-            label_visibility='collapsed'
-        )
-    with sc3:
-        st.markdown('<br>', unsafe_allow_html=True)
-        search_btn = st.button('🔍  Search', key='portal_search_btn',
-                               use_container_width=True, type='primary')
+    # ── Test type selector
+    test_type = st.selectbox(
+        'Select Test Type',
+        ['All Types'] + list(loaded.keys()),
+        key='portal_test_type',
+        label_visibility='collapsed'
+    )
 
-    # Search result
+    # Build combined patient list for dropdown
+    all_options = []  # (display_label, patient_id, mtype)
+    search_in = loaded if test_type == 'All Types' else                 {test_type: loaded[test_type]} if test_type in loaded else {}
+
+    SEV_EMOJI = {
+        'Normal':'🟢','Mild':'🟡','Moderate':'🟠','Severe':'🔴','Unknown':'⚪'
+    }
+    for mtype, df in search_in.items():
+        type_short = {'Lab Report':'Lab','CT Scan':'CT',
+                      'Ultrasound':'US','Combined Assessment':'MM'}.get(mtype, mtype)
+        for _, row in df.head(100).iterrows():
+            pid  = str(row['_id'])
+            sev  = row.get('_sev','Unknown')
+            icon = SEV_EMOJI.get(sev,'⚪')
+            all_options.append((
+                f"{icon}  {pid}  ·  [{type_short}]  ·  {sev}",
+                pid,
+                mtype
+            ))
+
+    if not all_options:
+        st.warning('No data loaded. Please upload your CSV files.')
+        return
+
+    # Sort severe first
+    sev_order = {'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
+    all_options.sort(key=lambda x: sev_order.get(
+        x[0].split('·')[-1].strip(), 4))
+
+    labels   = [o[0] for o in all_options]
+    ids      = [o[1] for o in all_options]
+    mtypes   = [o[2] for o in all_options]
+
+    st.markdown(
+        f'<div style="font-size:13px;color:#64748B;margin-bottom:8px;">' +
+        f'{len(all_options):,} records — select a patient to view details</div>',
+        unsafe_allow_html=True
+    )
+
+    chosen_label = st.selectbox(
+        'Select Patient',
+        labels,
+        key='portal_patient_select',
+        label_visibility='collapsed'
+    )
+    chosen_idx = labels.index(chosen_label)
+    search_id  = ids[chosen_idx]
+    sel_mtype  = mtypes[chosen_idx]
+
+    # Auto-find the selected patient
     found_row  = None
     found_type = None
 
-    if search_id and search_id.strip():
-        sid = search_id.strip()
-        search_in = loaded if test_type == 'All Types' else \
-                    {test_type: loaded[test_type]} if test_type in loaded else {}
+    sid = search_id
+    df  = loaded.get(sel_mtype)
+    if df is not None:
+        match = df[df['_id'] == sid]
+        if not match.empty:
+            found_row  = match.iloc[0].to_dict()
+            found_type = sel_mtype
 
-        for mtype, df in search_in.items():
-            match = df[df['_id'] == sid]
-            if not match.empty:
-                found_row  = match.iloc[0].to_dict()
-                found_type = mtype
-                break
-
-        if found_row:
+    if found_row:
             sev  = found_row.get('_sev', 'Unknown')
             clr  = SEV_COLORS.get(sev, '#94A3B8')
             st.markdown(
