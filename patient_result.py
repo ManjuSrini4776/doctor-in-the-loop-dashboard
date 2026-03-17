@@ -34,6 +34,18 @@ SEV_MESSAGES = {
         "Please contact your doctor or visit the hospital soon.",
         "Do not delay — early treatment leads to better outcomes.",
         "Your doctor has been notified and will contact you."
+    ),
+    'Unknown': (
+        "Your report has been reviewed by your doctor.",
+        "Please contact your doctor for detailed interpretation.",
+        "Schedule a follow-up appointment at your earliest convenience.",
+        "Your doctor will guide you on next steps."
+    ),
+    'Processing': (
+        "Your report is being processed.",
+        "Please check back shortly.",
+        "Contact your doctor if you have urgent concerns.",
+        "No action required at this time."
     )
 }
 
@@ -131,7 +143,7 @@ def render():
     fus_lbl  = p.get('fusion_label', 'Unknown')
     fus_clr  = SEV_COLORS.get(fus_lbl, '#94A3B8')
     fus_icon = SEV_ICONS.get(fus_lbl, '❓')
-    msgs     = SEV_MESSAGES.get(fus_lbl, SEV_MESSAGES['Unknown'])
+    msgs     = SEV_MESSAGES.get(fus_lbl, SEV_MESSAGES.get('Unknown', ('Report reviewed.','Contact your doctor.','Schedule follow-up.','No revisit needed.')))
 
     # Big result card
     bg_clr = {
