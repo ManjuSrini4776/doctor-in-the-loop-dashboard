@@ -3,90 +3,98 @@ from datetime import datetime
 import time
 
 SEV_COLORS = {
-    'Normal':   '#10B981', 'Mild':    '#F59E0B',
-    'Moderate': '#F97316', 'Severe':  '#EF4444', 'Unknown': '#94A3B8'
+    'Normal':'#10B981','Mild':'#F59E0B',
+    'Moderate':'#F97316','Severe':'#EF4444','Unknown':'#94A3B8'
 }
-SEV_ICONS = {
-    'Normal':   '✅', 'Mild':    '⚠️',
-    'Moderate': '🔶', 'Severe':  '🚨', 'Unknown': '❓'
+SEV_BG = {
+    'Normal':'rgba(16,185,129,0.08)','Mild':'rgba(245,158,11,0.08)',
+    'Moderate':'rgba(249,115,22,0.08)','Severe':'rgba(239,68,68,0.08)',
+    'Unknown':'rgba(148,163,184,0.08)'
 }
-SEV_MESSAGES = {
+SEV_ICON = {
+    'Normal':'✅','Mild':'⚠️','Moderate':'🔶','Severe':'🚨','Unknown':'📋'
+}
+SEV_HEADLINE = {
+    'Normal':   'Your results are normal',
+    'Mild':     'Your results show mild findings',
+    'Moderate': 'Your results need attention',
+    'Severe':   'Your results require urgent care',
+    'Unknown':  'Your report is ready'
+}
+SEV_MESSAGE = {
     'Normal': (
-        "Great news! Your test results are within normal range.",
-        "No immediate medical attention required.",
-        "Continue your current health routine and schedule your next regular check-up.",
-        "You do NOT need to revisit the hospital for this report."
+        'Great news — your test results are within the normal healthy range.',
+        'No immediate medical attention is required at this time.',
+        'We recommend continuing your current health routine and attending your next scheduled check-up.',
+        'You do not need to visit the hospital for this report.'
     ),
     'Mild': (
-        "Your results show mild findings that need monitoring.",
-        "No emergency intervention required at this time.",
-        "Please follow up with your doctor within 2-4 weeks.",
-        "You may consult your doctor via phone before visiting."
+        'Your results show some mild findings that should be monitored.',
+        'There is no emergency, but we recommend a follow-up with your doctor.',
+        'Please contact your doctor to arrange a review within the next 2 to 4 weeks.',
+        'You may be able to discuss this over the phone before deciding to visit.'
     ),
     'Moderate': (
-        "Your results indicate moderate severity findings.",
-        "A follow-up visit with your specialist is recommended.",
-        "Please book an appointment within the next 7-10 days.",
-        "Bring this report to your next appointment."
+        'Your results indicate findings that need medical attention.',
+        'We recommend you see a specialist within the next 7 to 10 days.',
+        'Please contact your doctor to book an appointment at your earliest convenience.',
+        'Bring this report along to your next appointment.'
     ),
     'Severe': (
-        "Your results indicate findings that require prompt attention.",
-        "Please contact your doctor or visit the hospital soon.",
-        "Do not delay — early treatment leads to better outcomes.",
-        "Your doctor has been notified and will contact you."
+        'Your results indicate findings that require prompt medical attention.',
+        'Please contact your doctor today or visit the hospital if you feel unwell.',
+        'Early treatment leads to the best outcomes — please do not delay.',
+        'Your doctor has been notified and may contact you directly.'
     ),
     'Unknown': (
-        "Your report has been reviewed by your doctor.",
-        "Please contact your doctor for detailed interpretation.",
-        "Schedule a follow-up appointment at your earliest convenience.",
-        "Your doctor will guide you on next steps."
-    ),
-    'Processing': (
-        "Your report is being processed.",
-        "Please check back shortly.",
-        "Contact your doctor if you have urgent concerns.",
-        "No action required at this time."
+        'Your medical report has been reviewed by your doctor.',
+        'Please contact your doctor for a detailed discussion of your results.',
+        'Schedule a follow-up appointment at your earliest convenience.',
+        'Your doctor will guide you on the appropriate next steps.'
     )
 }
 
 
 def render():
     st.markdown("""
-    <div style="background:#0D1621;border:1px solid #1E293B;
-                border-radius:12px;padding:20px 28px;margin-bottom:24px;">
-        <div style="font-family:'Playfair Display',serif;font-size:20px;
-                    color:#F0F4FF;">📋 My Report</div>
-        <div style="font-size:12px;color:#64748B;margin-top:4px;
-                    font-family:'IBM Plex Mono',monospace;">
-            Check your approved medical report · No hospital visit needed
+    <div style="margin-bottom:24px;">
+        <div style="font-size:26px;font-weight:700;color:#F1F5F9;
+                    letter-spacing:-0.5px;margin-bottom:6px;">
+            My Report
+        </div>
+        <div style="font-size:15px;color:#94A3B8;">
+            Enter your case reference number to view your approved report
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Patient ID lookup
-    col1, col2 = st.columns([2, 1])
+    # Lookup form
+    col1, col2 = st.columns([3,1])
     with col1:
-        # Pre-fill if coming from patient portal
-        default_id = st.session_state.get('patient_lookup', '')
-        pid_input  = st.text_input(
-            'Enter your Patient ID',
-            value=default_id,
-            placeholder='e.g. PT-123456',
-            key='result_pid_input'
+        default = st.session_state.get('patient_lookup','')
+        pid_input = st.text_input(
+            'Case Reference Number',
+            value=default,
+            placeholder='e.g. 24992831 or CASE-1004',
+            label_visibility='collapsed'
         )
     with col2:
         st.markdown('<br>', unsafe_allow_html=True)
-        check_btn = st.button('🔍 Get My Report',
-                              use_container_width=True,
-                              type='primary')
+        check = st.button('Find My Report',
+                          use_container_width=True,
+                          type='primary')
 
     if not pid_input:
         st.markdown("""
-        <div style="text-align:center;padding:60px 20px;">
-            <div style="font-size:40px;margin-bottom:12px;">📋</div>
+        <div style="background:#111827;border:2px dashed #1E2D40;
+                    border-radius:12px;padding:64px;text-align:center;
+                    margin-top:20px;">
+            <div style="font-size:40px;margin-bottom:16px;">🔍</div>
+            <div style="font-size:16px;font-weight:500;color:#F1F5F9;
+                        margin-bottom:8px;">Enter your reference number above</div>
             <div style="font-size:14px;color:#64748B;">
-                Enter your Patient ID above to view your report.<br>
-                Your ID was given when you registered.
+                Your reference number was given to you when you registered.<br>
+                It is also in any SMS or notification you received.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -95,269 +103,267 @@ def render():
     pid = pid_input.strip()
 
     if pid not in st.session_state.patients:
-        st.error('❌ Patient ID not found. Please check your ID.')
+        st.markdown(f"""
+        <div style="background:rgba(239,68,68,0.08);
+                    border:1px solid rgba(239,68,68,0.2);
+                    border-radius:12px;padding:24px;margin-top:16px;">
+            <div style="font-size:16px;font-weight:600;color:#EF4444;
+                        margin-bottom:8px;">Reference number not found</div>
+            <div style="font-size:14px;color:#94A3B8;">
+                We could not find a record for <b style="color:#F1F5F9;">
+                {pid}</b>. Please check the number and try again, or contact 
+                the hospital registration desk.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         return
 
     p      = st.session_state.patients[pid]
-    status = p.get('status', 'PENDING')
+    status = p.get('status','PENDING')
 
+    # Pending
     if status == 'PENDING':
         st.markdown(f"""
-        <div style="background:#0D1621;border:1px solid #F59E0B;
-                    border-radius:12px;padding:28px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:12px;">⏳</div>
-            <div style="font-size:16px;font-weight:600;color:#F0F4FF;
-                        margin-bottom:8px;">Report Pending Review</div>
-            <div style="font-size:13px;color:#64748B;margin-bottom:16px;">
-                Your doctor <b style="color:#F0F4FF;">
-                {p.get('doctor_name','')}</b> is reviewing your report.<br>
-                You will be notified once it's approved.
+        <div style="background:rgba(245,158,11,0.08);
+                    border:1px solid rgba(245,158,11,0.2);
+                    border-radius:16px;padding:40px;text-align:center;
+                    margin-top:16px;">
+            <div style="font-size:40px;margin-bottom:16px;">⏳</div>
+            <div style="font-size:20px;font-weight:700;color:#F1F5F9;
+                        margin-bottom:10px;">Your report is being reviewed</div>
+            <div style="font-size:15px;color:#94A3B8;margin-bottom:20px;">
+                Your doctor <b style="color:#F1F5F9;">
+                {p.get('doctor_name','')}</b> is currently reviewing your results.
             </div>
-            <div style="background:#1A1400;border:1px solid #F59E0B;
-                        border-radius:8px;padding:12px 20px;
-                        display:inline-block;font-size:12px;color:#F59E0B;
-                        font-family:'IBM Plex Mono',monospace;">
-                No need to visit the hospital — we'll notify you here!
+            <div style="background:rgba(245,158,11,0.12);
+                        border:1px solid rgba(245,158,11,0.25);
+                        border-radius:10px;padding:14px 24px;
+                        display:inline-block;font-size:14px;color:#F59E0B;
+                        font-weight:500;">
+                You will be notified here once approved — 
+                no need to visit the hospital
             </div>
         </div>
         """, unsafe_allow_html=True)
         return
 
+    # Rejected
     if status == 'REJECTED':
         st.markdown(f"""
-        <div style="background:#0D1621;border:1px solid #EF4444;
-                    border-radius:12px;padding:28px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:12px;">❌</div>
-            <div style="font-size:16px;font-weight:600;color:#F0F4FF;
-                        margin-bottom:8px;">Report Requires Manual Review</div>
-            <div style="font-size:13px;color:#64748B;">
-                Your doctor has flagged this report for manual review.<br>
-                Please contact <b style="color:#F0F4FF;">
-                {p.get('doctor_name','')}</b> directly.
+        <div style="background:rgba(239,68,68,0.08);
+                    border:1px solid rgba(239,68,68,0.2);
+                    border-radius:16px;padding:40px;text-align:center;
+                    margin-top:16px;">
+            <div style="font-size:40px;margin-bottom:16px;">📞</div>
+            <div style="font-size:20px;font-weight:700;color:#F1F5F9;
+                        margin-bottom:10px;">
+                Please contact your doctor
+            </div>
+            <div style="font-size:15px;color:#94A3B8;">
+                Your doctor has reviewed your report and would like to 
+                discuss the findings with you directly.<br><br>
+                Please contact <b style="color:#F1F5F9;">
+                {p.get('doctor_name','your doctor')}</b> at your earliest 
+                convenience.
             </div>
         </div>
         """, unsafe_allow_html=True)
         return
 
-    # ── APPROVED — Show full report ───────────────────────────
-    fus_lbl  = p.get('fusion_label', 'Unknown')
-    fus_clr  = SEV_COLORS.get(fus_lbl, '#94A3B8')
-    fus_icon = SEV_ICONS.get(fus_lbl, '❓')
-    msgs     = SEV_MESSAGES.get(fus_lbl, SEV_MESSAGES.get('Unknown', ('Report reviewed.','Contact your doctor.','Schedule follow-up.','No revisit needed.')))
+    # ── APPROVED ─────────────────────────────────────────────
+    fus      = p.get('fusion_label', p.get('severity_label','Unknown'))
+    fus_clr  = SEV_COLORS.get(fus,'#94A3B8')
+    fus_bg   = SEV_BG.get(fus,'rgba(148,163,184,0.08)')
+    icon     = SEV_ICON.get(fus,'📋')
+    headline = SEV_HEADLINE.get(fus,'Your report is ready')
+    msgs     = SEV_MESSAGE.get(fus, SEV_MESSAGE['Unknown'])
 
-    # Big result card
-    bg_clr = {
-        'Normal':   '#0D2818', 'Mild':    '#1A1400',
-        'Moderate': '#1A0E00', 'Severe':  '#1A0808', 'Unknown': '#0D1621'
-    }.get(fus_lbl, '#0D1621')
-
+    # Main result card
     st.markdown(f"""
-    <div style="background:{bg_clr};border:2px solid {fus_clr};
-                border-radius:16px;padding:32px;text-align:center;
-                margin-bottom:24px;">
-        <div style="font-size:52px;margin-bottom:12px;">{fus_icon}</div>
-        <div style="font-family:'Playfair Display',serif;font-size:28px;
-                    color:#F0F4FF;margin-bottom:6px;">
-            Your Report is Ready
+    <div style="background:{fus_bg};border:2px solid {fus_clr}33;
+                border-radius:20px;padding:40px 48px;text-align:center;
+                margin:16px 0 28px;">
+        <div style="font-size:56px;margin-bottom:16px;">{icon}</div>
+        <div style="font-size:28px;font-weight:700;color:#F1F5F9;
+                    letter-spacing:-0.5px;margin-bottom:10px;">
+            {headline}
         </div>
-        <div style="font-size:14px;color:#94A3B8;margin-bottom:20px;">
-            Patient: <b style="color:#F0F4FF;">{p.get('name','')}</b> ·
-            ID: <b style="color:#F0F4FF;">{pid}</b>
+        <div style="font-size:15px;color:#94A3B8;margin-bottom:24px;">
+            Case reference: <b style="color:#F1F5F9;
+            font-family:'JetBrains Mono',monospace;">{pid}</b>
         </div>
-        <div style="display:inline-block;background:rgba(0,0,0,.3);
-                    border:2px solid {fus_clr};border-radius:50px;
-                    padding:10px 32px;margin-bottom:20px;">
-            <span style="font-size:22px;font-weight:700;color:{fus_clr};
-                         font-family:'IBM Plex Mono',monospace;">
-                {fus_lbl.upper()}
+        <div style="background:{fus_bg};border:2px solid {fus_clr}55;
+                    border-radius:50px;padding:12px 36px;
+                    display:inline-block;margin-bottom:28px;">
+            <span style="font-size:24px;font-weight:700;color:{fus_clr};">
+                {fus}
             </span>
         </div>
-        <div style="max-width:500px;margin:0 auto;">
-            <div style="font-size:15px;color:#F0F4FF;margin-bottom:8px;
-                        font-weight:500;">{msgs[0]}</div>
-            <div style="font-size:13px;color:#94A3B8;margin-bottom:6px;">
-                {msgs[1]}
-            </div>
-            <div style="font-size:13px;color:{fus_clr};margin-bottom:6px;">
-                📅 {msgs[2]}
-            </div>
-            <div style="font-size:12px;color:#64748B;
-                        font-family:'IBM Plex Mono',monospace;
-                        margin-top:10px;">
-                {msgs[3]}
-            </div>
+        <div style="max-width:560px;margin:0 auto;text-align:left;
+                    background:rgba(0,0,0,0.2);border-radius:12px;
+                    padding:24px 28px;">
+            <div style="font-size:16px;color:#F1F5F9;font-weight:500;
+                        margin-bottom:10px;line-height:1.5;">{msgs[0]}</div>
+            <div style="font-size:14px;color:#94A3B8;margin-bottom:8px;
+                        line-height:1.6;">{msgs[1]}</div>
+            <div style="font-size:14px;color:{fus_clr};margin-bottom:8px;
+                        line-height:1.6;font-weight:500;">📅 {msgs[2]}</div>
+            <div style="font-size:13px;color:#64748B;padding-top:10px;
+                        border-top:1px solid rgba(255,255,255,0.06);
+                        line-height:1.6;">{msgs[3]}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Details + SMS simulation
-    col1, col2 = st.columns([1.5, 1])
+    # Details + SMS
+    dc1, dc2 = st.columns([3,2])
 
-    with col1:
+    with dc1:
         st.markdown("""
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;
-                    color:#3B82F6;letter-spacing:.1em;text-transform:uppercase;
-                    padding-bottom:8px;border-bottom:1px solid #1E293B;
-                    margin-bottom:14px;">── Report Details</div>
+        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
+                    margin-bottom:14px;">Report Details</div>
         """, unsafe_allow_html=True)
 
-        # Score breakdown
-        score_items = [
-            ('🧪 Lab Score',  p.get('lab_score'),
-             p.get('lab_severity_label', 'N/A')),
-            ('🧠 CT Score',   p.get('ct_score'),
-             p.get('ct_severity_label', 'N/A')),
-            ('🔬 US Score',   p.get('us_score'),
-             p.get('us_severity_label', 'N/A')),
-        ]
-        for lbl, score, sev in score_items:
-            if score is not None:
-                clr = SEV_COLORS.get(sev, '#94A3B8')
-                st.markdown(f"""
-                <div style="background:#0D1621;border:1px solid #1E293B;
-                            border-left:3px solid {clr};border-radius:6px;
-                            padding:10px 14px;margin-bottom:6px;
-                            display:flex;justify-content:space-between;
-                            align-items:center;">
-                    <div style="font-size:13px;color:#94A3B8;">{lbl}</div>
-                    <div style="font-size:13px;color:{clr};font-weight:500;">
-                        {sev}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+        # What was tested
+        mtype = p.get('modality_type','')
+        test_items = []
+        if 'final_severity_label' in p or mtype=='Lab Report':
+            ckd = p.get('ckd_severity','')
+            dia = p.get('diabetes_severity_final','')
+            thy = p.get('thyroid_severity_final','')
+            vals = [v for v in [
+                f"Kidney: {ckd}" if ckd and str(ckd) not in ['None','nan'] else None,
+                f"Diabetes: {dia}" if dia and str(dia) not in ['None','nan'] else None,
+                f"Thyroid: {thy}" if thy and str(thy) not in ['None','nan'] else None
+            ] if v]
+            if vals:
+                test_items.append(('🧪 Blood Test Results',
+                                   ' · '.join(vals)))
 
-        # Doctor info
+        if 'ct_predicted_class' in p:
+            from doctor_dashboard import CT_DIAGNOSIS
+            cls  = p.get('ct_predicted_class','')
+            name = CT_DIAGNOSIS.get(cls,(cls,''))[0]
+            test_items.append(('🧠 CT Brain Scan', name))
+
+        if 'predicted_class' in p or 'us_predicted_class' in p:
+            from doctor_dashboard import US_DIAGNOSIS
+            cls  = p.get('predicted_class',p.get('us_predicted_class',''))
+            name = US_DIAGNOSIS.get(cls,(cls,''))[0]
+            test_items.append(('🔬 Ultrasound', name))
+
+        for lbl, val in test_items:
+            st.markdown(f"""
+            <div style="background:#111827;border:1px solid #1E2D40;
+                        border-radius:10px;padding:14px 18px;
+                        margin-bottom:8px;display:flex;
+                        justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;color:#94A3B8;">{lbl}</div>
+                <div style="font-size:14px;font-weight:500;color:#F1F5F9;">
+                    {val}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Doctor sign-off
         st.markdown(f"""
-        <div style="background:#0D1621;border:1px solid #1E293B;
-                    border-radius:8px;padding:14px 18px;margin-top:10px;">
-            <div style="font-size:11px;color:#64748B;
-                        font-family:'IBM Plex Mono',monospace;
-                        margin-bottom:8px;">REVIEWED BY</div>
-            <div style="font-size:14px;color:#F0F4FF;font-weight:500;">
-                {p.get('reviewed_by', p.get('doctor_name',''))}
-            </div>
-            <div style="font-size:12px;color:#64748B;margin-top:2px;">
-                Approved: {p.get('reviewed_at','')[:16]}
-            </div>
-            {('<div style="margin-top:8px;padding-top:8px;'
-              'border-top:1px solid #1E293B;font-size:12px;'
-              'color:#94A3B8;font-style:italic;">'
-              + p.get("doctor_notes","") + '</div>')
-             if p.get("doctor_notes") else ''}
+        <div style="background:#111827;border:1px solid #1E2D40;
+                    border-radius:10px;padding:16px 18px;margin-top:4px;">
+            <div style="font-size:12px;color:#64748B;margin-bottom:6px;
+                        text-transform:uppercase;letter-spacing:0.06em;">
+                Reviewed and Approved by</div>
+            <div style="font-size:16px;font-weight:600;color:#F1F5F9;">
+                {p.get('reviewed_by', p.get('doctor_name',''))}</div>
+            <div style="font-size:13px;color:#64748B;margin-top:4px;">
+                {p.get('reviewed_at','')[:16]}</div>
+            {f'<div style="font-size:13px;color:#94A3B8;margin-top:8px;padding-top:8px;border-top:1px solid #1E2D40;font-style:italic;">{p.get("doctor_notes","")}</div>' if p.get("doctor_notes") else ''}
         </div>
         """, unsafe_allow_html=True)
 
-        # Full clinical report
+        # Full report
         if p.get('final_report'):
-            st.markdown("""
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;
-                        color:#3B82F6;letter-spacing:.1em;
-                        text-transform:uppercase;padding-bottom:6px;
-                        border-bottom:1px solid #1E293B;margin:14px 0 10px;">
-                ── Clinical Report
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown(f"""
-            <div style="background:#0A0D14;border:1px solid #1E293B;
-                        border-radius:8px;padding:14px 18px;
-                        font-size:12px;line-height:1.8;color:#94A3B8;
-                        white-space:pre-wrap;">
+            with st.expander('📄  View Full Clinical Report'):
+                st.markdown(f"""
+                <div style="background:#0B1120;border-radius:8px;
+                            padding:16px 18px;font-size:13px;
+                            line-height:1.8;color:#94A3B8;
+                            white-space:pre-wrap;">
 {p.get('final_report','')}
-            </div>
-            """, unsafe_allow_html=True)
+                </div>
+                """, unsafe_allow_html=True)
 
-    with col2:
-        # SMS simulation
+    with dc2:
         st.markdown("""
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;
-                    color:#3B82F6;letter-spacing:.1em;text-transform:uppercase;
-                    padding-bottom:8px;border-bottom:1px solid #1E293B;
-                    margin-bottom:14px;">── SMS Notification</div>
+        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
+                    margin-bottom:14px;">SMS Notification Preview</div>
         """, unsafe_allow_html=True)
 
-        sms_text = (
+        sms = (
             f"[MedAI Hospital]\n\n"
             f"Dear {p.get('name','Patient')},\n\n"
             f"Your medical report is ready.\n\n"
-            f"Result: {fus_lbl.upper()} {fus_icon}\n\n"
+            f"Result: {fus} {icon}\n\n"
             f"{msgs[0]}\n\n"
             f"{msgs[2]}\n\n"
-            f"Doctor: {p.get('reviewed_by', p.get('doctor_name',''))}\n"
-            f"Patient ID: {pid}\n\n"
-            f"View full report at:\n"
-            f"medai-hospital.streamlit.app\n\n"
-            f"MedAI - Doctor-in-the-Loop System"
+            f"Doctor: {p.get('reviewed_by',p.get('doctor_name',''))}\n"
+            f"Ref: {pid}\n\n"
+            f"View full report at medai.streamlit.app\n\n"
+            f"MedAI Clinical System"
         )
 
-        # Phone mockup
         st.markdown(f"""
         <div style="display:flex;justify-content:center;">
         <div style="background:#1A1A2E;border:2px solid #2A2A4A;
-                    border-radius:24px;padding:20px;width:240px;
-                    box-shadow:0 0 30px rgba(59,130,246,.1);">
-
-            <!-- Phone top -->
-            <div style="text-align:center;margin-bottom:12px;">
+                    border-radius:28px;padding:20px 16px;width:260px;">
+            <div style="text-align:center;margin-bottom:14px;">
                 <div style="background:#2A2A4A;height:4px;width:40px;
                             border-radius:2px;margin:0 auto 8px;"></div>
-                <div style="font-size:10px;color:#475569;
-                            font-family:'IBM Plex Mono',monospace;">
-                    {p.get('phone','+91 XXXXXXXXXX')}
+                <div style="font-size:11px;color:#64748B;">
+                    {p.get('phone','Not provided')}
                 </div>
-                <div style="font-size:9px;color:#334155;">
+                <div style="font-size:10px;color:#334155;">
                     {datetime.now().strftime('%H:%M')}
                 </div>
             </div>
-
-            <!-- SMS bubble -->
-            <div style="background:#0D4A1F;border:1px solid #10B981;
-                        border-radius:12px 12px 12px 0;
-                        padding:12px;margin-bottom:6px;">
-                <div style="font-size:9px;color:#10B981;margin-bottom:6px;
-                            font-family:'IBM Plex Mono',monospace;">
-                    MedAI Hospital
-                </div>
-                <div style="font-size:10px;color:#D1FAE5;
-                            white-space:pre-wrap;line-height:1.5;">
-{sms_text}
+            <div style="background:rgba(16,185,129,0.12);
+                        border:1px solid rgba(16,185,129,0.25);
+                        border-radius:14px 14px 14px 0;padding:14px;">
+                <div style="font-size:10px;color:#10B981;font-weight:600;
+                            margin-bottom:8px;">MedAI Hospital</div>
+                <div style="font-size:11px;color:#D1FAE5;
+                            white-space:pre-wrap;line-height:1.6;">
+{sms}
                 </div>
             </div>
-
-            <!-- Delivered indicator -->
-            <div style="text-align:right;font-size:9px;color:#334155;
-                        font-family:'IBM Plex Mono',monospace;">
-                ✓✓ Delivered
-            </div>
+            <div style="text-align:right;font-size:10px;color:#334155;
+                        margin-top:6px;">✓✓ Delivered</div>
         </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown('<br>', unsafe_allow_html=True)
-
-        # Simulate send button
-        if st.button('📱 Simulate SMS Send',
-                     use_container_width=True):
-            with st.spinner('Sending SMS...'):
+        if st.button('📱  Send SMS Notification',
+                     use_container_width=True,
+                     type='primary',
+                     key='send_sms'):
+            with st.spinner('Sending...'):
                 time.sleep(1.5)
             st.success(
-                f'✅ SMS sent to {p.get("phone","patient")}!'
+                f'✅  SMS sent to {p.get("phone","patient")}!'
             )
 
-    # Footer message
     st.markdown(f"""
-    <div style="background:#0A1628;border:1px solid #1E3A5F;
-                border-radius:10px;padding:16px 20px;margin-top:20px;
-                text-align:center;">
-        <div style="font-size:14px;color:#F0F4FF;margin-bottom:4px;">
-            🏥 Thank you for using MedAI Hospital System
+    <div style="background:#111827;border:1px solid #1E2D40;
+                border-radius:12px;padding:20px 24px;
+                text-align:center;margin-top:24px;">
+        <div style="font-size:15px;color:#F1F5F9;font-weight:500;
+                    margin-bottom:6px;">
+            Thank you for using MedAI Clinical System
         </div>
-        <div style="font-size:12px;color:#64748B;">
-            Your health is our priority.
-            This report was reviewed and approved by
-            <b style="color:#3B82F6;">
-            {p.get('reviewed_by', p.get('doctor_name','your doctor'))}
-            </b>.
-            <br>For any concerns, please contact your doctor directly.
+        <div style="font-size:13px;color:#64748B;">
+            This report was reviewed and approved by 
+            <b style="color:#94A3B8;">
+            {p.get('reviewed_by',p.get('doctor_name','your doctor'))}</b>.
+            For any questions, please contact your doctor directly.
         </div>
     </div>
     """, unsafe_allow_html=True)
