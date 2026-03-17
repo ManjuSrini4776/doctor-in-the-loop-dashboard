@@ -2,422 +2,361 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import os
 
-SEV_COLORS = {
-    'Normal':'#10B981','Mild':'#F59E0B',
-    'Moderate':'#F97316','Severe':'#EF4444','Unknown':'#94A3B8'
-}
-SEV_BG = {
-    'Normal':'rgba(16,185,129,0.12)','Mild':'rgba(245,158,11,0.12)',
-    'Moderate':'rgba(249,115,22,0.12)','Severe':'rgba(239,68,68,0.12)',
-    'Unknown':'rgba(148,163,184,0.12)'
-}
+SEV_COLORS  = {'Normal':'#10B981','Mild':'#F59E0B','Moderate':'#F97316','Severe':'#EF4444','Unknown':'#94A3B8'}
+SEV_BG      = {'Normal':'rgba(16,185,129,0.1)','Mild':'rgba(245,158,11,0.1)','Moderate':'rgba(249,115,22,0.1)','Severe':'rgba(239,68,68,0.1)','Unknown':'rgba(148,163,184,0.1)'}
+CT_NAMES    = {'notumor':'No Brain Tumour Detected','pituitary':'Pituitary Adenoma','meningioma':'Meningioma','glioma':'Glioma'}
+US_NAMES    = {'Fetal abdomen':'Fetal Abdomen — Normal','Fetal brain':'Fetal Brain Plane','Fetal femur':'Fetal Femur — Normal Growth','Fetal thorax':'Fetal Thorax Plane'}
 
-CT_DIAGNOSIS = {
-    'notumor':   'No Brain Tumour Detected',
-    'pituitary': 'Pituitary Adenoma',
-    'meningioma':'Meningioma',
-    'glioma':    'Glioma'
-}
-US_DIAGNOSIS = {
-    'Fetal abdomen':'Fetal Abdomen — Normal',
-    'Fetal brain':  'Fetal Brain Plane',
-    'Fetal femur':  'Fetal Femur — Normal Growth',
-    'Fetal thorax': 'Fetal Thorax Plane'
+# Google Drive paths — exact paths from your Drive
+DRIVE_PATHS = {
+    'lab':    '/content/drive/MyDrive/MIMIC_DOCTOR_IN_LOOP_PROJECT/checkpoints/NB06_MULTIMODAL_SEVERITY_FUSION.parquet',
+    'ct':     '/content/drive/MyDrive/Medical_AI_Project/ct_module/results/CT_SEVERITY_FOR_FUSION.csv',
+    'us':     '/content/drive/MyDrive/Medical_AI_Project/ultrasound_module/results/US_SEVERITY_FOR_FUSION.csv',
+    'fusion': '/content/drive/MyDrive/Medical_AI_Project/fusion_output/FINAL_MULTIMODAL_FUSION.parquet',
 }
 
-# ── Data loaders ──────────────────────────────────────────────
 
 @st.cache_data
-def load_lab_data(uploaded=None):
-    if uploaded:
-        return pd.read_parquet(uploaded)
-    return None
-
-@st.cache_data
-def load_ct_data(uploaded=None):
-    if uploaded:
-        return pd.read_csv(uploaded)
-    return None
-
-@st.cache_data
-def load_us_data(uploaded=None):
-    if uploaded:
-        return pd.read_csv(uploaded)
-    return None
-
-@st.cache_data
-def load_fusion_data(uploaded=None):
-    if uploaded:
-        return pd.read_parquet(uploaded)
+def load_lab():
+    path = DRIVE_PATHS['lab']
+    if os.path.exists(path):
+        df = pd.read_parquet(path)
+        df['_display_id'] = df['hadm_id'].astype(str)
+        df['_sev']        = df['final_severity_label'].fillna('Unknown')
+        df['_mtype']      = 'Lab Report'
+        return df
     return None
 
 
-def sev_pill(label):
+@st.cache_data
+def load_ct():
+    path = DRIVE_PATHS['ct']
+    if os.path.exists(path):
+        df = pd.read_csv(path)
+        df['_display_id'] = df['image_id'].astype(str)
+        df['_sev']        = df['ct_severity_label'].fillna('Unknown')
+        df['_mtype']      = 'CT Scan'
+        return df
+    return None
+
+
+@st.cache_data
+def load_us():
+    path = DRIVE_PATHS['us']
+    if os.path.exists(path):
+        df = pd.read_csv(path)
+        df['_display_id'] = df['patient_id'].astype(str)
+        df['_sev']        = df['us_severity_label'].fillna('Unknown')
+        df['_mtype']      = 'Ultrasound'
+        return df
+    return None
+
+
+@st.cache_data
+def load_fusion():
+    path = DRIVE_PATHS['fusion']
+    if os.path.exists(path):
+        df = pd.read_parquet(path)
+        df['_display_id'] = df['case_id'].astype(str)
+        df['_sev']        = df['fusion_label'].fillna('Unknown')
+        df['_mtype']      = 'Combined Assessment'
+        return df
+    return None
+
+
+def sev_badge(label):
     c = SEV_COLORS.get(label,'#94A3B8')
-    b = SEV_BG.get(label,'rgba(148,163,184,0.12)')
-    return (f'<span style="background:{b};border:1px solid {c}33;'
-            f'color:{c};font-size:12px;font-weight:600;'
-            f'padding:3px 12px;border-radius:20px;">{label}</span>')
+    b = SEV_BG.get(label,'rgba(148,163,184,0.1)')
+    return (f'<span style="background:{b};border:1px solid {c}55;color:{c};'
+            f'font-size:13px;font-weight:600;padding:4px 14px;'
+            f'border-radius:20px;">{label}</span>')
+
+
+def stat_card(title, val, color):
+    return (
+        f'<div style="background:#111827;border:1px solid #1E2D40;'
+        f'border-top:3px solid {color};border-radius:10px;'
+        f'padding:14px 16px;text-align:center;">'
+        f'<div style="font-size:26px;font-weight:700;color:{color};">{val:,}</div>'
+        f'<div style="font-size:13px;color:#64748B;margin-top:3px;">{title}</div>'
+        f'</div>'
+    )
 
 
 def render():
-    st.markdown("""
-    <div style="margin-bottom:24px;">
-        <div style="font-size:26px;font-weight:700;color:#F1F5F9;
-                    letter-spacing:-0.5px;margin-bottom:6px;">
-            Patient Registration
-        </div>
-        <div style="font-size:15px;color:#94A3B8;">
-            Upload your test data files to find and register your case
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:26px;font-weight:700;color:#F1F5F9;'
+        'letter-spacing:-0.5px;margin-bottom:6px;">Patient Registration</div>'
+        '<div style="font-size:15px;color:#94A3B8;margin-bottom:20px;">'
+        'Select a patient from your AI model output and assign to a doctor</div>',
+        unsafe_allow_html=True
+    )
 
-    # ── File upload section ───────────────────────────────────
-    with st.expander('📂  Upload Test Result Files', expanded=True):
-        st.markdown("""
-        <div style="font-size:14px;color:#94A3B8;margin-bottom:16px;">
-            Upload the output files from your AI models. 
-            All files are from your Google Drive.
-        </div>
-        """, unsafe_allow_html=True)
+    # Load data — from Drive if running in Colab, else show upload
+    lab_df    = load_lab()
+    ct_df     = load_ct()
+    us_df     = load_us()
+    fusion_df = load_fusion()
 
+    drive_loaded = any(df is not None for df in [lab_df, ct_df, us_df, fusion_df])
+
+    # Upload fallback (for Streamlit Cloud where Drive isn't mounted)
+    if not drive_loaded:
+        st.markdown(
+            '<div style="background:#111827;border:1px solid #1E2D40;'
+            'border-radius:12px;padding:20px 24px;margin-bottom:20px;">'
+            '<div style="font-size:15px;font-weight:600;color:#F1F5F9;margin-bottom:6px;">'
+            '📂 Upload Your Model Output Files</div>'
+            '<div style="font-size:13px;color:#94A3B8;margin-bottom:16px;">'
+            'Download these files from Google Drive and upload here.</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
         uc1,uc2,uc3,uc4 = st.columns(4)
         with uc1:
-            lab_up = st.file_uploader(
-                '🧪 Lab Report Data',
-                type=['parquet'],
-                key='lab_up',
-                help='NB06_MULTIMODAL_SEVERITY_FUSION.parquet'
-            )
+            f1 = st.file_uploader('🧪 Lab Report',    type=['parquet'], key='up_lab',
+                                  help='NB06_MULTIMODAL_SEVERITY_FUSION.parquet')
         with uc2:
-            ct_up = st.file_uploader(
-                '🧠 CT Scan Data',
-                type=['csv'],
-                key='ct_up',
-                help='CT_SEVERITY_FOR_FUSION.csv'
-            )
+            f2 = st.file_uploader('🧠 CT Scan',        type=['csv'],     key='up_ct',
+                                  help='CT_SEVERITY_FOR_FUSION.csv')
         with uc3:
-            us_up = st.file_uploader(
-                '🔬 Ultrasound Data',
-                type=['csv'],
-                key='us_up',
-                help='US_SEVERITY_FOR_FUSION.csv'
-            )
+            f3 = st.file_uploader('🔬 Ultrasound',     type=['csv'],     key='up_us',
+                                  help='US_SEVERITY_FOR_FUSION.csv')
         with uc4:
-            fus_up = st.file_uploader(
-                '⚡ Combined Assessment',
-                type=['parquet'],
-                key='fus_up',
-                help='FINAL_MULTIMODAL_FUSION.parquet'
-            )
+            f4 = st.file_uploader('⚡ Combined',       type=['parquet'], key='up_fus',
+                                  help='FINAL_MULTIMODAL_FUSION.parquet')
 
-        # Load uploaded files into session
-        if lab_up and 'lab_df' not in st.session_state:
-            df = pd.read_parquet(lab_up)
-            df['modality_type']    = 'Lab Report'
-            df['display_id']       = df['hadm_id'].astype(str)
-            df['severity_label']   = df['final_severity_label']
-            df['fusion_label']     = df['final_severity_label']
-            st.session_state['lab_df'] = df
-            st.success(f'✅  Lab data loaded — {len(df):,} patient records')
+        if f1:
+            df = pd.read_parquet(f1)
+            df['_display_id'] = df['hadm_id'].astype(str)
+            df['_sev']        = df['final_severity_label'].fillna('Unknown')
+            df['_mtype']      = 'Lab Report'
+            lab_df = df
+        if f2:
+            df = pd.read_csv(f2)
+            df['_display_id'] = df['image_id'].astype(str)
+            df['_sev']        = df['ct_severity_label'].fillna('Unknown')
+            df['_mtype']      = 'CT Scan'
+            ct_df = df
+        if f3:
+            df = pd.read_csv(f3)
+            df['_display_id'] = df['patient_id'].astype(str)
+            df['_sev']        = df['us_severity_label'].fillna('Unknown')
+            df['_mtype']      = 'Ultrasound'
+            us_df = df
+        if f4:
+            df = pd.read_parquet(f4)
+            df['_display_id'] = df['case_id'].astype(str)
+            df['_sev']        = df['fusion_label'].fillna('Unknown')
+            df['_mtype']      = 'Combined Assessment'
+            fusion_df = df
 
-        if ct_up and 'ct_df' not in st.session_state:
-            df = pd.read_csv(ct_up)
-            df['modality_type']  = 'CT Scan'
-            df['display_id']     = df['image_id'].astype(str)
-            df['severity_label'] = df['ct_severity_label']
-            df['fusion_label']   = df['ct_severity_label']
-            st.session_state['ct_df'] = df
-            st.success(f'✅  CT data loaded — {len(df):,} scan records')
-
-        if us_up and 'us_df' not in st.session_state:
-            df = pd.read_csv(us_up)
-            df['modality_type']  = 'Ultrasound'
-            df['display_id']     = df['patient_id'].astype(str)
-            df['severity_label'] = df['us_severity_label']
-            df['fusion_label']   = df['us_severity_label']
-            st.session_state['us_df'] = df
-            st.success(f'✅  Ultrasound data loaded — {len(df):,} scan records')
-
-        if fus_up and 'fus_df' not in st.session_state:
-            df = pd.read_parquet(fus_up)
-            df['modality_type'] = 'Combined Assessment'
-            df['display_id']    = df['case_id'].astype(str)
-            df['severity_label']= df['fusion_label']
-            st.session_state['fus_df'] = df
-            # Filter multi-modality only
-            multi = df[df['modalities_available'] >= 2]
-            st.success(
-                f'✅  Combined data loaded — {len(df):,} cases '
-                f'({len(multi):,} with multiple tests)'
-            )
-
-    # ── 4 tabs with real data ─────────────────────────────────
+    # 4 tabs
     tab1, tab2, tab3, tab4 = st.tabs([
         '🧪  Lab Report Patients',
         '🧠  CT Scan Patients',
         '🔬  Ultrasound Patients',
-        '⚡  Combined Assessment'
+        '⚡  Combined Assessment',
     ])
 
-    with tab1:
-        render_patient_list(
-            df_key        = 'lab_df',
-            tab_key       = 'lab',
-            title         = 'Lab Report Patients',
-            subtitle      = 'Patients with chronic disease assessment — kidney, diabetes, thyroid',
-            id_col        = 'hadm_id',
-            sev_col       = 'final_severity_label',
-            modality_type = 'Lab Report',
-            empty_msg     = 'Upload NB06_MULTIMODAL_SEVERITY_FUSION.parquet to view lab patients'
+    configs = [
+        (tab1, lab_df,    'Lab Report',
+         'Chronic disease assessment — kidney function, diabetes, thyroid',
+         'NB06_MULTIMODAL_SEVERITY_FUSION.parquet'),
+        (tab2, ct_df,     'CT Scan',
+         'Brain CT scans — EfficientNet-B0 tumour classification',
+         'CT_SEVERITY_FOR_FUSION.csv'),
+        (tab3, us_df,     'Ultrasound',
+         'Fetal ultrasound — DenseNet121 classification',
+         'US_SEVERITY_FOR_FUSION.csv'),
+        (tab4, fusion_df, 'Combined Assessment',
+         'Patients assessed across multiple test types',
+         'FINAL_MULTIMODAL_FUSION.parquet'),
+    ]
+
+    for tab, df, mtype, subtitle, fname in configs:
+        with tab:
+            render_tab(df, mtype, subtitle, fname)
+
+
+def render_tab(df, mtype, subtitle, fname):
+    st.markdown(
+        f'<div style="padding:14px 0 10px;">'
+        f'<div style="font-size:18px;font-weight:600;color:#F1F5F9;margin-bottom:4px;">'
+        f'{mtype} Patients</div>'
+        f'<div style="font-size:14px;color:#94A3B8;">{subtitle}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    if df is None:
+        st.markdown(
+            '<div style="background:#111827;border:2px dashed #1E2D40;'
+            'border-radius:12px;padding:56px;text-align:center;">'
+            '<div style="font-size:32px;margin-bottom:12px;">📂</div>'
+            f'<div style="font-size:15px;color:#F1F5F9;margin-bottom:6px;">'
+            f'Upload <code>{fname}</code></div>'
+            '<div style="font-size:13px;color:#64748B;">'
+            'Download from Google Drive and upload above</div>'
+            '</div>',
+            unsafe_allow_html=True
         )
-
-    with tab2:
-        render_patient_list(
-            df_key        = 'ct_df',
-            tab_key       = 'ct',
-            title         = 'CT Scan Patients',
-            subtitle      = 'Brain CT scans — EfficientNet-B0 tumour classification',
-            id_col        = 'image_id',
-            sev_col       = 'ct_severity_label',
-            modality_type = 'CT Scan',
-            empty_msg     = 'Upload CT_SEVERITY_FOR_FUSION.csv to view CT patients'
-        )
-
-    with tab3:
-        render_patient_list(
-            df_key        = 'us_df',
-            tab_key       = 'us',
-            title         = 'Ultrasound Patients',
-            subtitle      = 'Fetal ultrasound — DenseNet121 plane classification',
-            id_col        = 'patient_id',
-            sev_col       = 'us_severity_label',
-            modality_type = 'Ultrasound',
-            empty_msg     = 'Upload US_SEVERITY_FOR_FUSION.csv to view ultrasound patients'
-        )
-
-    with tab4:
-        render_patient_list(
-            df_key        = 'fus_df',
-            tab_key       = 'fus',
-            title         = 'Combined Assessment Patients',
-            subtitle      = 'Patients with results from multiple tests — multimodal fusion score',
-            id_col        = 'case_id',
-            sev_col       = 'fusion_label',
-            modality_type = 'Combined Assessment',
-            empty_msg     = 'Upload FINAL_MULTIMODAL_FUSION.parquet to view combined cases',
-            multi_only    = True
-        )
-
-
-def render_patient_list(df_key, tab_key, title, subtitle,
-                        id_col, sev_col, modality_type,
-                        empty_msg, multi_only=False):
-
-    st.markdown(f"""
-    <div style="padding:16px 0 12px;">
-        <div style="font-size:18px;font-weight:600;color:#F1F5F9;
-                    margin-bottom:4px;">{title}</div>
-        <div style="font-size:14px;color:#94A3B8;">{subtitle}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if df_key not in st.session_state:
-        st.markdown(f"""
-        <div style="background:#111827;border:2px dashed #1E2D40;
-                    border-radius:12px;padding:48px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:12px;">📂</div>
-            <div style="font-size:15px;color:#64748B;">{empty_msg}</div>
-        </div>
-        """, unsafe_allow_html=True)
         return
 
-    df = st.session_state[df_key].copy()
-
-    # Multi-modality filter
-    if multi_only and 'modalities_available' in df.columns:
+    # For fusion tab — only show multi-modality cases
+    if mtype == 'Combined Assessment' and 'modalities_available' in df.columns:
         df = df[df['modalities_available'] >= 2].copy()
-        if df.empty:
-            st.info('No patients with multiple test types found in this dataset.')
-            return
 
-    # Severity distribution mini stats
+    if df.empty:
+        st.info('No records found.')
+        return
+
+    # Severity stats
     sev_order = ['Severe','Moderate','Mild','Normal','Unknown']
-    counts    = df[sev_col].value_counts()
+    counts    = df['_sev'].value_counts()
     total     = len(df)
 
-    cols = st.columns(5)
-    for col, sev in zip(cols, sev_order):
-        cnt = counts.get(sev, 0)
+    sc = st.columns(5)
+    colors = ['#EF4444','#F97316','#F59E0B','#10B981','#94A3B8']
+    for col, (sev, clr) in zip(sc, zip(sev_order, colors)):
+        cnt = int(counts.get(sev, 0))
         pct = round(100*cnt/total, 1) if total > 0 else 0
-        clr = SEV_COLORS.get(sev,'#94A3B8')
         with col:
-            st.markdown(f"""
-            <div style="background:#111827;border:1px solid #1E2D40;
-                        border-top:3px solid {clr};border-radius:10px;
-                        padding:14px 16px;text-align:center;margin-bottom:16px;">
-                <div style="font-size:24px;font-weight:700;color:{clr};">
-                    {cnt:,}
-                </div>
-                <div style="font-size:13px;color:#64748B;margin-top:2px;">
-                    {sev}
-                </div>
-                <div style="font-size:11px;color:#334155;margin-top:2px;">
-                    {pct}%
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="background:#111827;border:1px solid #1E2D40;'
+                f'border-top:3px solid {clr};border-radius:10px;'
+                f'padding:12px 14px;text-align:center;margin-bottom:14px;">'
+                f'<div style="font-size:22px;font-weight:700;color:{clr};">{cnt:,}</div>'
+                f'<div style="font-size:12px;color:#64748B;margin-top:2px;">{sev}</div>'
+                f'<div style="font-size:11px;color:#334155;">{pct}%</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
     # Search + filter
-    fc1, fc2 = st.columns([3,1])
+    fc1, fc2 = st.columns([3, 1])
     with fc1:
         search = st.text_input(
             'Search',
-            placeholder=f'Search by ID...',
-            key=f'{tab_key}_search',
+            placeholder='Search by patient ID...',
+            key=f'search_{mtype}',
             label_visibility='collapsed'
         )
     with fc2:
-        sev_filter = st.selectbox(
-            'Filter',
-            ['All Patients','Severe','Moderate','Mild','Normal'],
-            key=f'{tab_key}_sev_filter',
+        sev_f = st.selectbox(
+            'Filter by severity',
+            ['All', 'Severe', 'Moderate', 'Mild', 'Normal'],
+            key=f'sev_{mtype}',
             label_visibility='collapsed'
         )
 
     filt = df.copy()
     if search:
-        filt = filt[filt[id_col].astype(str)
-                    .str.contains(search, case=False, na=False)]
-    if sev_filter != 'All Patients':
-        filt = filt[filt[sev_col] == sev_filter]
+        filt = filt[filt['_display_id'].str.contains(search, case=False, na=False)]
+    if sev_f != 'All':
+        filt = filt[filt['_sev'] == sev_f]
 
     # Sort severe first
-    order_map = {'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
-    filt = filt.sort_values(sev_col, key=lambda x: x.map(order_map))
-
-    st.markdown(f"""
-    <div style="font-size:13px;color:#64748B;margin-bottom:12px;">
-        Showing <b style="color:#F1F5F9;">{min(len(filt),50):,}</b> of
-        <b style="color:#F1F5F9;">{len(filt):,}</b> records
-    </div>
-    """, unsafe_allow_html=True)
+    order = {'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
+    filt  = filt.sort_values('_sev', key=lambda x: x.map(order))
+    filt  = filt.head(100)  # limit for performance
 
     if filt.empty:
         st.warning('No records match your search.')
         return
 
-    # Patient dropdown — stays selected
-    def make_label(row):
-        done = '✓ ' if str(row[id_col]) in st.session_state.patients else ''
-        sev  = row.get(sev_col,'Unknown')
-        return f"{done}{row[id_col]}  ·  {sev}"
+    st.markdown(
+        f'<div style="font-size:13px;color:#64748B;margin-bottom:10px;">'
+        f'Showing <b style="color:#F1F5F9;">{len(filt):,}</b> records · '
+        f'Total: <b style="color:#F1F5F9;">{total:,}</b></div>',
+        unsafe_allow_html=True
+    )
 
-    options = filt[id_col].astype(str).tolist()[:50]
-    labels  = [make_label(filt[filt[id_col].astype(str)==c].iloc[0])
-               for c in options]
+    # Dropdown — uses real patient IDs from dataset
+    ids    = filt['_display_id'].tolist()
+    sevs   = filt['_sev'].tolist()
+    labels = []
+    for pid, sev in zip(ids, sevs):
+        done  = '✓  ' if pid in st.session_state.patients else ''
+        labels.append(f'{done}{pid}   ·   {sev}')
 
     chosen_label = st.selectbox(
-        'Select a patient record',
+        f'Select {mtype} Patient',
         labels,
-        key=f'{tab_key}_select'
+        key=f'sel_{mtype}'
     )
     chosen_idx = labels.index(chosen_label)
-    chosen_id  = options[chosen_idx]
-    row = filt[filt[id_col].astype(str)==chosen_id].iloc[0].to_dict()
+    chosen_id  = ids[chosen_idx]
+    row        = filt[filt['_display_id'] == chosen_id].iloc[0].to_dict()
+    sev        = row.get('_sev', 'Unknown')
+    clr        = SEV_COLORS.get(sev, '#94A3B8')
+    bg         = SEV_BG.get(sev, 'rgba(148,163,184,0.1)')
 
-    # ── Patient detail card ───────────────────────────────────
-    sev   = row.get(sev_col,'Unknown')
-    clr   = SEV_COLORS.get(sev,'#94A3B8')
-    bg    = SEV_BG.get(sev,'rgba(148,163,184,0.12)')
+    # Patient detail card
+    st.markdown(
+        f'<div style="background:#111827;border:2px solid {clr}44;'
+        f'border-left:5px solid {clr};border-radius:12px;'
+        f'padding:20px 24px;margin:12px 0 16px;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        f'<div>'
+        f'<div style="font-size:12px;color:#64748B;font-family:monospace;margin-bottom:4px;">PATIENT ID</div>'
+        f'<div style="font-size:22px;font-weight:700;color:#F1F5F9;font-family:monospace;">{chosen_id}</div>'
+        f'<div style="font-size:13px;color:#64748B;margin-top:4px;">{mtype}</div>'
+        f'</div>'
+        f'<div style="background:{bg};border:1px solid {clr}55;border-radius:10px;'
+        f'padding:12px 20px;text-align:center;">'
+        f'<div style="font-size:12px;color:{clr};font-weight:600;margin-bottom:4px;">OVERALL STATUS</div>'
+        f'<div style="font-size:20px;font-weight:700;color:{clr};">{sev}</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    st.markdown(f"""
-    <div style="background:#111827;border:2px solid {clr}33;
-                border-left:4px solid {clr};border-radius:12px;
-                padding:20px 24px;margin:12px 0 16px;">
-        <div style="display:flex;justify-content:space-between;
-                    align-items:flex-start;">
-            <div>
-                <div style="font-size:13px;color:#64748B;
-                            font-family:'JetBrains Mono',monospace;
-                            margin-bottom:4px;">CASE REFERENCE</div>
-                <div style="font-size:20px;font-weight:700;color:#F1F5F9;
-                            font-family:'JetBrains Mono',monospace;">
-                    {chosen_id}
-                </div>
-                <div style="font-size:13px;color:#64748B;margin-top:4px;">
-                    {modality_type}
-                </div>
-            </div>
-            <div style="background:{bg};border:1px solid {clr}44;
-                        border-radius:10px;padding:12px 20px;
-                        text-align:center;min-width:140px;">
-                <div style="font-size:12px;color:{clr};font-weight:600;
-                            text-transform:uppercase;letter-spacing:0.08em;
-                            margin-bottom:4px;">Overall Status</div>
-                <div style="font-size:22px;font-weight:700;color:{clr};">
-                    {sev}
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Show relevant findings per modality
-    render_findings(row, tab_key, sev_col)
+    # Show findings based on modality
+    show_findings(row, mtype)
 
     # Assign to doctor
-    st.markdown("""
-    <div style="font-size:16px;font-weight:600;color:#F1F5F9;
-                margin:20px 0 12px;">Assign to Doctor</div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:16px;font-weight:600;color:#F1F5F9;'
+        'margin:20px 0 12px;">Assign to Doctor</div>',
+        unsafe_allow_html=True
+    )
 
-    ac1, ac2, ac3 = st.columns([2,1,1])
+    ac1, ac2, ac3 = st.columns([2, 1, 1])
     with ac1:
         docs    = st.session_state.doctors
-        doc_opts= {f"{v['name']} — {v['specialty']}": k
-                   for k,v in docs.items()}
+        doc_opts= {f"{v['name']} — {v['specialty']}": k for k,v in docs.items()}
         sel_lbl = st.selectbox('Doctor', list(doc_opts.keys()),
-                               key=f'{tab_key}_doc',
-                               label_visibility='collapsed')
+                               key=f'doc_{mtype}', label_visibility='collapsed')
         sel_doc = doc_opts[sel_lbl]
     with ac2:
-        pat_name = st.text_input('Patient Name',
-                                 placeholder='Full name (optional)',
-                                 key=f'{tab_key}_name',
-                                 label_visibility='collapsed')
+        pat_name = st.text_input('Patient Name', placeholder='Full name (optional)',
+                                 key=f'name_{mtype}', label_visibility='collapsed')
     with ac3:
-        pat_phone = st.text_input('Phone',
-                                  placeholder='Phone number',
-                                  key=f'{tab_key}_phone',
-                                  label_visibility='collapsed')
+        pat_phone = st.text_input('Phone', placeholder='+91 ...',
+                                  key=f'phone_{mtype}', label_visibility='collapsed')
 
-    symptoms = st.text_area(
-        'Reason for Visit',
-        placeholder='Describe symptoms or reason for this test...',
-        height=70, key=f'{tab_key}_symptoms',
-        label_visibility='collapsed'
-    )
+    symptoms = st.text_area('Reason for Visit',
+                            placeholder='Describe symptoms or reason for this test...',
+                            height=70, key=f'sym_{mtype}',
+                            label_visibility='collapsed')
 
     already = chosen_id in st.session_state.patients
     if already:
-        doc_name = st.session_state.patients[chosen_id].get('doctor_name','')
-        status   = st.session_state.patients[chosen_id].get('status','PENDING')
-        st.success(f'✅  Already assigned to {doc_name} · Status: {status}')
-        if st.button('Open Doctor Dashboard →',
-                     key=f'{tab_key}_goto_doc',
-                     use_container_width=True,
-                     type='primary'):
+        doc_n  = st.session_state.patients[chosen_id].get('doctor_name','')
+        status = st.session_state.patients[chosen_id].get('status','PENDING')
+        st.success(f'✅  Already assigned to {doc_n}  ·  Status: {status}')
+        if st.button('Open Doctor Dashboard →', key=f'todoc_{mtype}',
+                     use_container_width=True, type='primary'):
             st.session_state.current_patient = chosen_id
             st.session_state.page = 'doctor'
             st.rerun()
     else:
-        if st.button('Send to Doctor for Review',
-                     key=f'{tab_key}_submit',
-                     use_container_width=True,
-                     type='primary'):
+        if st.button('Send to Doctor for Review', key=f'submit_{mtype}',
+                     use_container_width=True, type='primary'):
             st.session_state.patients[chosen_id] = {
                 **row,
                 'patient_id':    chosen_id,
@@ -428,175 +367,151 @@ def render_patient_list(df_key, tab_key, title, subtitle,
                 'doctor_id':     sel_doc,
                 'doctor_name':   docs[sel_doc]['name'],
                 'status':        'PENDING',
-                'modality_type': modality_type,
-                'severity_label':sev,
+                'modality_type': mtype,
                 'fusion_label':  sev,
+                'severity_label':sev,
                 'registered_at': datetime.now().isoformat(),
             }
-            st.success(
-                f'✅  Case {chosen_id} sent to '
-                f'{docs[sel_doc]["name"]} for review.'
-            )
+            st.success(f'✅  Patient {chosen_id} sent to {docs[sel_doc]["name"]}!')
             st.balloons()
-            if st.button('Open Doctor Dashboard →',
-                         key=f'{tab_key}_after_submit',
+            if st.button('Open Doctor Dashboard →', key=f'todoc2_{mtype}',
                          use_container_width=True):
                 st.session_state.current_patient = chosen_id
                 st.session_state.page = 'doctor'
                 st.rerun()
 
 
-def render_findings(row, tab_key, sev_col):
-    """Show relevant clinical findings based on modality."""
-
-    mtype = row.get('modality_type','')
+def show_findings(row, mtype):
+    """Display clinical findings cleanly based on modality."""
 
     # Lab findings
     if mtype == 'Lab Report' or 'final_severity_label' in row:
-        st.markdown("""
-        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
-                    margin:16px 0 12px;">Lab Findings</div>
-        """, unsafe_allow_html=True)
-
-        c1,c2,c3 = st.columns(3)
-        findings = [
-            ('Kidney Function', row.get('ckd_severity','Not tested'),
-             row.get('ckd_score')),
-            ('Blood Sugar', row.get('diabetes_severity_final','Not tested'),
-             row.get('diabetes_score')),
-            ('Thyroid', row.get('thyroid_severity_final','Not tested'),
-             row.get('thyroid_score')),
+        st.markdown(
+            '<div style="font-size:15px;font-weight:600;color:#F1F5F9;'
+            'margin:14px 0 10px;">Lab Results</div>',
+            unsafe_allow_html=True
+        )
+        cols = st.columns(3)
+        items = [
+            ('Kidney Function',   row.get('ckd_severity','')),
+            ('Blood Sugar Level', row.get('diabetes_severity_final','')),
+            ('Thyroid Function',  row.get('thyroid_severity_final','')),
         ]
-        for col,(lbl,val,score) in zip([c1,c2,c3],findings):
+        for col,(lbl,val) in zip(cols, items):
+            v = val if val and str(val) not in ['None','nan','NaN',''] else 'Not tested'
             with col:
-                v   = val if val and str(val) not in ['None','nan','NaN'] else 'Not tested'
-                clr = '#10B981' if v in ['None','Not tested','Normal'] else '#F59E0B'
-                st.markdown(f"""
-                <div style="background:#0B1120;border:1px solid #1E2D40;
-                            border-radius:10px;padding:16px;">
-                    <div style="font-size:12px;color:#64748B;
-                                text-transform:uppercase;letter-spacing:0.06em;
-                                margin-bottom:6px;">{lbl}</div>
-                    <div style="font-size:16px;font-weight:600;color:#F1F5F9;">
-                        {v}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(
+                    f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                    f'border-radius:10px;padding:14px 16px;">'
+                    f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                    f'letter-spacing:0.06em;margin-bottom:6px;">{lbl}</div>'
+                    f'<div style="font-size:16px;font-weight:600;color:#F1F5F9;">{v}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
     # CT findings
     if mtype == 'CT Scan' or 'ct_predicted_class' in row:
-        st.markdown("""
-        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
-                    margin:16px 0 12px;">CT Scan Findings</div>
-        """, unsafe_allow_html=True)
-
         ct_cls  = row.get('ct_predicted_class','')
         ct_conf = row.get('ct_confidence', 0)
         ct_sev  = row.get('ct_severity_label','Unknown')
-        ct_clr  = SEV_COLORS.get(ct_sev,'#94A3B8')
-        diag    = CT_DIAGNOSIS.get(ct_cls, ct_cls)
-
+        clr     = SEV_COLORS.get(ct_sev,'#94A3B8')
+        diag    = CT_NAMES.get(ct_cls, ct_cls)
+        st.markdown(
+            '<div style="font-size:15px;font-weight:600;color:#F1F5F9;'
+            'margin:14px 0 10px;">CT Scan Result</div>',
+            unsafe_allow_html=True
+        )
         c1,c2 = st.columns(2)
         with c1:
-            st.markdown(f"""
-            <div style="background:#0B1120;border:1px solid #1E2D40;
-                        border-left:4px solid {ct_clr};
-                        border-radius:10px;padding:16px;">
-                <div style="font-size:12px;color:#64748B;
-                            text-transform:uppercase;letter-spacing:0.06em;
-                            margin-bottom:6px;">Diagnosis</div>
-                <div style="font-size:16px;font-weight:600;color:#F1F5F9;">
-                    {diag}</div>
-                <div style="font-size:13px;color:{ct_clr};margin-top:4px;">
-                    {ct_sev}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                f'border-left:4px solid {clr};border-radius:10px;padding:14px 16px;">'
+                f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:6px;">Diagnosis</div>'
+                f'<div style="font-size:16px;font-weight:600;color:#F1F5F9;">{diag}</div>'
+                f'<div style="font-size:13px;color:{clr};margin-top:4px;">{ct_sev}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
         with c2:
-            st.markdown(f"""
-            <div style="background:#0B1120;border:1px solid #1E2D40;
-                        border-radius:10px;padding:16px;">
-                <div style="font-size:12px;color:#64748B;
-                            text-transform:uppercase;letter-spacing:0.06em;
-                            margin-bottom:6px;">AI Confidence</div>
-                <div style="font-size:24px;font-weight:700;color:#F1F5F9;">
-                    {float(ct_conf):.1%}</div>
-                <div style="font-size:12px;color:#64748B;margin-top:4px;">
-                    EfficientNet-B0 model</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                f'border-radius:10px;padding:14px 16px;">'
+                f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:6px;">AI Confidence</div>'
+                f'<div style="font-size:22px;font-weight:700;color:#F1F5F9;">'
+                f'{float(ct_conf):.1%}</div>'
+                f'<div style="font-size:12px;color:#64748B;margin-top:4px;">'
+                f'EfficientNet-B0</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
     # US findings
     if mtype == 'Ultrasound' or 'predicted_class' in row:
-        st.markdown("""
-        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
-                    margin:16px 0 12px;">Ultrasound Findings</div>
-        """, unsafe_allow_html=True)
-
         us_cls  = row.get('predicted_class', row.get('us_predicted_class',''))
         us_conf = row.get('confidence', row.get('us_confidence',0))
         us_sev  = row.get('us_severity_label','Unknown')
-        us_clr  = SEV_COLORS.get(us_sev,'#94A3B8')
-        diag    = US_DIAGNOSIS.get(us_cls, us_cls)
-
+        clr     = SEV_COLORS.get(us_sev,'#94A3B8')
+        diag    = US_NAMES.get(us_cls, us_cls)
+        st.markdown(
+            '<div style="font-size:15px;font-weight:600;color:#F1F5F9;'
+            'margin:14px 0 10px;">Ultrasound Result</div>',
+            unsafe_allow_html=True
+        )
         c1,c2 = st.columns(2)
         with c1:
-            st.markdown(f"""
-            <div style="background:#0B1120;border:1px solid #1E2D40;
-                        border-left:4px solid {us_clr};
-                        border-radius:10px;padding:16px;">
-                <div style="font-size:12px;color:#64748B;
-                            text-transform:uppercase;letter-spacing:0.06em;
-                            margin-bottom:6px;">Scan Result</div>
-                <div style="font-size:16px;font-weight:600;color:#F1F5F9;">
-                    {diag}</div>
-                <div style="font-size:13px;color:{us_clr};margin-top:4px;">
-                    {us_sev}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                f'border-left:4px solid {clr};border-radius:10px;padding:14px 16px;">'
+                f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:6px;">Scan Result</div>'
+                f'<div style="font-size:16px;font-weight:600;color:#F1F5F9;">{diag}</div>'
+                f'<div style="font-size:13px;color:{clr};margin-top:4px;">{us_sev}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
         with c2:
-            st.markdown(f"""
-            <div style="background:#0B1120;border:1px solid #1E2D40;
-                        border-radius:10px;padding:16px;">
-                <div style="font-size:12px;color:#64748B;
-                            text-transform:uppercase;letter-spacing:0.06em;
-                            margin-bottom:6px;">AI Confidence</div>
-                <div style="font-size:24px;font-weight:700;color:#F1F5F9;">
-                    {float(us_conf):.1%}</div>
-                <div style="font-size:12px;color:#64748B;margin-top:4px;">
-                    DenseNet121 model</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                f'border-radius:10px;padding:14px 16px;">'
+                f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:6px;">AI Confidence</div>'
+                f'<div style="font-size:22px;font-weight:700;color:#F1F5F9;">'
+                f'{float(us_conf):.1%}</div>'
+                f'<div style="font-size:12px;color:#64748B;margin-top:4px;">'
+                f'DenseNet121</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
-    # Fusion / Combined
+    # Combined assessment
     if mtype == 'Combined Assessment' or 'fusion_score' in row:
-        st.markdown("""
-        <div style="font-size:16px;font-weight:600;color:#F1F5F9;
-                    margin:16px 0 12px;">Combined Assessment</div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(
+            '<div style="font-size:15px;font-weight:600;color:#F1F5F9;'
+            'margin:14px 0 10px;">Combined Assessment</div>',
+            unsafe_allow_html=True
+        )
+        sev_map = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
         c1,c2,c3 = st.columns(3)
         for col,(lbl,key) in zip([c1,c2,c3],[
             ('Lab Score','lab_score'),
             ('CT Score','ct_score'),
             ('Ultrasound Score','us_score')
         ]):
+            val = row.get(key)
+            v   = str(int(val)) if val is not None and pd.notna(val) else '—'
+            sev = sev_map.get(int(val),'—') if val is not None and pd.notna(val) else '—'
+            clr = SEV_COLORS.get(sev,'#64748B')
             with col:
-                val = row.get(key)
-                v   = str(int(val)) if val is not None and pd.notna(val) else '—'
-                from pandas import isna
-                sev = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}.get(
-                    int(val) if val is not None and not isna(val) else -1,
-                    'Not available'
+                st.markdown(
+                    f'<div style="background:#0B1120;border:1px solid #1E2D40;'
+                    f'border-radius:10px;padding:14px;text-align:center;">'
+                    f'<div style="font-size:11px;color:#64748B;text-transform:uppercase;'
+                    f'letter-spacing:0.06em;margin-bottom:6px;">{lbl}</div>'
+                    f'<div style="font-size:26px;font-weight:700;color:#F1F5F9;">{v}</div>'
+                    f'<div style="font-size:13px;color:{clr};margin-top:4px;">{sev}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
                 )
-                clr = SEV_COLORS.get(sev,'#64748B')
-                st.markdown(f"""
-                <div style="background:#0B1120;border:1px solid #1E2D40;
-                            border-radius:10px;padding:16px;text-align:center;">
-                    <div style="font-size:12px;color:#64748B;
-                                text-transform:uppercase;letter-spacing:0.06em;
-                                margin-bottom:6px;">{lbl}</div>
-                    <div style="font-size:28px;font-weight:700;color:#F1F5F9;">
-                        {v}</div>
-                    <div style="font-size:13px;color:{clr};margin-top:4px;">
-                        {sev}</div>
-                </div>
-                """, unsafe_allow_html=True)
