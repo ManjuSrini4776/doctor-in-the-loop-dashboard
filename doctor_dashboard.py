@@ -143,11 +143,6 @@ End with:
 
 
 def render():
-    # ── Back button ──────────────────────────────────────────
-    if st.button('← Back to Home', key='doc_back'):
-        st.session_state.page = 'home'
-        st.rerun()
-
         # Doctor selector
     doctors = st.session_state.doctors
 
