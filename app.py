@@ -165,14 +165,14 @@ with st.sidebar:
 page = st.session_state.page
 
 if page == 'home':
-    from pages.home import render
+    from components.home import render
     render()
 elif page == 'patient':
-    from pages.patient_portal import render
+    from components.patient_portal import render
     render()
 elif page == 'doctor':
-    from pages.doctor_dashboard import render
+    from components.doctor_dashboard import render
     render()
 elif page == 'result':
-    from pages.patient_result import render
+    from components.patient_result import render
     render()
