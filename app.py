@@ -1,723 +1,1063 @@
-# ============================================================
-# app.py — Doctor-in-the-Loop Dashboard
-# Data structure matches NB09 + NB10 exactly
-# Columns: case_id, lab_score, ct_score, ct_disease,
-#          ultrasound_score, ultrasound_disease,
-#          fusion_score, final_severity
-# ============================================================
+"""
+Doctor-in-the-Loop Medical AI Dashboard
+Multimodal Clinical Decision Support System
+Lab Report + CT Tumor + Fetal Ultrasound
+"""
 
 import streamlit as st
-import json, os, math
 import pandas as pd
 import numpy as np
+import json
+import os
+import time
 from datetime import datetime
-from pipeline import run_rag_pipeline
+from PIL import Image
+import io
+import base64
 
+# ── Page config ───────────────────────────────────────────────
 st.set_page_config(
-    page_title="MedAI Doctor Dashboard",
-    page_icon="🏥", layout="wide",
+    page_title="Doctor-in-the-Loop AI",
+    page_icon="🏥",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# ── Custom CSS ─────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
-html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
-.dash-header{background:linear-gradient(135deg,#0a1f3c,#1a3f6f);
-  padding:1.2rem 1.8rem;border-radius:12px;margin-bottom:1.5rem;
-  display:flex;align-items:center;justify-content:space-between;}
-.dash-title{color:white;font-size:1.3rem;font-weight:600;margin:0;}
-.dash-sub{color:rgba(255,255,255,0.6);font-size:0.78rem;margin-top:3px;}
-.dash-tag{background:rgba(255,255,255,0.12);color:#7dd3fc;font-size:0.7rem;
-  padding:3px 10px;border-radius:20px;border:1px solid rgba(125,211,252,0.3);}
-.metric-card{background:white;border:1px solid #e8edf2;border-radius:10px;
-  padding:1rem 1.2rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
-.metric-val{font-size:1.9rem;font-weight:600;line-height:1.1;}
-.metric-label{font-size:0.7rem;color:#6b7280;text-transform:uppercase;
-  letter-spacing:0.06em;margin-top:3px;}
-.metric-sub{font-size:0.7rem;color:#94a3b8;margin-top:2px;}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;
-  font-size:0.7rem;font-weight:600;}
-.badge-pending{background:#FFF3E0;color:#854F0B;}
-.badge-approved{background:#E8F5E9;color:#2E7D32;}
-.badge-rejected{background:#FFEBEE;color:#C62828;}
-.badge-edited{background:#E3F2FD;color:#1565C0;}
-.badge-severe{background:#FFEBEE;color:#C62828;}
-.badge-moderate{background:#FFF3E0;color:#854F0B;}
-.badge-mild{background:#E8F5E9;color:#2E7D32;}
-.badge-normal{background:#E3F2FD;color:#1565C0;}
-.badge-unknown{background:#F1F5F9;color:#64748b;}
-.section-title{font-size:0.7rem;font-weight:600;color:#94a3b8;
-  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;}
-.report-box{background:#f8fafc;border:1px solid #e2e8f0;
-  border-left:4px solid #1a3f6f;border-radius:8px;
-  padding:1rem 1.2rem;font-size:0.87rem;line-height:1.8;
-  color:#1e293b;white-space:pre-wrap;}
-.evidence-chip{display:inline-block;background:#EBF5FB;color:#185FA5;
-  border:1px solid #B5D4F4;border-radius:6px;padding:2px 9px;
-  font-size:0.7rem;margin:2px;font-family:'DM Mono',monospace;}
-.info-box{background:#EBF5FB;border:1px solid #B5D4F4;border-radius:8px;
-  padding:0.8rem 1rem;font-size:0.82rem;color:#1565C0;margin-bottom:0.8rem;}
-.warn-box{background:#FFF8E1;border:1px solid #FFE082;border-radius:8px;
-  padding:0.8rem 1rem;font-size:0.82rem;color:#854F0B;margin-bottom:0.8rem;}
-.sev-bar-wrap{background:#e2e8f0;border-radius:4px;height:6px;margin-top:4px;}
-.sev-bar{height:6px;border-radius:4px;}
-#MainMenu{visibility:hidden;}footer{visibility:hidden;}header{visibility:hidden;}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap');
+
+/* ── Base ── */
+html, body, [class*="css"] {
+    font-family: 'DM Sans', sans-serif;
+    background-color: #080C14;
+    color: #C8D0E0;
+}
+.stApp { background-color: #080C14; }
+
+/* ── Hide streamlit chrome ── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding: 1.5rem 2rem; max-width: 1400px; }
+
+/* ── Top header bar ── */
+.top-header {
+    background: linear-gradient(135deg, #0D1621 0%, #111827 100%);
+    border: 1px solid #1E293B;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: #F0F4FF;
+    margin: 0;
+}
+.header-subtitle {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.header-badge {
+    background: rgba(16,185,129,0.15);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #10B981;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── Metric cards ── */
+.metric-card {
+    background: #0D1621;
+    border: 1px solid #1E293B;
+    border-radius: 10px;
+    padding: 16px 20px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 10px 0 0 10px;
+}
+.card-normal::before   { background: #10B981; }
+.card-mild::before     { background: #F59E0B; }
+.card-moderate::before { background: #F97316; }
+.card-severe::before   { background: #EF4444; }
+.card-unknown::before  { background: #475569; }
+.card-info::before     { background: #3B82F6; }
+
+.metric-label {
+    font-size: 11px;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 6px;
+}
+.metric-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #F0F4FF;
+    line-height: 1;
+}
+.metric-sub {
+    font-size: 12px;
+    color: #94A3B8;
+    margin-top: 4px;
+}
+
+/* ── Severity badge ── */
+.sev-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.sev-Normal   { background:rgba(16,185,129,0.15); color:#10B981; border:1px solid rgba(16,185,129,0.3); }
+.sev-Mild     { background:rgba(245,158,11,0.15);  color:#F59E0B; border:1px solid rgba(245,158,11,0.3); }
+.sev-Moderate { background:rgba(249,115,22,0.15);  color:#F97316; border:1px solid rgba(249,115,22,0.3); }
+.sev-Severe   { background:rgba(239,68,68,0.15);   color:#EF4444; border:1px solid rgba(239,68,68,0.3); }
+.sev-Unknown  { background:rgba(71,85,105,0.15);   color:#94A3B8; border:1px solid rgba(71,85,105,0.3); }
+
+/* ── Section headers ── */
+.section-header {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #3B82F6;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 8px 0;
+    border-bottom: 1px solid #1E293B;
+    margin-bottom: 16px;
+}
+
+/* ── Patient row ── */
+.patient-row {
+    background: #0D1621;
+    border: 1px solid #1E293B;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.patient-row:hover { border-color: #3B82F6; background: #111827; }
+
+/* ── Report box ── */
+.report-box {
+    background: #0D1621;
+    border: 1px solid #1E293B;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #C8D0E0;
+    white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Action buttons ── */
+.stButton > button {
+    border-radius: 8px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    padding: 8px 20px !important;
+    border: 1px solid !important;
+    transition: all 0.15s !important;
+}
+
+/* ── Sidebar ── */
+.css-1d391kg, [data-testid="stSidebar"] {
+    background: #0A0F1A !important;
+    border-right: 1px solid #1E293B !important;
+}
+
+/* ── Divider ── */
+hr { border-color: #1E293B !important; }
+
+/* ── Progress bar ── */
+.stProgress > div > div { background-color: #3B82F6 !important; }
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: #0D1621;
+    border-radius: 8px;
+    gap: 4px;
+    padding: 4px;
+}
+.stTabs [data-baseweb="tab"] {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #64748B;
+    border-radius: 6px;
+    padding: 6px 16px;
+}
+.stTabs [aria-selected="true"] {
+    background: #1E293B !important;
+    color: #F0F4FF !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Paths
-DATA_CSV    = "data/fusion_patient_context.csv"
-RAG_JSON    = "data/rag_output.json"
-REVIEW_JSON = "data/doctor_review_output.json"
 
+# ── Helpers ───────────────────────────────────────────────────
 SEV_COLORS = {
-    "Severe":"#C62828","Moderate":"#F28E2B",
-    "Mild":"#2E7D32","Normal":"#1565C0","Unknown":"#64748b"
+    'Normal':   '#10B981',
+    'Mild':     '#F59E0B',
+    'Moderate': '#F97316',
+    'Severe':   '#EF4444',
+    'Unknown':  '#94A3B8'
 }
 
-# ── Helpers
-def _notna(val):
-    if val is None: return False
-    try:    return not math.isnan(float(val))
-    except: return str(val) not in ["nan","None",""]
+SCORE_TO_LABEL = {0: 'Normal', 1: 'Mild', 2: 'Moderate', 3: 'Severe'}
 
-def sev_color(s):  return SEV_COLORS.get(str(s),"#64748b")
-def sev_badge(s):
-    m = {"Severe":"badge-severe","Moderate":"badge-moderate",
-         "Mild":"badge-mild","Normal":"badge-normal"}
-    return m.get(str(s),"badge-unknown")
+CT_CLASS_DESC = {
+    'notumor':    'No tumor detected',
+    'pituitary':  'Pituitary adenoma',
+    'meningioma': 'Meningioma',
+    'glioma':     'Glioma (high-grade)'
+}
 
-# ── Assign patient type from NB09 data
-def get_patient_type(row):
-    ct  = str(row.get("ct_disease","")).lower()
-    us  = str(row.get("ultrasound_disease","")).lower()
-    lab = row.get("lab_score")
-    if "fetal" in us or "pregnancy" in us: return "Pregnancy"
-    if any(t in ct for t in ["glioma","meningioma","pituitary","tumor"]): return "Tumor"
-    if _notna(lab): return "Chronic/Lab"
-    return "General"
+US_CLASS_DESC = {
+    'Fetal abdomen': 'Normal fetal abdominal plane',
+    'Fetal brain':   'Fetal brain — neurological assessment',
+    'Fetal femur':   'Fetal femur — growth assessment',
+    'Fetal thorax':  'Fetal thorax — cardiac/lung assessment'
+}
 
-# ── Data loaders
-@st.cache_data(ttl=300)
-def load_patients():
+
+def sev_badge(label: str) -> str:
+    return f'<span class="sev-badge sev-{label}">{label}</span>'
+
+
+def metric_card(label: str, value: str, sub: str = '',
+                card_class: str = 'card-info') -> str:
+    return f"""
+    <div class="metric-card {card_class}">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value">{value}</div>
+        {'<div class="metric-sub">' + sub + '</div>' if sub else ''}
+    </div>"""
+
+
+def score_to_card_class(score) -> str:
+    if pd.isna(score): return 'card-unknown'
+    s = int(score)
+    return {0: 'card-normal', 1: 'card-mild',
+            2: 'card-moderate', 3: 'card-severe'}.get(s, 'card-unknown')
+
+
+def load_sample_data():
+    """Generate realistic sample data for demo."""
+    np.random.seed(42)
+    n = 50
+
+    ct_classes = ['notumor', 'pituitary', 'meningioma', 'glioma']
+    us_classes  = ['Fetal abdomen', 'Fetal brain', 'Fetal femur', 'Fetal thorax']
+    ct_sev_map  = {'notumor': 0, 'pituitary': 1, 'meningioma': 2, 'glioma': 3}
+    us_sev_map  = {'Fetal abdomen': 0, 'Fetal femur': 1,
+                   'Fetal thorax': 2, 'Fetal brain': 3}
+
+    records = []
+    for i in range(n):
+        ct_cls  = np.random.choice(ct_classes, p=[0.4, 0.2, 0.25, 0.15])
+        us_cls  = np.random.choice(us_classes)
+        lab_s   = np.random.choice([0,1,2,3], p=[0.35,0.30,0.20,0.15])
+        ct_s    = ct_sev_map[ct_cls]
+        us_s    = us_sev_map[us_cls]
+        fus_s   = max(lab_s, ct_s, us_s)
+
+        records.append({
+            'case_id':           f'PT-{1000+i:04d}',
+            'lab_score':         lab_s,
+            'lab_severity_label':SCORE_TO_LABEL[lab_s],
+            'ct_score':          ct_s,
+            'ct_predicted_class':ct_cls,
+            'ct_confidence':     round(np.random.uniform(0.75, 0.99), 3),
+            'ct_severity_label': SCORE_TO_LABEL[ct_s],
+            'us_score':          us_s,
+            'us_predicted_class':us_cls,
+            'us_confidence':     round(np.random.uniform(0.80, 0.99), 3),
+            'us_severity_label': SCORE_TO_LABEL[us_s],
+            'fusion_score':      fus_s,
+            'fusion_label':      SCORE_TO_LABEL[fus_s],
+            'modalities_available': 3,
+            'review_status':     'PENDING'
+        })
+
+    return pd.DataFrame(records)
+
+
+@st.cache_data
+def get_openai_client():
     try:
-        df = pd.read_csv(DATA_CSV)
-        df.columns = [c.strip().lower().replace(" ","_") for c in df.columns]
-        df["case_id"] = df["case_id"].astype(str)
-        df["patient_type"] = df.apply(get_patient_type, axis=1)
-        return df
-    except FileNotFoundError:
-        st.warning("⚠️ data/fusion_patient_context.csv not found — using demo data")
-        return _demo()
+        from openai import OpenAI
+        api_key = st.secrets.get('OPENAI_API_KEY', os.environ.get('OPENAI_API_KEY',''))
+        if api_key:
+            return OpenAI(api_key=api_key)
+    except Exception:
+        pass
+    return None
 
-def _demo():
-    return pd.DataFrame([
-        {"case_id":"23529134","lab_score":2.0,"ct_score":None,"ct_disease":None,
-         "ultrasound_score":None,"ultrasound_disease":None,
-         "fusion_score":2.0,"final_severity":"Moderate","patient_type":"Chronic/Lab"},
-        {"case_id":"Tr-gl_0042","lab_score":2.0,"ct_score":3.0,"ct_disease":"glioma",
-         "ultrasound_score":None,"ultrasound_disease":None,
-         "fusion_score":2.5,"final_severity":"Severe","patient_type":"Tumor"},
-        {"case_id":"216","lab_score":None,"ct_score":None,"ct_disease":None,
-         "ultrasound_score":3.0,"ultrasound_disease":"Fetal brain",
-         "fusion_score":3.0,"final_severity":"Severe","patient_type":"Pregnancy"},
-        {"case_id":"25259089","lab_score":2.0,"ct_score":None,"ct_disease":None,
-         "ultrasound_score":None,"ultrasound_disease":None,
-         "fusion_score":2.0,"final_severity":"Moderate","patient_type":"Chronic/Lab"},
-        {"case_id":"Tr-me_0010","lab_score":None,"ct_score":2.0,"ct_disease":"meningioma",
-         "ultrasound_score":None,"ultrasound_disease":None,
-         "fusion_score":2.0,"final_severity":"Moderate","patient_type":"Tumor"},
-    ])
 
-def load_rag():
+@st.cache_resource
+def load_rag_retriever():
+    """Load FAISS baseline RAG if available."""
     try:
-        with open(RAG_JSON) as f: data = json.load(f)
-        if isinstance(data, list):
-            return {str(r["case_id"]): r for r in data}
-        return {str(k): v for k,v in data.items()}
-    except: return {}
+        from langchain_community.vectorstores import FAISS
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        emb = HuggingFaceEmbeddings(
+            model_name='all-MiniLM-L6-v2',
+            encode_kwargs={'batch_size': 32}
+        )
+        db_path = 'rag_output/baseline_vector_db'
+        if os.path.exists(db_path):
+            db = FAISS.load_local(db_path, emb,
+                                  allow_dangerous_deserialization=True)
+            return db
+    except Exception:
+        pass
+    return None
 
-def load_reviews():
+
+def generate_report_rag(patient: dict, rag_db=None,
+                        openai_client=None) -> str:
+    """Generate clinical report using RAG + GPT-4o-mini."""
+    sev_text = {0: 'Normal', 1: 'Mild', 2: 'Moderate', 3: 'Severe'}
+
+    query_parts = []
+    if pd.notna(patient.get('lab_score')):
+        query_parts.append(
+            f"Lab findings indicate {sev_text.get(int(patient['lab_score']),'unknown')} "
+            f"chronic disease severity."
+        )
+    if pd.notna(patient.get('ct_score')):
+        cls = patient.get('ct_predicted_class', 'brain tumor')
+        query_parts.append(
+            f"CT imaging: {CT_CLASS_DESC.get(cls, cls)} with "
+            f"{sev_text.get(int(patient['ct_score']),'unknown')} severity "
+            f"(confidence: {patient.get('ct_confidence',0):.1%})."
+        )
+    if pd.notna(patient.get('us_score')):
+        cls = patient.get('us_predicted_class', 'fetal plane')
+        query_parts.append(
+            f"Ultrasound: {US_CLASS_DESC.get(cls, cls)} — "
+            f"{sev_text.get(int(patient['us_score']),'unknown')} risk level "
+            f"(confidence: {patient.get('us_confidence',0):.1%})."
+        )
+    query_parts.append(
+        f"Overall multimodal fusion severity: {patient.get('fusion_label','Unknown')}."
+    )
+    query = ' '.join(query_parts)
+
+    # RAG context
+    context = ''
+    if rag_db:
+        try:
+            docs    = rag_db.similarity_search(query, k=4)
+            context = '\n\n'.join([d.page_content for d in docs])
+        except Exception:
+            context = ''
+
+    if not openai_client:
+        return (
+            f"Clinical Interpretation: Patient shows "
+            f"{patient.get('fusion_label','Unknown')} overall severity based on "
+            f"multimodal assessment. "
+            f"{'CT indicates ' + CT_CLASS_DESC.get(patient.get('ct_predicted_class',''), '') + '.' if pd.notna(patient.get('ct_score')) else ''} "
+            f"{'Ultrasound shows ' + US_CLASS_DESC.get(patient.get('us_predicted_class',''), '') + '.' if pd.notna(patient.get('us_score')) else ''}\n\n"
+            f"Recommended Actions: Schedule follow-up based on severity level. "
+            f"Review all modality findings before finalising treatment plan.\n\n"
+            f"Urgency: {'High' if patient.get('fusion_label') == 'Severe' else 'Medium' if patient.get('fusion_label') == 'Moderate' else 'Low'}\n\n"
+            f"⚠️ Note: AI-generated draft — requires doctor review and validation."
+        )
+
+    prompt = f"""You are a clinical decision support assistant in a Doctor-in-the-Loop AI system.
+
+Patient Assessment:
+{query}
+
+{"Relevant Clinical Guideline Evidence:" + chr(10) + context if context else ""}
+
+Task: Write a concise clinical dashboard summary for the reviewing doctor.
+
+Rules:
+- Ground every statement in evidence (if provided)
+- Do not hallucinate clinical facts
+- Maximum 4 sentences
+- Flag if severity is Moderate or Severe
+
+Format:
+Clinical Interpretation: <interpretation>
+Recommended Actions: <specific actionable steps>
+Urgency: <Low / Medium / High>
+
+End with:
+⚠️ AI-generated draft — requires doctor review and validation."""
+
     try:
-        with open(REVIEW_JSON) as f: return json.load(f)
-    except: return {}
+        response = openai_client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[{'role': 'user', 'content': prompt}],
+            temperature=0.2,
+            max_tokens=300
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Report generation failed: {e}\n\n⚠️ Please check your OpenAI API key."
 
-def save_review(cid, decision, report, notes, delivery, ptype, sev):
-    os.makedirs("data", exist_ok=True)
-    reviews = load_reviews()
-    reviews[str(cid)] = {
-        "case_id":str(cid),"decision":decision,
-        "edited_report":report,"doctor_notes":notes,
-        "delivery":delivery,"patient_type":ptype,"severity":sev,
-        "timestamp":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-    with open(REVIEW_JSON,"w") as f: json.dump(reviews,f,indent=2)
 
-def save_rag_result(cid, result):
-    os.makedirs("data", exist_ok=True)
-    outputs = load_rag()
-    outputs[str(cid)] = result
-    with open(RAG_JSON,"w") as f:
-        json.dump(list(outputs.values()),f,indent=2)
+# ── Session state ──────────────────────────────────────────────
+if 'df' not in st.session_state:
+    st.session_state.df = None
+if 'reviews' not in st.session_state:
+    st.session_state.reviews = {}
+if 'selected_patient' not in st.session_state:
+    st.session_state.selected_patient = None
+if 'generated_reports' not in st.session_state:
+    st.session_state.generated_reports = {}
 
-# ── Sidebar
+
+# ── Sidebar ────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style='text-align:center;padding:0.8rem 0 0.4rem;'>
-        <div style='font-size:2rem;'>🏥</div>
-        <div style='font-weight:600;font-size:0.95rem;color:#0a1f3c;'>MedAI Dashboard</div>
-        <div style='font-size:0.7rem;color:#94a3b8;'>Doctor-in-the-Loop</div>
+    <div style="padding:16px 0 8px;">
+        <div style="font-family:'Playfair Display',serif;font-size:18px;color:#F0F4FF;">
+            🏥 Medical AI
+        </div>
+        <div style="font-size:11px;color:#475569;margin-top:2px;
+                    font-family:'IBM Plex Mono',monospace;">
+            Doctor-in-the-Loop System
+        </div>
     </div>
-    <hr style='border:none;border-top:1px solid #e2e8f0;margin:0.5rem 0;'>
+    <hr>
     """, unsafe_allow_html=True)
 
-    page = st.radio("nav", label_visibility="collapsed", options=[
-        "🏠 Overview","👨‍⚕️ Review Queue",
-        "✅ Approved Reports","📊 RAG Analytics","ℹ️ About"
-    ])
+    st.markdown("**📂 Data Source**")
+    data_source = st.radio(
+        '', ['Use Sample Data', 'Upload My Data'],
+        label_visibility='collapsed'
+    )
 
-    st.markdown("<hr style='border:none;border-top:1px solid #e2e8f0;margin:0.5rem 0;'>",
-                unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>Filters</div>", unsafe_allow_html=True)
-    f_type = st.multiselect("Patient Type",
-        ["Pregnancy","Tumor","Chronic/Lab","General"],
-        default=["Pregnancy","Tumor","Chronic/Lab","General"])
-    f_sev  = st.multiselect("Severity",
-        ["Severe","Moderate","Mild","Normal"],
-        default=["Severe","Moderate"])
-    f_stat = st.multiselect("Status",
-        ["Pending","Approved","Rejected","Edited"],
-        default=["Pending"])
-    show_n = st.slider("Patients per page",10,100,25)
+    if data_source == 'Upload My Data':
+        st.markdown("**Fusion Output**")
+        fusion_file = st.file_uploader(
+            'FINAL_MULTIMODAL_FUSION.parquet',
+            type=['parquet', 'csv'],
+            key='fusion_upload'
+        )
+        if fusion_file:
+            if fusion_file.name.endswith('.parquet'):
+                st.session_state.df = pd.read_parquet(fusion_file)
+            else:
+                st.session_state.df = pd.read_csv(fusion_file)
+            st.success(f'{len(st.session_state.df):,} patients loaded')
+    else:
+        if st.button('Load Sample Data', use_container_width=True):
+            st.session_state.df = load_sample_data()
+            st.success('50 sample patients loaded')
 
-# ── Load
-patients_df = load_patients()
-rag_outputs = load_rag()
-reviews     = load_reviews()
+    st.markdown('<hr>', unsafe_allow_html=True)
 
-patients_df["status"] = patients_df["case_id"].apply(
-    lambda c: reviews.get(str(c),{}).get("decision","Pending"))
+    # Severity filter
+    st.markdown("**🔍 Filter Patients**")
+    sev_filter = st.multiselect(
+        'Severity',
+        ['Normal', 'Mild', 'Moderate', 'Severe', 'Unknown'],
+        default=['Normal', 'Mild', 'Moderate', 'Severe', 'Unknown'],
+        label_visibility='collapsed'
+    )
 
-fdf = patients_df.copy()
-if f_type: fdf = fdf[fdf["patient_type"].isin(f_type)]
-if f_sev:  fdf = fdf[fdf["final_severity"].apply(
-    lambda s: any(f.lower() in str(s).lower() for f in f_sev))]
-if f_stat: fdf = fdf[fdf["status"].isin(f_stat)]
-
-TYPE_ICON = {"Pregnancy":"🤰","Tumor":"🧠","Chronic/Lab":"🧪","General":"👤"}
-
-# ══════════════════════════════════════════════
-# OVERVIEW
-# ══════════════════════════════════════════════
-if page == "🏠 Overview":
-    st.markdown(f"""
-    <div class='dash-header'>
-        <div>
-            <div class='dash-title'>🏥 Doctor-in-the-Loop Medical AI Dashboard</div>
-            <div class='dash-sub'>Multimodal AI · RAG Reports · Doctor Approval · {datetime.now().strftime("%d %b %Y")}</div>
-        </div>
-        <div style='display:flex;gap:6px;flex-direction:column;align-items:flex-end;'>
-            <span class='dash-tag'>Page Index RAG · Faithfulness 0.692</span>
-            <span class='dash-tag'>Hierarchical RAG · Relevancy 0.701</span>
-        </div>
-    </div>""", unsafe_allow_html=True)
-
-    total=len(patients_df)
-    pending=len(patients_df[patients_df["status"]=="Pending"])
-    approved=len(patients_df[patients_df["status"]=="Approved"])
-    rejected=len(patients_df[patients_df["status"]=="Rejected"])
-    severe=len(patients_df[patients_df["final_severity"].str.contains("Severe",na=False)])
-    preg=len(patients_df[patients_df["patient_type"]=="Pregnancy"])
-
-    c1,c2,c3,c4,c5,c6=st.columns(6)
-    for col,val,lbl,sub,color in [
-        (c1,total,"Total Patients","All modalities","#0a1f3c"),
-        (c2,pending,"Pending","Needs review","#854F0B"),
-        (c3,approved,"Approved","Released","#2E7D32"),
-        (c4,rejected,"Rejected","Needs regen","#C62828"),
-        (c5,severe,"Severe Cases","Priority","#C62828"),
-        (c6,preg,"Pregnancy","Follow-up","#4A148C"),
-    ]:
-        col.markdown(f"""
-        <div class='metric-card' style='border-top:3px solid {color};'>
-            <div class='metric-val' style='color:{color};'>{val}</div>
-            <div class='metric-label'>{lbl}</div>
-            <div class='metric-sub'>{sub}</div>
-        </div>""", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    cl,cr=st.columns([2.5,1.2])
-
-    with cl:
-        st.markdown("<div class='section-title'>Priority Queue — Severe & Moderate</div>",
-                    unsafe_allow_html=True)
-        pq = patients_df[patients_df["final_severity"].isin(["Severe","Moderate"])]\
-            .sort_values("fusion_score",ascending=False,na_position="last").head(15)
-        show_c=[c for c in ["case_id","patient_type","final_severity",
-                             "ct_disease","ultrasound_disease","fusion_score","status"]
-                if c in pq.columns]
-        st.dataframe(pq[show_c],use_container_width=True,hide_index=True,
-            column_config={
-                "case_id":st.column_config.TextColumn("Patient ID",width=130),
-                "patient_type":st.column_config.TextColumn("Type",width=110),
-                "final_severity":st.column_config.TextColumn("Severity",width=90),
-                "ct_disease":st.column_config.TextColumn("CT Finding",width=110),
-                "ultrasound_disease":st.column_config.TextColumn("US Finding",width=120),
-                "fusion_score":st.column_config.NumberColumn("Fusion",format="%.2f",width=80),
-                "status":st.column_config.TextColumn("Status",width=90),
-            })
-
-    with cr:
-        st.markdown("<div class='section-title'>Severity Distribution</div>",
-                    unsafe_allow_html=True)
-        for s in ["Severe","Moderate","Mild","Normal"]:
-            cnt=patients_df["final_severity"].value_counts().get(s,0)
-            pct=int(cnt/max(total,1)*100); c=sev_color(s)
-            st.markdown(f"""
-            <div style='margin-bottom:9px;'>
-                <div style='display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px;'>
-                    <span style='font-weight:500;'>{s}</span>
-                    <span style='color:#64748b;'>{cnt} ({pct}%)</span>
-                </div>
-                <div class='sev-bar-wrap'><div class='sev-bar' style='width:{pct}%;background:{c};'></div></div>
-            </div>""", unsafe_allow_html=True)
-
-        reviewed=approved+rejected; pd2=int(reviewed/max(total,1)*100)
-        st.markdown(f"""
-        <div style='margin-top:1rem;background:#f0fdf4;border:1px solid #86efac;
-                    border-radius:8px;padding:0.8rem;'>
-            <div style='font-size:0.72rem;font-weight:600;color:#166534;margin-bottom:5px;'>
-                💡 System Impact</div>
-            <div style='font-size:0.75rem;color:#166534;line-height:1.6;'>
-                <b>{approved}</b> reports approved<br>
-                <b>{preg}</b> pregnancy follow-ups<br>
-                Reducing unnecessary revisits
-            </div>
-        </div>""", unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════
-# REVIEW QUEUE
-# ══════════════════════════════════════════════
-elif page == "👨‍⚕️ Review Queue":
+    st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
-    <div class='dash-header'>
-        <div>
-            <div class='dash-title'>👨‍⚕️ Doctor Review Queue</div>
-            <div class='dash-sub'>Select patient → View AI scores → Read report → Approve / Edit / Reject</div>
+    <div style="font-size:11px;color:#475569;font-family:'IBM Plex Mono',monospace;">
+        <div style="margin-bottom:4px;">📊 Lab: MIMIC-IV</div>
+        <div style="margin-bottom:4px;">🧠 CT: EfficientNet-B0</div>
+        <div style="margin-bottom:4px;">🔬 US: DenseNet121</div>
+        <div style="margin-bottom:4px;">🤖 RAG: Baseline V1</div>
+        <div style="color:#334155;margin-top:8px;">v1.0 · Final Year Project</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ── Main content ───────────────────────────────────────────────
+
+# Top header
+st.markdown("""
+<div class="top-header">
+    <div>
+        <div class="header-title">Doctor-in-the-Loop Clinical AI Dashboard</div>
+        <div class="header-subtitle">
+            Multimodal Severity Assessment · Lab Report + CT Tumor + Fetal Ultrasound
         </div>
-    </div>""", unsafe_allow_html=True)
+    </div>
+    <div class="header-badge">● SYSTEM ACTIVE</div>
+</div>
+""", unsafe_allow_html=True)
 
-    if fdf.empty:
-        st.info("No patients match your filters. Adjust sidebar.")
-        st.stop()
+df = st.session_state.df
 
-    cq,cd=st.columns([1,2.8])
+if df is None:
+    # Landing state
+    st.markdown("""
+    <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">🏥</div>
+        <div style="font-family:'Playfair Display',serif;font-size:24px;
+                    color:#F0F4FF;margin-bottom:8px;">
+            Welcome to the Medical AI Dashboard
+        </div>
+        <div style="font-size:14px;color:#64748B;max-width:500px;margin:0 auto;">
+            Load sample data or upload your fusion output from the sidebar
+            to begin reviewing patient cases.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with cq:
-        st.markdown(f"<div class='section-title'>Queue ({len(fdf)} patients)</div>",
-                    unsafe_allow_html=True)
-        if "selected_patient" not in st.session_state:
-            st.session_state.selected_patient = str(
-                fdf.sort_values("fusion_score",ascending=False,
-                                na_position="last").iloc[0]["case_id"])
-
-        sdf=fdf.sort_values("fusion_score",ascending=False,na_position="last").head(show_n)
-        for _,row in sdf.iterrows():
-            cid=str(row["case_id"]); sev=str(row.get("final_severity","Unknown"))
-            status=str(row.get("status","Pending")); ptype=str(row.get("patient_type","General"))
-            active=cid==st.session_state.selected_patient
-            icon=TYPE_ICON.get(ptype,"👤")
-
-            if st.button(f"{'▶ ' if active else ''}{icon} #{cid}",
-                         key=f"q_{cid}",use_container_width=True,
-                         type="primary" if active else "secondary"):
-                st.session_state.selected_patient=cid; st.rerun()
-
-            pb={"Pending":"badge-pending","Approved":"badge-approved",
-                "Rejected":"badge-rejected","Edited":"badge-edited"}.get(status,"badge-pending")
+    # Feature cards
+    cols = st.columns(4)
+    features = [
+        ('🧪', 'Lab Severity', 'CKD + Diabetes + Thyroid fusion scoring'),
+        ('🧠', 'CT Analysis', 'EfficientNet-B0 tumor classification + GradCAM'),
+        ('🔬', 'Ultrasound', 'DenseNet121 fetal plane classification + GradCAM'),
+        ('📋', 'AI Reports', 'RAG + GPT-4o-mini clinical report generation'),
+    ]
+    for col, (icon, title, desc) in zip(cols, features):
+        with col:
             st.markdown(f"""
-            <div style='font-size:0.7rem;margin:-8px 0 8px 2px;'>
-                <span class='badge {sev_badge(sev)}'>{sev}</span>
-                <span class='badge {pb}'>{status}</span>
-            </div>""", unsafe_allow_html=True)
-
-    with cd:
-        cid=st.session_state.selected_patient
-        pat=patients_df[patients_df["case_id"].astype(str)==cid]
-        if pat.empty: st.warning("Patient not found."); st.stop()
-
-        p=pat.iloc[0]; sev=str(p.get("final_severity","Unknown"))
-        ptype=str(p.get("patient_type","General"))
-        score=p.get("fusion_score",None); icon=TYPE_ICON.get(ptype,"👤")
-        sc=sev_color(sev)
-
-        # Patient header
-        st.markdown(f"""
-        <div style='background:#f8fafc;border:1px solid #e2e8f0;
-                    border-left:4px solid {sc};border-radius:10px;
-                    padding:1rem 1.2rem;margin-bottom:1rem;'>
-            <div style='display:flex;justify-content:space-between;align-items:center;'>
-                <div>
-                    <div style='font-size:1.1rem;font-weight:600;color:#0a1f3c;'>
-                        {icon} Patient #{cid}</div>
-                    <div style='font-size:0.75rem;color:#64748b;margin-top:3px;'>
-                        {ptype} · Multimodal AI Assessment</div>
-                </div>
-                <span class='badge {sev_badge(sev)}' style='font-size:0.8rem;padding:5px 14px;'>
-                    {sev}</span>
+            <div class="metric-card card-info" style="text-align:center;padding:20px;">
+                <div style="font-size:28px;margin-bottom:8px;">{icon}</div>
+                <div style="font-size:13px;font-weight:600;color:#F0F4FF;
+                            margin-bottom:4px;">{title}</div>
+                <div style="font-size:12px;color:#64748B;">{desc}</div>
             </div>
-        </div>""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        # Context messages
-        if ptype=="Pregnancy":
-            st.markdown("<div class='info-box'>🤰 <b>Pregnancy Follow-up</b> — If findings are normal, approve for WhatsApp/SMS delivery to avoid unnecessary hospital revisit.</div>",
-                        unsafe_allow_html=True)
-        elif ptype=="Chronic/Lab":
-            st.markdown("<div class='info-box'>🧪 <b>Chronic Disease Patient</b> — Regular monitoring. Approve with next appointment to reduce revisits.</div>",
-                        unsafe_allow_html=True)
-        elif sev=="Severe":
-            st.markdown("<div class='warn-box'>⚠️ <b>Severe Case</b> — Immediate attention required. Review carefully before approving.</div>",
-                        unsafe_allow_html=True)
+else:
+    # Apply severity filter
+    if 'fusion_label' in df.columns:
+        df_filtered = df[df['fusion_label'].isin(sev_filter)].copy()
+    else:
+        df_filtered = df.copy()
 
-        # Score cards — from NB09 fusion_df columns
-        s1,s2,s3,s4=st.columns(4)
-        for col,lbl,val,color in [
-            (s1,"Lab Score",    p.get("lab_score"),        "#1565C0"),
-            (s2,"CT Score",     p.get("ct_score"),         "#C62828"),
-            (s3,"Ultrasound",   p.get("ultrasound_score"), "#2E7D32"),
-            (s4,"Fusion Score", score,                     sc),
-        ]:
-            d=f"{float(val):.1f}" if _notna(val) else "—"
-            col.markdown(f"""
-            <div class='metric-card' style='border-top:3px solid {color};padding:0.7rem;'>
-                <div class='metric-val' style='color:{color};font-size:1.4rem;'>{d}</div>
-                <div class='metric-label'>{lbl}</div>
-            </div>""", unsafe_allow_html=True)
+    if 'review_status' not in df_filtered.columns:
+        df_filtered['review_status'] = 'PENDING'
 
-        # Findings chips
-        findings=[]
-        ct_d=str(p.get("ct_disease",""))
-        us_d=str(p.get("ultrasound_disease",""))
-        if ct_d.lower() not in ["nan","none",""]:
-            findings.append(f"🧠 CT: {ct_d}")
-        if us_d.lower() not in ["nan","none",""]:
-            findings.append(f"🔊 US: {us_d}")
-        if findings:
-            st.markdown("<br>"+" ".join([f"<span class='evidence-chip'>{f}</span>"
-                                         for f in findings]),
-                        unsafe_allow_html=True)
-
-        # RAG report — load from pre-generated file
-        st.markdown("<br><div class='section-title'>AI-Generated Clinical Report</div>",
-                    unsafe_allow_html=True)
-        existing  = reviews.get(cid,{})
-        rag_data  = rag_outputs.get(cid,{})
-        default_report = rag_data.get("report","")
-
-        if default_report:
-            # Show metadata
-            sources = rag_data.get("sources",[])
-            st.markdown(
-                f"<span class='evidence-chip'>🤖 {rag_data.get('rag_type','Page Index RAG')}</span>"
-                f"<span class='evidence-chip'>Faithfulness: {rag_data.get('faithfulness',0.692):.3f}</span>"
-                +"".join([f"<span class='evidence-chip'>📄 {s}</span>"
-                           for s in sources[:4]]),
+    # ── Overview metrics ──────────────────────────────────────
+    st.markdown('<div class="section-header">── Overview</div>',
                 unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
+
+    total      = len(df)
+    pending    = len([v for v in st.session_state.reviews.values()
+                      if v.get('status') == 'PENDING']) or total
+    approved   = len([v for v in st.session_state.reviews.values()
+                      if v.get('status') == 'APPROVED'])
+    rejected   = len([v for v in st.session_state.reviews.values()
+                      if v.get('status') == 'REJECTED'])
+    severe_n   = len(df[df.get('fusion_label', pd.Series()) == 'Severe']) \
+                 if 'fusion_label' in df.columns else 0
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1:
+        st.markdown(metric_card('Total Patients', f'{total:,}',
+                                'in system', 'card-info'),
+                    unsafe_allow_html=True)
+    with c2:
+        st.markdown(metric_card('Pending Review',
+                                f'{total - approved - rejected:,}',
+                                'awaiting doctor', 'card-mild'),
+                    unsafe_allow_html=True)
+    with c3:
+        st.markdown(metric_card('Approved', f'{approved:,}',
+                                'reports signed off', 'card-normal'),
+                    unsafe_allow_html=True)
+    with c4:
+        st.markdown(metric_card('Rejected', f'{rejected:,}',
+                                'reports returned', 'card-moderate'),
+                    unsafe_allow_html=True)
+    with c5:
+        st.markdown(metric_card('Severe Cases', f'{severe_n:,}',
+                                'requires urgent attention', 'card-severe'),
+                    unsafe_allow_html=True)
+
+    st.markdown('<br>', unsafe_allow_html=True)
+
+    # ── Two columns layout ────────────────────────────────────
+    left_col, right_col = st.columns([1, 2], gap='large')
+
+    with left_col:
+        st.markdown('<div class="section-header">── Patient List</div>',
+                    unsafe_allow_html=True)
+
+        # Severity distribution mini chart
+        if 'fusion_label' in df.columns:
+            sev_counts = df['fusion_label'].value_counts()
+            for sev in ['Severe', 'Moderate', 'Mild', 'Normal']:
+                cnt = sev_counts.get(sev, 0)
+                pct = round(100 * cnt / len(df), 1)
+                color = SEV_COLORS.get(sev, '#94A3B8')
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;
+                            gap:8px;margin-bottom:5px;">
+                    <div style="width:60px;font-size:11px;color:#64748B;
+                                font-family:'IBM Plex Mono',monospace;">{sev}</div>
+                    <div style="flex:1;height:6px;background:#1E293B;
+                                border-radius:3px;overflow:hidden;">
+                        <div style="width:{pct}%;height:100%;
+                                    background:{color};border-radius:3px;"></div>
+                    </div>
+                    <div style="width:36px;font-size:11px;color:#94A3B8;
+                                text-align:right;">{cnt}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown('<br>', unsafe_allow_html=True)
+
+        # Patient list
+        display_cols = ['case_id', 'fusion_label', 'modalities_available'] \
+            if all(c in df_filtered.columns
+                   for c in ['case_id', 'fusion_label', 'modalities_available']) \
+            else df_filtered.columns[:3].tolist()
+
+        for _, row in df_filtered.head(30).iterrows():
+            case_id = str(row.get('case_id', row.name))
+            fus_lbl = row.get('fusion_label', 'Unknown')
+            mods    = int(row.get('modalities_available', 1))
+            color   = SEV_COLORS.get(fus_lbl, '#94A3B8')
+            status  = st.session_state.reviews.get(case_id, {}).get('status', '')
+            status_icon = {'APPROVED': '✅', 'REJECTED': '❌',
+                           'EDITED': '✏️'}.get(status, '⏳')
+
+            if st.button(
+                f"{status_icon}  {case_id}  ·  {fus_lbl}  ·  {mods}🔲",
+                key=f'pt_{case_id}',
+                use_container_width=True
+            ):
+                st.session_state.selected_patient = case_id
+
+    with right_col:
+        if st.session_state.selected_patient:
+            case_id = st.session_state.selected_patient
+            mask    = df_filtered['case_id'].astype(str) == case_id \
+                      if 'case_id' in df_filtered.columns \
+                      else df_filtered.index.astype(str) == case_id
+
+            if mask.any():
+                patient = df_filtered[mask].iloc[0].to_dict()
+
+                # Patient header
+                fus_lbl = patient.get('fusion_label', 'Unknown')
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;
+                            justify-content:space-between;margin-bottom:16px;">
+                    <div>
+                        <span style="font-family:'IBM Plex Mono',monospace;
+                                     font-size:18px;color:#F0F4FF;
+                                     font-weight:500;">
+                            {case_id}
+                        </span>
+                        <span style="margin-left:12px;">
+                            {sev_badge(fus_lbl)}
+                        </span>
+                    </div>
+                    <div style="font-size:11px;color:#475569;
+                                font-family:'IBM Plex Mono',monospace;">
+                        {datetime.now().strftime('%Y-%m-%d %H:%M')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Tabs
+                tab1, tab2, tab3, tab4 = st.tabs([
+                    '📊 Severity Scores',
+                    '🧠 CT Analysis',
+                    '🔬 Ultrasound',
+                    '📋 Clinical Report'
+                ])
+
+                # ── Tab 1: Severity ──────────────────────────
+                with tab1:
+                    st.markdown('<div class="section-header">── Modality Scores</div>',
+                                unsafe_allow_html=True)
+
+                    c1, c2, c3, c4 = st.columns(4)
+                    lab_s  = patient.get('lab_score')
+                    ct_s   = patient.get('ct_score')
+                    us_s   = patient.get('us_score')
+                    fus_s  = patient.get('fusion_score')
+
+                    with c1:
+                        lbl = SCORE_TO_LABEL.get(int(lab_s), 'Unknown') \
+                              if pd.notna(lab_s) else 'N/A'
+                        st.markdown(
+                            metric_card('Lab Score',
+                                        str(int(lab_s)) if pd.notna(lab_s) else '—',
+                                        lbl,
+                                        score_to_card_class(lab_s)),
+                            unsafe_allow_html=True)
+                    with c2:
+                        lbl = SCORE_TO_LABEL.get(int(ct_s), 'Unknown') \
+                              if pd.notna(ct_s) else 'N/A'
+                        st.markdown(
+                            metric_card('CT Score',
+                                        str(int(ct_s)) if pd.notna(ct_s) else '—',
+                                        lbl,
+                                        score_to_card_class(ct_s)),
+                            unsafe_allow_html=True)
+                    with c3:
+                        lbl = SCORE_TO_LABEL.get(int(us_s), 'Unknown') \
+                              if pd.notna(us_s) else 'N/A'
+                        st.markdown(
+                            metric_card('US Score',
+                                        str(int(us_s)) if pd.notna(us_s) else '—',
+                                        lbl,
+                                        score_to_card_class(us_s)),
+                            unsafe_allow_html=True)
+                    with c4:
+                        st.markdown(
+                            metric_card('Fusion Score',
+                                        str(int(fus_s)) if pd.notna(fus_s) else '—',
+                                        fus_lbl,
+                                        score_to_card_class(fus_s)),
+                            unsafe_allow_html=True)
+
+                    st.markdown('<br>', unsafe_allow_html=True)
+
+                    # Score bar chart
+                    scores = {}
+                    if pd.notna(lab_s):  scores['Lab']        = int(lab_s)
+                    if pd.notna(ct_s):   scores['CT']         = int(ct_s)
+                    if pd.notna(us_s):   scores['Ultrasound'] = int(us_s)
+                    if pd.notna(fus_s):  scores['Fusion']     = int(fus_s)
+
+                    if scores:
+                        import plotly.graph_objects as go
+                        fig = go.Figure()
+                        colors_list = [
+                            SEV_COLORS.get(SCORE_TO_LABEL.get(v,'Unknown'),'#94A3B8')
+                            for v in scores.values()
+                        ]
+                        fig.add_trace(go.Bar(
+                            x=list(scores.keys()),
+                            y=list(scores.values()),
+                            marker_color=colors_list,
+                            text=[SCORE_TO_LABEL.get(v,'?')
+                                  for v in scores.values()],
+                            textposition='outside',
+                            textfont=dict(color='#C8D0E0', size=11)
+                        ))
+                        fig.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#94A3B8', family='DM Sans'),
+                            yaxis=dict(range=[0, 4], tickvals=[0,1,2,3],
+                                       ticktext=['Normal','Mild','Moderate','Severe'],
+                                       gridcolor='#1E293B'),
+                            xaxis=dict(gridcolor='#1E293B'),
+                            height=280,
+                            margin=dict(t=20, b=20, l=10, r=10),
+                            showlegend=False
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    # Lab details
+                    if any(c in patient for c in
+                           ['ckd_severity','diabetes_severity_final',
+                            'thyroid_severity_final']):
+                        st.markdown('<div class="section-header">'
+                                    '── Lab Details</div>',
+                                    unsafe_allow_html=True)
+                        lc1, lc2, lc3 = st.columns(3)
+                        with lc1:
+                            v = patient.get('ckd_severity', 'N/A')
+                            st.markdown(
+                                metric_card('CKD Stage', str(v) if v else 'N/A',
+                                            '', 'card-info'),
+                                unsafe_allow_html=True)
+                        with lc2:
+                            v = patient.get('diabetes_severity_final', 'N/A')
+                            st.markdown(
+                                metric_card('Diabetes', str(v) if v else 'N/A',
+                                            '', 'card-info'),
+                                unsafe_allow_html=True)
+                        with lc3:
+                            v = patient.get('thyroid_severity_final', 'N/A')
+                            st.markdown(
+                                metric_card('Thyroid', str(v) if v else 'N/A',
+                                            '', 'card-info'),
+                                unsafe_allow_html=True)
+
+                # ── Tab 2: CT ────────────────────────────────
+                with tab2:
+                    st.markdown('<div class="section-header">'
+                                '── CT Tumor Classification</div>',
+                                unsafe_allow_html=True)
+
+                    ct_cls  = patient.get('ct_predicted_class', 'N/A')
+                    ct_conf = patient.get('ct_confidence', None)
+                    ct_sev  = patient.get('ct_severity_label',
+                                          SCORE_TO_LABEL.get(
+                                              int(ct_s) if pd.notna(ct_s) else -1,
+                                              'Unknown'))
+
+                    gc1, gc2 = st.columns(2)
+                    with gc1:
+                        st.markdown(
+                            metric_card('Predicted Class',
+                                        ct_cls.title() if ct_cls != 'N/A' else '—',
+                                        CT_CLASS_DESC.get(ct_cls, ''),
+                                        score_to_card_class(ct_s)),
+                            unsafe_allow_html=True)
+                    with gc2:
+                        conf_str = f'{float(ct_conf):.1%}' \
+                                   if ct_conf is not None else '—'
+                        st.markdown(
+                            metric_card('Confidence', conf_str,
+                                        f'Severity: {ct_sev}',
+                                        score_to_card_class(ct_s)),
+                            unsafe_allow_html=True)
+
+                    # GradCAM
+                    st.markdown('<br>', unsafe_allow_html=True)
+                    st.markdown('<div class="section-header">'
+                                '── Grad-CAM Explainability</div>',
+                                unsafe_allow_html=True)
+
+                    gradcam_path = patient.get('gradcam_path', '')
+                    if gradcam_path and os.path.exists(str(gradcam_path)):
+                        img = Image.open(gradcam_path)
+                        st.image(img, caption=f'Grad-CAM — {ct_cls}',
+                                 use_column_width=True)
+                        st.markdown("""
+                        <div style="font-size:11px;color:#64748B;margin-top:4px;
+                                    font-family:'IBM Plex Mono',monospace;">
+                            Heatmap shows regions the model focused on for
+                            classification decision.
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown("""
+                        <div class="metric-card card-info"
+                             style="text-align:center;padding:40px;">
+                            <div style="font-size:32px;margin-bottom:8px;">🧠</div>
+                            <div style="color:#64748B;font-size:13px;">
+                                Grad-CAM image not available for this patient.<br>
+                                Run CT_NB03 to generate heatmaps.
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ── Tab 3: Ultrasound ────────────────────────
+                with tab3:
+                    st.markdown('<div class="section-header">'
+                                '── Fetal Ultrasound Classification</div>',
+                                unsafe_allow_html=True)
+
+                    us_cls  = patient.get('us_predicted_class', 'N/A')
+                    us_conf = patient.get('us_confidence', None)
+                    us_sev  = patient.get('us_severity_label',
+                                          SCORE_TO_LABEL.get(
+                                              int(us_s) if pd.notna(us_s) else -1,
+                                              'Unknown'))
+
+                    uc1, uc2 = st.columns(2)
+                    with uc1:
+                        st.markdown(
+                            metric_card('Fetal Plane', us_cls if us_cls!='N/A' else '—',
+                                        US_CLASS_DESC.get(us_cls, ''),
+                                        score_to_card_class(us_s)),
+                            unsafe_allow_html=True)
+                    with uc2:
+                        conf_str = f'{float(us_conf):.1%}' \
+                                   if us_conf is not None else '—'
+                        st.markdown(
+                            metric_card('Confidence', conf_str,
+                                        f'Severity: {us_sev}',
+                                        score_to_card_class(us_s)),
+                            unsafe_allow_html=True)
+
+                    # GradCAM
+                    st.markdown('<br>', unsafe_allow_html=True)
+                    st.markdown('<div class="section-header">'
+                                '── Grad-CAM Explainability</div>',
+                                unsafe_allow_html=True)
+
+                    us_gradcam = patient.get('us_gradcam_path', '')
+                    if us_gradcam and os.path.exists(str(us_gradcam)):
+                        img = Image.open(us_gradcam)
+                        st.image(img, caption=f'Grad-CAM — {us_cls}',
+                                 use_column_width=True)
+                    else:
+                        st.markdown("""
+                        <div class="metric-card card-info"
+                             style="text-align:center;padding:40px;">
+                            <div style="font-size:32px;margin-bottom:8px;">🔬</div>
+                            <div style="color:#64748B;font-size:13px;">
+                                Grad-CAM image not available for this patient.<br>
+                                Run US_NB03 to generate heatmaps.
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ── Tab 4: Clinical Report ───────────────────
+                with tab4:
+                    st.markdown('<div class="section-header">'
+                                '── AI-Generated Clinical Report</div>',
+                                unsafe_allow_html=True)
+
+                    existing_review = st.session_state.reviews.get(case_id, {})
+
+                    # Generate button
+                    if case_id not in st.session_state.generated_reports:
+                        if st.button('🤖 Generate AI Report',
+                                     use_container_width=True,
+                                     key=f'gen_{case_id}'):
+                            with st.spinner('Retrieving guidelines + generating report...'):
+                                rag_db = load_rag_retriever()
+                                oai    = get_openai_client()
+                                report = generate_report_rag(patient, rag_db, oai)
+                                st.session_state.generated_reports[case_id] = report
+                            st.rerun()
+                    else:
+                        report = st.session_state.generated_reports[case_id]
+
+                        st.markdown('<div class="section-header">'
+                                    '── Draft Report</div>',
+                                    unsafe_allow_html=True)
+                        st.markdown(
+                            f'<div class="report-box">{report}</div>',
+                            unsafe_allow_html=True
+                        )
+
+                        st.markdown('<br>', unsafe_allow_html=True)
+                        st.markdown('<div class="section-header">'
+                                    '── Doctor Review</div>',
+                                    unsafe_allow_html=True)
+
+                        # Editable report
+                        edited = st.text_area(
+                            'Edit report (optional)',
+                            value=report,
+                            height=200,
+                            key=f'edit_{case_id}',
+                            label_visibility='collapsed'
+                        )
+
+                        # Doctor notes
+                        notes = st.text_input(
+                            'Doctor notes',
+                            placeholder='Add clinical notes...',
+                            key=f'notes_{case_id}',
+                            label_visibility='collapsed'
+                        )
+
+                        # Action buttons
+                        bc1, bc2, bc3, bc4 = st.columns(4)
+                        with bc1:
+                            if st.button('✅ Approve', key=f'app_{case_id}',
+                                         use_container_width=True):
+                                st.session_state.reviews[case_id] = {
+                                    'status':       'APPROVED',
+                                    'final_report': edited,
+                                    'notes':        notes,
+                                    'reviewed_at':  datetime.now().isoformat(),
+                                    'reviewer':     'Doctor'
+                                }
+                                st.success('Report approved and signed off!')
+                        with bc2:
+                            if st.button('✏️ Approve + Edit',
+                                         key=f'edit_app_{case_id}',
+                                         use_container_width=True):
+                                st.session_state.reviews[case_id] = {
+                                    'status':       'EDITED',
+                                    'final_report': edited,
+                                    'notes':        notes,
+                                    'reviewed_at':  datetime.now().isoformat(),
+                                    'reviewer':     'Doctor'
+                                }
+                                st.info('Report approved with edits.')
+                        with bc3:
+                            if st.button('❌ Reject', key=f'rej_{case_id}',
+                                         use_container_width=True):
+                                st.session_state.reviews[case_id] = {
+                                    'status':       'REJECTED',
+                                    'final_report': '',
+                                    'notes':        notes,
+                                    'reviewed_at':  datetime.now().isoformat(),
+                                    'reviewer':     'Doctor'
+                                }
+                                st.error('Report rejected.')
+                        with bc4:
+                            if st.button('🔄 Regenerate',
+                                         key=f'regen_{case_id}',
+                                         use_container_width=True):
+                                del st.session_state.generated_reports[case_id]
+                                st.rerun()
+
+                        # Show current status
+                        if case_id in st.session_state.reviews:
+                            status = st.session_state.reviews[case_id]['status']
+                            status_colors = {
+                                'APPROVED': 'success',
+                                'EDITED':   'info',
+                                'REJECTED': 'error'
+                            }
+                            getattr(st, status_colors.get(status, 'info'))(
+                                f'Status: {status} · '
+                                f'{st.session_state.reviews[case_id]["reviewed_at"][:16]}'
+                            )
+
         else:
-            st.info("⚠️ No pre-generated report found for this patient.")
+            st.markdown("""
+            <div style="text-align:center;padding:80px 20px;">
+                <div style="font-size:40px;margin-bottom:12px;">👈</div>
+                <div style="font-size:14px;color:#64748B;">
+                    Select a patient from the list to view details
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        edited=st.text_area("report_area",
-            value=existing.get("edited_report",default_report),
-            height=220,key=f"rep_{cid}",
-            placeholder="Run dashboard_export.py in Colab to pre-generate reports, "
-                        "then upload rag_output.json to GitHub data/ folder.",
-            label_visibility="collapsed")
-
-        # Doctor notes
-        st.markdown("<div class='section-title' style='margin-top:0.6rem;'>Doctor Notes</div>",
+    # ── Export reviewed reports ───────────────────────────────
+    if st.session_state.reviews:
+        st.markdown('<hr>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">── Export</div>',
                     unsafe_allow_html=True)
-        notes=st.text_area("notes_area",
-            value=existing.get("doctor_notes",""),height=80,key=f"nts_{cid}",
-            placeholder="Observations, corrections, next appointment, patient instructions...",
-            label_visibility="collapsed")
 
-        # Delivery options
-        st.markdown("<div class='section-title' style='margin-top:0.6rem;'>Deliver Via</div>",
-                    unsafe_allow_html=True)
-        prev=existing.get("delivery",[])
-        d1,d2,d3,d4=st.columns(4)
-        dpdf=d1.checkbox("📄 PDF",     value="PDF" in prev,      key=f"pdf_{cid}")
-        dwa =d2.checkbox("💬 WhatsApp",value="WhatsApp" in prev, key=f"wa_{cid}")
-        dem =d3.checkbox("📧 Email",   value="Email" in prev,    key=f"em_{cid}")
-        drec=d4.checkbox("💾 Record",  value="Record" in prev,   key=f"rc_{cid}")
-        delivery=(["PDF"]*dpdf+["WhatsApp"]*dwa+["Email"]*dem+["Record"]*drec)
+        reviews_df = pd.DataFrame([
+            {'case_id': k, **v}
+            for k, v in st.session_state.reviews.items()
+        ])
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        b1,b2,b3,b4=st.columns(4)
+        col_exp1, col_exp2 = st.columns(2)
+        with col_exp1:
+            st.download_button(
+                '⬇️ Download Reviewed Reports (CSV)',
+                data=reviews_df.to_csv(index=False),
+                file_name=f'reviewed_reports_{datetime.now().strftime("%Y%m%d_%H%M")}.csv',
+                mime='text/csv',
+                use_container_width=True
+            )
+        with col_exp2:
+            st.download_button(
+                '⬇️ Download as JSON',
+                data=json.dumps(st.session_state.reviews, indent=2),
+                file_name=f'reviewed_reports_{datetime.now().strftime("%Y%m%d_%H%M")}.json',
+                mime='application/json',
+                use_container_width=True
+            )
 
-        with b1:
-            if st.button("✅ Approve",key=f"app_{cid}",
-                         use_container_width=True,type="primary"):
-                if not edited: st.error("No report to approve!")
-                else:
-                    save_review(cid,"Approved",edited,notes,delivery,ptype,sev)
-                    st.success("✅ Approved & queued for delivery!")
-                    st.balloons(); st.rerun()
-        with b2:
-            if st.button("💾 Save Edit",key=f"sv_{cid}",use_container_width=True):
-                save_review(cid,"Edited",edited,notes,delivery,ptype,sev)
-                st.info("💾 Saved."); st.rerun()
-        with b3:
-            if st.button("🔄 Regenerate",key=f"rg_{cid}",use_container_width=True):
-                with st.spinner("Generating via RAG pipeline..."):
-                    try:
-                        result=run_rag_pipeline(p.to_dict())
-                        save_rag_result(cid,result)
-                        st.success("✅ Report regenerated!"); st.rerun()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-        with b4:
-            if st.button("❌ Reject",key=f"rej_{cid}",use_container_width=True):
-                save_review(cid,"Rejected",edited,notes,delivery,ptype,sev)
-                st.warning("❌ Rejected."); st.rerun()
-
-        # Download approved report
-        if reviews.get(cid,{}).get("decision")=="Approved" and edited:
-            st.markdown("<br>", unsafe_allow_html=True)
-            rpt=(f"{'='*60}\nDOCTOR-APPROVED CLINICAL REPORT\n{'='*60}\n"
-                 f"Patient ID  : {cid}\nType        : {ptype}\nSeverity    : {sev}\n"
-                 f"Date        : {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-                 f"{'='*60}\n\n{edited}\n\nDoctor Notes:\n{notes}\n"
-                 f"\nDelivery: {', '.join(delivery)}\n"
-                 f"{'='*60}\nReviewed and approved by a licensed physician.\n")
-            st.download_button("⬇️ Download Report",data=rpt,
-                file_name=f"report_{cid}_{datetime.now().strftime('%Y%m%d')}.txt",
-                mime="text/plain",use_container_width=True)
-
-# ══════════════════════════════════════════════
-# APPROVED REPORTS
-# ══════════════════════════════════════════════
-elif page == "✅ Approved Reports":
-    st.markdown("""
-    <div class='dash-header'>
-        <div>
-            <div class='dash-title'>✅ Doctor-Reviewed Reports Log</div>
-            <div class='dash-sub'>All approved, edited and rejected reports</div>
-        </div>
-    </div>""", unsafe_allow_html=True)
-
-    if not reviews:
-        st.info("No reviews yet. Go to Review Queue.")
-        st.stop()
-
-    appr=[v for v in reviews.values() if v.get("decision")=="Approved"]
-    edit=[v for v in reviews.values() if v.get("decision")=="Edited"]
-    rejt=[v for v in reviews.values() if v.get("decision")=="Rejected"]
-
-    t1,t2,t3,t4=st.tabs([
-        f"✅ Approved ({len(appr)})",
-        f"✏️ Edited ({len(edit)})",
-        f"❌ Rejected ({len(rejt)})",
-        f"📋 All ({len(reviews)})"
-    ])
-
-    def show_table(rlist, expandable=True):
-        if not rlist: st.info("No records."); return
-        df=pd.DataFrame(rlist)
-        cols=[c for c in ["case_id","patient_type","severity","decision",
-                           "timestamp","delivery","doctor_notes"] if c in df.columns]
-        st.dataframe(df[cols],use_container_width=True,hide_index=True)
-        cl2,_=st.columns([1,3])
-        with cl2:
-            st.download_button("⬇️ Export CSV",data=df.to_csv(index=False),
-                file_name=f"reviews_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv")
-        if expandable:
-            for rev in rlist[:10]:
-                with st.expander(
-                    f"#{rev['case_id']} · {rev.get('patient_type','')} · "
-                    f"{rev.get('severity','')} · {rev.get('timestamp','')}"):
-                    st.markdown(
-                        f"<div class='report-box'>{rev.get('edited_report','—')}</div>",
-                        unsafe_allow_html=True)
-                    if rev.get("doctor_notes"):
-                        st.markdown(f"**Doctor Notes:** {rev['doctor_notes']}")
-                    st.download_button("⬇️ Download",
-                        data=rev.get("edited_report",""),
-                        file_name=f"report_{rev['case_id']}.txt",
-                        mime="text/plain",key=f"dl_{rev['case_id']}")
-
-    with t1: show_table(appr)
-    with t2: show_table(edit)
-    with t3: show_table(rejt, expandable=False)
-    with t4: show_table(list(reviews.values()), expandable=False)
-
-# ══════════════════════════════════════════════
-# RAG ANALYTICS
-# ══════════════════════════════════════════════
-elif page == "📊 RAG Analytics":
-    st.markdown("""
-    <div class='dash-header'>
-        <div>
-            <div class='dash-title'>📊 RAG Performance Analytics</div>
-            <div class='dash-sub'>Baseline vs Hierarchical vs Page Index · V1 vs V2</div>
-        </div>
-    </div>""", unsafe_allow_html=True)
-
-    try: import plotly.graph_objects as go
-    except: st.error("pip install plotly"); st.stop()
-
-    rl=["Baseline","Hierarchical","Page Index"]
-    fv1=[0.5606,0.4687,0.4461]; fv2=[0.4568,0.4180,0.6919]
-    rv1=[0.4718,0.3922,0.5664]; rv2=[0.4634,0.7012,0.6050]
-    lat=[2.764,2.559,3.619]
-
-    c1,c2,c3,c4=st.columns(4)
-    for col,val,lbl,sub,color in [
-        (c1,"0.692","Best Faithfulness","Page Index V2 +0.246","#2E7D32"),
-        (c2,"0.701","Best Relevancy","Hierarchical V2 +0.309","#2E7D32"),
-        (c3,"2.56s","Fastest","Hierarchical V2","#1565C0"),
-        (c4,"~0.62","Avg V2 Score","from ~0.51 V1","#854F0B"),
-    ]:
-        col.markdown(f"""
-        <div class='metric-card' style='border-top:3px solid {color};'>
-            <div class='metric-val' style='color:{color};'>{val}</div>
-            <div class='metric-label'>{lbl}</div>
-            <div class='metric-sub'>{sub}</div>
-        </div>""", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    C1,C2="#A8C4DC","#1F5F8B"
-
-    def gbar(v1,v2,title):
-        fig=go.Figure()
-        fig.add_trace(go.Bar(name="V1",x=rl,y=v1,marker_color=C1,
-            text=[f"{x:.3f}" for x in v1],textposition="outside"))
-        fig.add_trace(go.Bar(name="V2",x=rl,y=v2,marker_color=C2,
-            text=[f"{x:.3f}" for x in v2],textposition="outside"))
-        fig.update_layout(title=title,barmode="group",
-            yaxis=dict(range=[0,1]),plot_bgcolor="white",
-            paper_bgcolor="white",legend=dict(orientation="h",y=-0.25),
-            height=320,margin=dict(t=40,b=70,l=40,r=20),
-            font=dict(family="DM Sans"))
-        fig.update_xaxes(showgrid=False)
-        fig.update_yaxes(gridcolor="#f1f5f9")
-        return fig
-
-    cl,cr=st.columns(2)
-    with cl: st.plotly_chart(gbar(fv1,fv2,"Faithfulness ↑"),use_container_width=True)
-    with cr: st.plotly_chart(gbar(rv1,rv2,"Answer Relevancy ↑"),use_container_width=True)
-
-    cl2,cr2=st.columns(2)
-    with cl2:
-        ml=max(lat); cats=["Faithfulness","Answer Relevancy","Speed","Faithfulness"]
-        rc={"Baseline":"#4E79A7","Hierarchical":"#F28E2B","Page Index":"#59A14F"}
-        fig3=go.Figure()
-        for name,f,r,la in [("Baseline",fv2[0],rv2[0],lat[0]),
-                              ("Hierarchical",fv2[1],rv2[1],lat[1]),
-                              ("Page Index",fv2[2],rv2[2],lat[2])]:
-            spd=round(1-la/ml,3)
-            fig3.add_trace(go.Scatterpolar(r=[f,r,spd,f],theta=cats,
-                fill="toself",name=name,line_color=rc[name],
-                fillcolor=rc[name],opacity=0.25))
-        fig3.update_layout(title="V2 Quality Profile",
-            polar=dict(radialaxis=dict(visible=True,range=[0,1])),
-            plot_bgcolor="white",paper_bgcolor="white",
-            legend=dict(orientation="h",y=-0.2),
-            height=340,margin=dict(t=50,b=70,l=40,r=40),
-            font=dict(family="DM Sans"))
-        st.plotly_chart(fig3,use_container_width=True)
-
-    with cr2:
-        df2=[round(b-a,4) for a,b in zip(fv1,fv2)]
-        dr2=[round(b-a,4) for a,b in zip(rv1,rv2)]
-        fig4=go.Figure()
-        fig4.add_trace(go.Bar(name="Faith Δ",x=rl,y=df2,
-            marker_color=["#2E7D32" if d>=0 else "#C62828" for d in df2],
-            text=[f"{'+' if d>=0 else ''}{d:.3f}" for d in df2],
-            textposition="outside"))
-        fig4.add_trace(go.Bar(name="Relev Δ",x=rl,y=dr2,
-            marker_color=["#52b788" if d>=0 else "#e63946" for d in dr2],
-            text=[f"{'+' if d>=0 else ''}{d:.3f}" for d in dr2],
-            textposition="outside",opacity=0.8))
-        fig4.add_hline(y=0,line_dash="dash",line_color="#94a3b8")
-        fig4.update_layout(title="V1→V2 Delta",barmode="group",
-            plot_bgcolor="white",paper_bgcolor="white",
-            legend=dict(orientation="h",y=-0.25),
-            height=340,margin=dict(t=50,b=70,l=40,r=20),
-            font=dict(family="DM Sans"))
-        fig4.update_xaxes(showgrid=False)
-        fig4.update_yaxes(gridcolor="#f1f5f9")
-        st.plotly_chart(fig4,use_container_width=True)
-
-# ══════════════════════════════════════════════
-# ABOUT
-# ══════════════════════════════════════════════
-elif page == "ℹ️ About":
-    st.markdown("""
-    <div class='dash-header'>
-        <div>
-            <div class='dash-title'>ℹ️ About This System</div>
-            <div class='dash-sub'>Doctor-in-the-Loop Multimodal Medical AI Reporting System</div>
-        </div>
-    </div>""", unsafe_allow_html=True)
-
-    cl,cr=st.columns(2)
-    with cl:
-        st.markdown("### 🎯 Goal")
-        st.markdown("""
-AI-assisted clinical decision support that interprets **multimodal medical data**
-(lab reports, CT scans, ultrasound) and generates structured reports —
-reviewed and approved by a doctor before patient delivery.
-
-**Key problem solved:** Reducing unnecessary hospital revisits:
-- 🤰 Pregnancy follow-up (normal ultrasound → send via WhatsApp)
-- 🧪 Chronic disease (regular lab results → digital report)
-        """)
-        st.markdown("### 🔬 Data Sources")
-        st.markdown("""
-| Module | Dataset | Output |
-|---|---|---|
-| CT Scan | Kaggle Brain Tumor | notumor/pituitary/meningioma/glioma |
-| Ultrasound | PlaneDB | Fetal abdomen/brain score |
-| Lab | MIMIC-4 NB06 | final_severity_score |
-| Fusion (NB09) | All 3 combined | fusion_score (mean) |
-| RAG (NB10) | WHO/Clinical PDFs | Clinical report |
-        """)
-
-    with cr:
-        st.markdown("### 📊 RAG Results")
-        st.markdown("""
-| RAG | Faithfulness | Relevancy |
-|---|---|---|
-| Baseline V1 | 0.5606 | 0.4718 |
-| Hierarchical V1 | 0.4687 | 0.3922 |
-| Page Index V1 | 0.4461 | 0.5664 |
-| **Page Index V2** | **0.692 ✅** | 0.605 |
-| **Hierarchical V2** | 0.418 | **0.701 ✅** |
-        """)
-        st.markdown("### 🔄 Pipeline")
-        st.code("""
-NB09: Lab + CT + Ultrasound → fusion_score
-           ↓
-NB10: RAG retrieval → GPT-4o-mini report
-           ↓
-Dashboard: Doctor reviews → Approve/Edit/Reject
-           ↓
-Deliver: WhatsApp / PDF / Email / Record
-        """)
-
-    c1,c2,c3=st.columns(3)
-    for col,icon,title,desc in [
-        (c1,"⏱️","Faster Diagnosis","AI pre-analyzes, doctor reviews summary"),
-        (c2,"🏠","Fewer Revisits","Normal results sent digitally"),
-        (c3,"✅","Clinical Safety","Doctor approves every report"),
-    ]:
-        col.markdown(f"""
-        <div class='metric-card' style='text-align:left;'>
-            <div style='font-size:1.5rem;margin-bottom:6px;'>{icon}</div>
-            <div style='font-weight:600;font-size:0.9rem;color:#0a1f3c;margin-bottom:4px;'>{title}</div>
-            <div style='font-size:0.78rem;color:#64748b;line-height:1.5;'>{desc}</div>
-        </div>""", unsafe_allow_html=True)
