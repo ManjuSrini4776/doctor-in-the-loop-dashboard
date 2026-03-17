@@ -161,9 +161,31 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+
+# ── Top navigation bar (shown on every page) ──────────────────
+def top_nav(current):
+    """Persistent top navigation bar across all pages."""
+    pages = [
+        ('home',    '🏠 Home'),
+        ('patient', '👤 Patient Portal'),
+        ('doctor',  '🩺 Doctor Dashboard'),
+        ('result',  '📋 My Report'),
+    ]
+    cols = st.columns(len(pages))
+    for col, (pid, label) in zip(cols, pages):
+        with col:
+            btn_type = 'primary' if current == pid else 'secondary'
+            if st.button(label, key=f'tnav_{pid}',
+                         use_container_width=True,
+                         type=btn_type):
+                st.session_state.page = pid
+                st.rerun()
+    st.markdown('<hr style="margin:8px 0 16px;">', unsafe_allow_html=True)
+
 # ── Page routing ──────────────────────────────────────────────
 page = st.session_state.page
 
+top_nav(page)
 if page == 'home':
     from home import render
     render()
