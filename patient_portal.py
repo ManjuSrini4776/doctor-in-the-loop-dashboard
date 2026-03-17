@@ -35,7 +35,7 @@ def build_sample_df():
         lab= int(np.random.choice([0,1,2,3], p=[0.35,0.30,0.20,0.15]))
         ct_s=ct_sev[ct]; us_s=us_sev[us]; fus=max(lab,ct_s,us_s)
         rows.append({
-            'case_id':f'CASE-{1000+i:04d}',
+            'case_id':f'CASE-{1000+i:04d}',  # In real data: hadm_id (lab) / image_id (CT) / patient_num (US)
             'lab_score':lab, 'lab_severity_label':SCORE_TO_LABEL[lab],
             'ckd_severity':np.random.choice(['G1 (Normal/High)','G2 (Mild)','G3a','G3b','G4 (Severe)']),
             'diabetes_severity_final':np.random.choice(['Normal','Mild','Moderate','Severe','Unknown']),
@@ -53,12 +53,6 @@ def build_sample_df():
 
 
 def render():
-
-    # ── Back button ───────────────────────────────────────────
-    if st.button('← Back to Home', key='pat_back'):
-        st.session_state.page = 'home'
-        st.rerun()
-
     st.markdown("""
     <div style="background:#0D1621;border:1px solid #1E293B;
                 border-radius:12px;padding:20px 28px;margin:12px 0 20px;">
@@ -73,8 +67,12 @@ def render():
 
     # ── Dataset loader ────────────────────────────────────────
     with st.expander('📂 Load Your Fusion Dataset', expanded=False):
-        st.caption('Upload FINAL_MULTIMODAL_FUSION.parquet from NB08. '
-                   'Sample data used if not uploaded.')
+        st.caption(
+            'Upload FINAL_MULTIMODAL_FUSION.parquet from NB08. '
+            'Columns used: case_id (hadm_id for Lab / image_id for CT / '
+            'patient_num for US), fusion_label, lab_score, ct_score, us_score. '
+            'Sample data used if not uploaded.'
+        )
         up = st.file_uploader('Upload', type=['parquet','csv'],
                               key='fusion_up', label_visibility='collapsed')
         if up:
@@ -122,7 +120,10 @@ def render():
                 'fusion_label', key=lambda x: x.map(order)
             )
 
-        st.caption(f'Showing {len(filt):,} of {len(df):,} patients')
+        st.caption(
+            f'Showing {len(filt):,} of {len(df):,} patients  ·  '
+            f'IDs: hadm_id (Lab) / image_id (CT) / patient_num (US)'
+        )
 
         # Patient list
         for _, row in filt.head(25).iterrows():
