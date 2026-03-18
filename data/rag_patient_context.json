@@ -1,0 +1,1352 @@
+[
+  {
+    "case_id": "MM-001",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9277
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-002",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "G3a (Mild-Moderate)",
+        "diabetes": "Normal",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9604
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-003",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9622
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9998
+      }
+    }
+  },
+  {
+    "case_id": "MM-004",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.5749
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9996
+      }
+    }
+  },
+  {
+    "case_id": "MM-005",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.5774
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-006",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "Not available",
+        "diabetes": "Severe",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9483
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-007",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Normal",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9806
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9997
+      }
+    }
+  },
+  {
+    "case_id": "MM-008",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Unknown",
+        "diabetes": "Not available",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9658
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-009",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9085
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-010",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Normal",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.776
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-011",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.6007
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-012",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.9318
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9995
+      }
+    }
+  },
+  {
+    "case_id": "MM-013",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Hyperthyroid"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.957
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.999
+      }
+    }
+  },
+  {
+    "case_id": "MM-014",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 2,
+        "label": "Moderate",
+        "ckd": "G3b (Moderate-Severe)",
+        "diabetes": "Mild",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.7897
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9997
+      }
+    }
+  },
+  {
+    "case_id": "MM-015",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9508
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9983
+      }
+    }
+  },
+  {
+    "case_id": "MM-016",
+    "fusion_label": "Normal",
+    "fusion_score": 0,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9862
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9982
+      }
+    }
+  },
+  {
+    "case_id": "MM-017",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.5131
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-018",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.8826
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-019",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.5258
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-020",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.8226
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-021",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "Not available",
+        "diabetes": "Prediabetes",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9981
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9973
+      }
+    }
+  },
+  {
+    "case_id": "MM-022",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 2,
+        "label": "Moderate",
+        "ckd": "G3b (Moderate-Severe)",
+        "diabetes": "Mild",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9188
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-023",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "Not available",
+        "diabetes": "Severe",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9956
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-024",
+    "fusion_label": "Mild",
+    "fusion_score": 1,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9769
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-025",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.9174
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9998
+      }
+    }
+  },
+  {
+    "case_id": "MM-026",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.95
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-027",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 2,
+        "label": "Moderate",
+        "ckd": "G2 (Mild)",
+        "diabetes": "Moderate",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.41
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9991
+      }
+    }
+  },
+  {
+    "case_id": "MM-028",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "Not available",
+        "diabetes": "Mild",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.525
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-029",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "G3b (Moderate-Severe)",
+        "diabetes": "Severe",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.985
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-030",
+    "fusion_label": "Normal",
+    "fusion_score": 0,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Normal",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.976
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9972
+      }
+    }
+  },
+  {
+    "case_id": "MM-031",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9911
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.999
+      }
+    }
+  },
+  {
+    "case_id": "MM-032",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.4291
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-033",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.995
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9996
+      }
+    }
+  },
+  {
+    "case_id": "MM-034",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "Not available",
+        "diabetes": "Severe",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9907
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-035",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "Not available",
+        "diabetes": "Prediabetes",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.8865
+      },
+      "ultrasound": {
+        "score": 0,
+        "label": "Normal",
+        "plane": "Fetal abdomen",
+        "confidence": 0.9972
+      }
+    }
+  },
+  {
+    "case_id": "MM-036",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "G5 (Kidney Failure)",
+        "diabetes": "Not available",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.3636
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9998
+      }
+    }
+  },
+  {
+    "case_id": "MM-037",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.8219
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-038",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9564
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-039",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.5313
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-040",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 3,
+        "label": "Severe",
+        "ckd": "G5 (Kidney Failure)",
+        "diabetes": "Normal",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9643
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-041",
+    "fusion_label": "Mild",
+    "fusion_score": 1,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9958
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-042",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Not available",
+        "thyroid": "Unknown"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.7774
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-043",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 2,
+        "label": "Moderate",
+        "diagnosis": "meningioma",
+        "confidence": 0.7456
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9998
+      }
+    }
+  },
+  {
+    "case_id": "MM-044",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9719
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9997
+      }
+    }
+  },
+  {
+    "case_id": "MM-045",
+    "fusion_label": "Mild",
+    "fusion_score": 1,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "G2 (Mild)",
+        "diabetes": "Mild",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.98
+      },
+      "ultrasound": {
+        "score": 1,
+        "label": "Mild",
+        "plane": "Fetal femur",
+        "confidence": 0.9992
+      }
+    }
+  },
+  {
+    "case_id": "MM-046",
+    "fusion_label": "Moderate",
+    "fusion_score": 2,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.9272
+      },
+      "ultrasound": {
+        "score": 2,
+        "label": "Moderate",
+        "plane": "Fetal thorax",
+        "confidence": 0.9984
+      }
+    }
+  },
+  {
+    "case_id": "MM-047",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 3,
+        "label": "Severe",
+        "diagnosis": "glioma",
+        "confidence": 0.9971
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-048",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.6671
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  },
+  {
+    "case_id": "MM-049",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 2,
+    "scores": {
+      "lab": {
+        "score": null,
+        "label": "Unknown",
+        "ckd": "Not available",
+        "diabetes": "Unknown",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 1,
+        "label": "Mild",
+        "diagnosis": "pituitary",
+        "confidence": 0.7531
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 1.0
+      }
+    }
+  },
+  {
+    "case_id": "MM-050",
+    "fusion_label": "Severe",
+    "fusion_score": 3,
+    "modalities_available": 3,
+    "scores": {
+      "lab": {
+        "score": 1,
+        "label": "Mild",
+        "ckd": "Not available",
+        "diabetes": "Mild",
+        "thyroid": "Not available"
+      },
+      "ct": {
+        "score": 0,
+        "label": "Normal",
+        "diagnosis": "notumor",
+        "confidence": 0.9681
+      },
+      "ultrasound": {
+        "score": 3,
+        "label": "Severe",
+        "plane": "Fetal brain",
+        "confidence": 0.9999
+      }
+    }
+  }
+]
