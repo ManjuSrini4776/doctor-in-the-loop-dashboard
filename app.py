@@ -10,7 +10,9 @@ st.set_page_config(page_title="Doctor Dashboard", layout="wide")
 # -------------------------------
 @st.cache_data
 def load_data():
-    lab = pd.read_csv("data/lab_data.csv")
+    lab["final_severity_label"] = lab["final_severity_label"].replace({
+        "Stable": "Normal"
+    })
     ct  = pd.read_csv("data/ct_data.csv")
     us  = pd.read_csv("data/us_data.csv")
 
