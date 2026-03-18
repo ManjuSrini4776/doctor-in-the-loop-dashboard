@@ -1,223 +1,175 @@
 import streamlit as st
+import pandas as pd
+import json
+import os
 
-st.set_page_config(
-    page_title="MedAI Clinical System",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="Doctor Dashboard", layout="wide")
 
-# ── Epic EMR Style CSS ────────────────────────────────────────
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+DATA_PATH = "data"
+IMAGE_PATH = "images"
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif !important;
-    background: #0D1B2E !important;
-    color: #E8EDF5 !important;
-}
-.stApp { background: #0D1B2E !important; }
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding: 0 !important; max-width: 100% !important; }
+# -------------------------------
+# LOAD DATA
+# -------------------------------
+@st.cache_data
+def load_data():
+    fusion = pd.read_csv(f"{DATA_PATH}/fusion_data.csv")
+    lab = pd.read_csv(f"{DATA_PATH}/lab_data.csv")
+    ct = pd.read_csv(f"{DATA_PATH}/ct_data.csv")
+    us = pd.read_csv(f"{DATA_PATH}/us_data.csv")
 
-/* Inputs */
-.stTextInput > div > div > input {
-    background: #162236 !important;
-    color: #E8EDF5 !important;
-    border: 1.5px solid #263A55 !important;
-    border-radius: 8px !important;
-    font-size: 16px !important;
-    font-family: 'Inter', sans-serif !important;
-    padding: 10px 14px !important;
-}
-.stTextArea textarea {
-    background: #162236 !important;
-    color: #E8EDF5 !important;
-    border: 1.5px solid #263A55 !important;
-    border-radius: 8px !important;
-    font-size: 15px !important;
-    font-family: 'Inter', sans-serif !important;
-}
-.stSelectbox > div > div {
-    background: #162236 !important;
-    color: #E8EDF5 !important;
-    border: 1.5px solid #263A55 !important;
-    border-radius: 8px !important;
-    font-size: 15px !important;
-}
-.stNumberInput > div > div > input {
-    background: #162236 !important;
-    color: #E8EDF5 !important;
-    border: 1.5px solid #263A55 !important;
-    border-radius: 8px !important;
-    font-size: 15px !important;
-}
-label { color: #94A3B8 !important; font-size: 14px !important; font-weight: 500 !important; }
+    with open(f"{DATA_PATH}/rag_patient_context.json") as f:
+        rag = json.load(f)
 
-/* Buttons */
-.stButton > button {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 600 !important;
-    font-size: 15px !important;
-    border-radius: 8px !important;
-    padding: 11px 22px !important;
-    transition: all 0.2s ease !important;
-    letter-spacing: -0.1px !important;
-}
-.stButton > button[kind="primary"] {
-    background: #2563EB !important;
-    border: none !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
-}
-.stButton > button[kind="primary"]:hover {
-    background: #1D4ED8 !important;
-    box-shadow: 0 4px 12px rgba(37,99,235,0.45) !important;
-}
-.stButton > button[kind="secondary"] {
-    background: #162236 !important;
-    border: 1.5px solid #263A55 !important;
-    color: #94A3B8 !important;
-}
-.stButton > button[kind="secondary"]:hover {
-    border-color: #4A9EFF !important;
-    color: #E8EDF5 !important;
-}
+    return fusion, lab, ct, us, rag
 
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] {
-    background: #112033 !important;
-    border-bottom: 2px solid #1E3250 !important;
-    padding: 0 4px !important;
-    gap: 0 !important;
-}
-.stTabs [data-baseweb="tab"] {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 15px !important;
-    font-weight: 500 !important;
-    color: #64748B !important;
-    padding: 14px 24px !important;
-    border-bottom: 3px solid transparent !important;
-    margin-bottom: -2px !important;
-}
-.stTabs [aria-selected="true"] {
-    color: #4A9EFF !important;
-    border-bottom-color: #4A9EFF !important;
-    background: transparent !important;
-    font-weight: 600 !important;
-}
+fusion_df, lab_df, ct_df, us_df, rag_data = load_data()
 
-/* File uploader */
-div[data-testid="stFileUploadDropzone"] {
-    background: #162236 !important;
-    border: 2px dashed #263A55 !important;
-    border-radius: 10px !important;
-}
+# -------------------------------
+# SESSION
+# -------------------------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-/* Expander */
-.stExpander {
-    background: #112033 !important;
-    border: 1px solid #1E3250 !important;
-    border-radius: 10px !important;
-}
+if "selected_case" not in st.session_state:
+    st.session_state.selected_case = None
 
-/* Success / Error / Info */
-.stSuccess { background: rgba(0,196,140,0.1) !important; border-color: rgba(0,196,140,0.3) !important; }
-.stError   { background: rgba(255,59,59,0.1) !important; border-color: rgba(255,59,59,0.3) !important; }
-.stInfo    { background: rgba(74,158,255,0.1) !important; border-color: rgba(74,158,255,0.3) !important; }
+# -------------------------------
+# LOGIN
+# -------------------------------
+def login():
+    st.title("👨‍⚕️ Doctor Login")
 
-hr { border-color: #1E3250 !important; }
-</style>
-""", unsafe_allow_html=True)
+    user = st.text_input("Username")
+    pwd = st.text_input("Password", type="password")
 
-# ── Session state ─────────────────────────────────────────────
-from utils import DOCTORS
-for k, v in {
-    'page':            'home',
-    'patients':        {},
-    'reports':         {},
-    'current_patient': None,
-    'patient_lookup':  None,
-    'selected_doc':    None,
-    'doctors':         DOCTORS,
-}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+    if st.button("Login"):
+        if user == "doctor1" and pwd == "1234":
+            st.session_state.logged_in = True
+        else:
+            st.error("Invalid login")
 
-# ── Top Bar ───────────────────────────────────────────────────
-pending = sum(1 for p in st.session_state.patients.values()
-              if p.get('status') == 'PENDING')
-urgent  = sum(1 for p in st.session_state.patients.values()
-              if p.get('fusion_label','') == 'Severe'
-              and p.get('status') == 'PENDING')
+# -------------------------------
+# PATIENT LIST
+# -------------------------------
+def patient_list():
+    st.title("📋 Multimodal Patient Cases")
 
-badges = ''
-if urgent > 0:
-    badges += ('<span style="background:#FF3B3B;color:white;font-size:13px;'
-               'font-weight:700;padding:5px 14px;border-radius:20px;'
-               'margin-right:10px;">🚨 ' + str(urgent) + ' Urgent</span>')
-if pending > 0:
-    badges += ('<span style="background:#FFB800;color:#0D1B2E;font-size:13px;'
-               'font-weight:700;padding:5px 14px;border-radius:20px;'
-               'margin-right:10px;">' + str(pending) + ' Pending</span>')
-badges += ('<span style="background:rgba(0,196,140,0.15);'
-           'border:1.5px solid rgba(0,196,140,0.4);color:#00C48C;'
-           'font-size:13px;font-weight:600;padding:5px 14px;'
-           'border-radius:20px;">● System Online</span>')
+    for _, row in fusion_df.iterrows():
+        col1, col2, col3 = st.columns([3,3,2])
 
-st.markdown(
-    '<div style="background:#0A1628;border-bottom:2px solid #1E3250;'
-    'padding:0 32px;height:64px;display:flex;align-items:center;'
-    'justify-content:space-between;">'
-    '<div style="display:flex;align-items:center;gap:12px;">'
-    '<div style="background:#2563EB;width:38px;height:38px;border-radius:10px;'
-    'display:flex;align-items:center;justify-content:center;'
-    'font-size:20px;box-shadow:0 2px 8px rgba(37,99,235,0.4);">🏥</div>'
-    '<div>'
-    '<div style="font-size:18px;font-weight:800;color:#F0F6FF;'
-    'letter-spacing:-0.5px;">MedAI</div>'
-    '<div style="font-size:11px;color:#4A6080;font-weight:500;'
-    'letter-spacing:0.08em;text-transform:uppercase;">Clinical System</div>'
-    '</div></div>'
-    '<div style="display:flex;align-items:center;gap:10px;">' + badges + '</div>'
-    '</div>',
-    unsafe_allow_html=True
-)
+        col1.write(f"**Case ID:** {row['case_id']}")
+        col2.write(f"**Severity:** {row['fusion_label']}")
 
-# ── Navigation ────────────────────────────────────────────────
-nav_items = [
-    ('home',    '🏠', 'Home'),
-    ('patient', '👤', 'Patient Portal'),
-    ('doctor',  '🩺', 'Doctor Dashboard'),
-    ('result',  '📋', 'My Report'),
-]
-nav_cols = st.columns(len(nav_items))
-for col, (pid, icon, label) in zip(nav_cols, nav_items):
-    with col:
-        active = st.session_state.page == pid
-        if st.button(
-            icon + '  ' + label,
-            key='nav_' + pid,
-            use_container_width=True,
-            type='primary' if active else 'secondary'
-        ):
-            st.session_state.page = pid
-            st.rerun()
+        if col3.button("View", key=row['case_id']):
+            st.session_state.selected_case = row['case_id']
 
-# ── Page ──────────────────────────────────────────────────────
-st.markdown('<div style="padding:28px 32px 40px;">', unsafe_allow_html=True)
+# -------------------------------
+# SEVERITY COLOR
+# -------------------------------
+def show_severity(label):
+    if label == "Severe":
+        st.error(f"🔴 {label}")
+    elif label == "Moderate":
+        st.warning(f"🟠 {label}")
+    elif label == "Mild":
+        st.info(f"🟡 {label}")
+    else:
+        st.success(f"🟢 {label}")
 
-page = st.session_state.page
-if page == 'home':
-    from home import render
-elif page == 'patient':
-    from patient_portal import render
-elif page == 'doctor':
-    from doctor_dashboard import render
-elif page == 'result':
-    from patient_result import render
+# -------------------------------
+# GRADCAM MAPPING
+# -------------------------------
+def get_ct_image(label):
+    mapping = {
+        "glioma": "ct_glioma.png",
+        "meningioma": "ct_meningioma.png",
+        "pituitary": "ct_pituitary.png",
+        "notumor": "ct_notumor.png"
+    }
+    return mapping.get(label.lower(), None)
 
-render()
-st.markdown('</div>', unsafe_allow_html=True)
+def get_us_image(label):
+    mapping = {
+        "abdomen": "us_abdomen.png",
+        "brain": "us_brain.png",
+        "femur": "us_femur.png",
+        "thorax": "us_thorax.png"
+    }
+    return mapping.get(label.lower(), None)
+
+# -------------------------------
+# PATIENT DETAILS
+# -------------------------------
+def patient_details(case_id):
+    st.title(f"🧾 Case: {case_id}")
+
+    fusion = fusion_df[fusion_df['case_id'] == case_id].iloc[0]
+
+    st.subheader("🤖 Multimodal Severity")
+    show_severity(fusion['fusion_label'])
+
+    col1, col2, col3 = st.columns(3)
+    col1.write(f"Lab: {fusion['lab_severity_label']}")
+    col2.write(f"CT: {fusion['ct_severity_label']}")
+    col3.write(f"US: {fusion['us_severity_label']}")
+
+    # ---------------- LAB ----------------
+    st.subheader("🧪 Lab Data")
+    st.dataframe(lab_df.head(10))  # later filter mapping
+
+    # ---------------- CT ----------------
+    st.subheader("🧠 CT Scan")
+    ct_sample = ct_df.sample(1).iloc[0]
+    st.write(f"Prediction: {ct_sample['label']}")
+
+    img = get_ct_image(ct_sample['label'])
+    if img and os.path.exists(f"{IMAGE_PATH}/{img}"):
+        st.image(f"{IMAGE_PATH}/{img}", caption="CT Grad-CAM")
+
+    # ---------------- US ----------------
+    st.subheader("👶 Ultrasound")
+    us_sample = us_df.sample(1).iloc[0]
+    st.write(f"Plane: {us_sample['plane']}")
+
+    img = get_us_image(us_sample['plane'])
+    if img and os.path.exists(f"{IMAGE_PATH}/{img}"):
+        st.image(f"{IMAGE_PATH}/{img}", caption="US Grad-CAM")
+
+    # ---------------- RAG ----------------
+    st.subheader("📚 AI Clinical Summary")
+
+    context = rag_data.get(case_id, {})
+    st.write(context.get("summary", "No summary available"))
+
+    st.subheader("📌 Citations")
+    for c in context.get("citations", []):
+        st.write(f"- {c}")
+
+    st.subheader("💊 Recommendations")
+    for r in context.get("recommendations", []):
+        st.write(f"- {r}")
+
+    # ---------------- APPROVAL ----------------
+    st.subheader("👨‍⚕️ Doctor Action")
+
+    if st.button("✅ Approve"):
+        st.success("Approved & Ready to send to patient")
+
+    # ---------------- MESSAGE ----------------
+    st.subheader("📩 Patient Message")
+    st.text_area("Preview", context.get("patient_message", ""), height=150)
+
+    if st.button("⬅ Back"):
+        st.session_state.selected_case = None
+
+# -------------------------------
+# MAIN
+# -------------------------------
+if not st.session_state.logged_in:
+    login()
+else:
+    if st.session_state.selected_case is None:
+        patient_list()
+    else:
+        patient_details(st.session_state.selected_case)
