@@ -1,24 +1,28 @@
 import streamlit as st
 import pandas as pd
+import json
 import os
 
-st.set_page_config(page_title="Doctor Dashboard", layout="wide")
+st.set_page_config(page_title="Doctor-in-the-Loop Dashboard", layout="wide")
 
 # -------------------------------
-# LOAD DATA (FROM ROOT)
+# LOAD DATA
 # -------------------------------
 @st.cache_data
 def load_data():
-    fusion = pd.read_csv("fusion_data.csv")
-    lab = pd.read_csv("lab_data.csv")
-    ct = pd.read_csv("ct_data.csv")
-    us = pd.read_csv("us_data.csv")
-    return fusion, lab, ct, us
+    fusion = pd.read_csv("data/fusion_data.csv")
 
-fusion_df, lab_df, ct_df, us_df = load_data()
+    with open("data/rag_patient_context.json") as f:
+        rag = json.load(f)
+
+    rag_dict = {item["case_id"]: item for item in rag}
+
+    return fusion, rag_dict
+
+fusion_df, rag_data = load_data()
 
 # -------------------------------
-# SESSION STATE
+# SESSION
 # -------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -42,6 +46,19 @@ def login():
             st.error("Invalid credentials")
 
 # -------------------------------
+# SEVERITY DISPLAY
+# -------------------------------
+def show_severity(label):
+    if label == "Severe":
+        st.error(f"🔴 {label}")
+    elif label == "Moderate":
+        st.warning(f"🟠 {label}")
+    elif label == "Mild":
+        st.info(f"🟡 {label}")
+    else:
+        st.success(f"🟢 {label}")
+
+# -------------------------------
 # PATIENT LIST
 # -------------------------------
 def patient_list():
@@ -57,35 +74,25 @@ def patient_list():
             st.session_state.selected_case = row['case_id']
 
 # -------------------------------
-# SEVERITY DISPLAY
+# GET IMAGE
 # -------------------------------
-def show_severity(label):
-    if label == "Severe":
-        st.error(f"🔴 {label}")
-    elif label == "Moderate":
-        st.warning(f"🟠 {label}")
-    elif label == "Mild":
-        st.info(f"🟡 {label}")
-    else:
-        st.success(f"🟢 {label}")
+def get_ct_image(label):
+    mapping = {
+        "Severe": "ct_glioma.png",
+        "Moderate": "ct_meningioma.png",
+        "Mild": "ct_pituitary.png",
+        "Normal": "ct_notumor.png"
+    }
+    return f"images/{mapping.get(label, 'ct_notumor.png')}"
 
-# -------------------------------
-# FAKE RAG (TEMP)
-# -------------------------------
-def generate_summary(case_id, fusion_row):
-    return f"""
-Patient {case_id} shows **{fusion_row['fusion_label']} severity** based on multimodal analysis.
-
-- Lab Severity: {fusion_row['lab_severity_label']}
-- CT Severity: {fusion_row['ct_severity_label']}
-- Ultrasound Severity: {fusion_row['us_severity_label']}
-
-Clinical interpretation:
-The final severity is derived using max-rule fusion across modalities.
-
-Recommendation:
-Doctor review is required. Consider follow-up tests and clinical correlation.
-"""
+def get_us_image(label):
+    mapping = {
+        "Severe": "us_brain.png",
+        "Moderate": "us_thorax.png",
+        "Mild": "us_femur.png",
+        "Normal": "us_abdomen.png"
+    }
+    return f"images/{mapping.get(label, 'us_abdomen.png')}"
 
 # -------------------------------
 # PATIENT DETAILS
@@ -94,6 +101,7 @@ def patient_details(case_id):
     st.title(f"🧾 Case: {case_id}")
 
     fusion = fusion_df[fusion_df['case_id'] == case_id].iloc[0]
+    rag    = rag_data.get(case_id, {})
 
     # -------------------------------
     # SEVERITY
@@ -107,71 +115,72 @@ def patient_details(case_id):
     col3.write(f"US: {fusion['us_severity_label']}")
 
     # -------------------------------
-    # LAB DATA (TEMP FILTER)
+    # GRADCAM
     # -------------------------------
-    st.subheader("🧪 Lab Data (Sample)")
-    st.dataframe(lab_df.head(10))
+    st.subheader("🧠 Explainability (Grad-CAM)")
+
+    col1, col2 = st.columns(2)
+
+    ct_img = get_ct_image(fusion['ct_severity_label'])
+    us_img = get_us_image(fusion['us_severity_label'])
+
+    if os.path.exists(ct_img):
+        col1.image(ct_img, caption="CT Grad-CAM")
+
+    if os.path.exists(us_img):
+        col2.image(us_img, caption="Ultrasound Grad-CAM")
 
     # -------------------------------
-    # CT DATA
-    # -------------------------------
-    st.subheader("🧠 CT Analysis")
-    ct_sample = ct_df.sample(1).iloc[0]
-    st.write(f"Prediction: {ct_sample.get('label', 'N/A')}")
-
-    # -------------------------------
-    # US DATA
-    # -------------------------------
-    st.subheader("👶 Ultrasound Analysis")
-    us_sample = us_df.sample(1).iloc[0]
-    st.write(f"Plane: {us_sample.get('plane', 'N/A')}")
-
-    # -------------------------------
-    # RAG SUMMARY (TEMP)
+    # RAG SUMMARY
     # -------------------------------
     st.subheader("📚 AI Clinical Summary")
-    summary = generate_summary(case_id, fusion)
-    st.write(summary)
 
-    # -------------------------------
-    # CITATIONS (STATIC FOR NOW)
-    # -------------------------------
-    st.subheader("📌 Citations")
-    st.write("- WHO Clinical Guidelines (2023)")
-    st.write("- ICMR Diagnostic Protocols")
+    scores = rag.get("scores", {})
+
+    st.write(f"""
+**Clinical Interpretation:**
+Patient shows **{fusion['fusion_label']} severity** based on multimodal analysis.
+
+- Lab: {scores.get('lab', {}).get('label', 'N/A')}
+- CT: {scores.get('ct', {}).get('label', 'N/A')}
+- Ultrasound: {scores.get('ultrasound', {}).get('label', 'N/A')}
+""")
 
     # -------------------------------
     # RECOMMENDATIONS
     # -------------------------------
     st.subheader("💊 Recommendations")
-    st.write("- Further diagnostic evaluation")
-    st.write("- Specialist consultation")
-    st.write("- Follow-up monitoring")
+
+    if fusion['fusion_label'] == "Severe":
+        st.write("- Immediate clinical attention required")
+        st.write("- Specialist consultation recommended")
+    elif fusion['fusion_label'] == "Moderate":
+        st.write("- Follow-up tests advised")
+    else:
+        st.write("- Routine monitoring")
 
     # -------------------------------
-    # DOCTOR APPROVAL
+    # DOCTOR ACTION
     # -------------------------------
-    st.subheader("👨‍⚕️ Doctor Action")
+    st.subheader("👨‍⚕️ Doctor Decision")
 
-    if st.button("✅ Approve Report"):
-        st.success("Report Approved (Doctor-in-the-loop ✔)")
+    if st.button("✅ Approve"):
+        st.success("Approved ✔")
 
     # -------------------------------
     # PATIENT MESSAGE
     # -------------------------------
     st.subheader("📩 Patient Message")
 
-    message = f"""
+    st.text_area("Preview", f"""
 Dear Patient,
 
 Your reports indicate **{fusion['fusion_label']} condition**.
 
-Please follow doctor's advice and attend follow-up if required.
+Please follow doctor advice.
 
 Stay healthy.
-"""
-
-    st.text_area("Preview", message, height=150)
+""", height=150)
 
     if st.button("⬅ Back"):
         st.session_state.selected_case = None
