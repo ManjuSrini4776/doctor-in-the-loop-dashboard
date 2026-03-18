@@ -3,50 +3,90 @@ import pandas as pd
 import json
 import os
 
-st.set_page_config(page_title="Doctor-in-the-Loop Dashboard", layout="wide")
+st.set_page_config(page_title="Doctor Dashboard", layout="wide")
 
 # -------------------------------
 # LOAD DATA
 # -------------------------------
 @st.cache_data
 def load_data():
-    fusion = pd.read_csv("data/fusion_data.csv")
+    lab = pd.read_csv("data/lab_data.csv")
+    ct  = pd.read_csv("data/ct_data.csv")
+    us  = pd.read_csv("data/us_data.csv")
 
-    with open("data/rag_patient_context.json") as f:
+    with open("data/rag_final_outputs.json") as f:
         rag = json.load(f)
 
-    rag_dict = {item["case_id"]: item for item in rag}
+    return lab, ct, us, rag
 
-    return fusion, rag_dict
+lab_df, ct_df, us_df, rag_data = load_data()
 
-fusion_df, rag_data = load_data()
+# -------------------------------
+# DOCTORS
+# -------------------------------
+DOCTORS = {
+    "Dr. Smith (Internal Medicine)": {
+        "password": "1234",
+        "dept": "Internal Medicine"
+    },
+    "Dr. John (Neurology)": {
+        "password": "1234",
+        "dept": "Neurology"
+    },
+    "Dr. Priya (Obstetrics)": {
+        "password": "1234",
+        "dept": "Obstetrics"
+    }
+}
 
 # -------------------------------
 # SESSION
 # -------------------------------
+if "doctor" not in st.session_state:
+    st.session_state.doctor = None
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "selected_case" not in st.session_state:
-    st.session_state.selected_case = None
+if "selected_patient" not in st.session_state:
+    st.session_state.selected_patient = None
 
 # -------------------------------
-# LOGIN
+# LOGIN FLOW
 # -------------------------------
 def login():
-    st.title("👨‍⚕️ Doctor Login")
+    st.title("👩‍⚕️ Select Doctor")
 
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
+    doctor_name = st.selectbox("Choose Doctor", list(DOCTORS.keys()))
 
-    if st.button("Login"):
-        if user == "doctor1" and pwd == "1234":
-            st.session_state.logged_in = True
-        else:
-            st.error("Invalid credentials")
+    if st.button("Next"):
+        st.session_state.doctor = doctor_name
+
+    if st.session_state.doctor:
+        st.subheader(f"Login for {st.session_state.doctor}")
+        pwd = st.text_input("Enter Password", type="password")
+
+        if st.button("Login"):
+            if pwd == DOCTORS[st.session_state.doctor]["password"]:
+                st.session_state.logged_in = True
+            else:
+                st.error("Wrong password")
 
 # -------------------------------
-# SEVERITY DISPLAY
+# GET DATA BY DEPARTMENT
+# -------------------------------
+def get_data_by_dept(dept):
+    if dept == "Internal Medicine":
+        return lab_df, "hadm_id", "final_severity_label"
+
+    elif dept == "Neurology":
+        return ct_df, "image_id", "ct_severity_label"
+
+    elif dept == "Obstetrics":
+        return us_df, "patient_id", "us_severity_label"
+
+# -------------------------------
+# SEVERITY UI
 # -------------------------------
 def show_severity(label):
     if label == "Severe":
@@ -59,131 +99,118 @@ def show_severity(label):
         st.success(f"🟢 {label}")
 
 # -------------------------------
-# PATIENT LIST
+# PATIENT QUEUE
 # -------------------------------
-def patient_list():
-    st.title("📋 Multimodal Patient Cases")
+def patient_queue():
+    doctor = DOCTORS[st.session_state.doctor]
+    dept = doctor["dept"]
 
-    for _, row in fusion_df.iterrows():
+    df, id_col, sev_col = get_data_by_dept(dept)
+
+    st.title(f"📋 Patient Queue — {dept}")
+
+    filter_option = st.selectbox(
+        "Filter by Severity",
+        ["All", "Normal", "Mild", "Moderate", "Severe"]
+    )
+
+    if filter_option != "All":
+        df = df[df[sev_col] == filter_option]
+
+    for _, row in df.head(50).iterrows():
         col1, col2, col3 = st.columns([3,3,2])
 
-        col1.write(f"**Case ID:** {row['case_id']}")
-        col2.write(f"**Severity:** {row['fusion_label']}")
+        col1.write(f"ID: {row[id_col]}")
+        col2.write(f"Severity: {row[sev_col]}")
 
-        if col3.button("View", key=row['case_id']):
-            st.session_state.selected_case = row['case_id']
+        if col3.button("View", key=str(row[id_col])):
+            st.session_state.selected_patient = (dept, row[id_col])
 
 # -------------------------------
-# GET IMAGE
+# GRADCAM
 # -------------------------------
-def get_ct_image(label):
-    mapping = {
-        "Severe": "ct_glioma.png",
-        "Moderate": "ct_meningioma.png",
-        "Mild": "ct_pituitary.png",
-        "Normal": "ct_notumor.png"
-    }
-    return f"images/{mapping.get(label, 'ct_notumor.png')}"
+def show_images(dept, severity):
+    if dept == "Neurology":
+        mapping = {
+            "Severe": "ct_glioma.png",
+            "Moderate": "ct_meningioma.png",
+            "Mild": "ct_pituitary.png",
+            "Normal": "ct_notumor.png"
+        }
+    else:
+        mapping = {
+            "Severe": "us_brain.png",
+            "Moderate": "us_thorax.png",
+            "Mild": "us_femur.png",
+            "Normal": "us_abdomen.png"
+        }
 
-def get_us_image(label):
-    mapping = {
-        "Severe": "us_brain.png",
-        "Moderate": "us_thorax.png",
-        "Mild": "us_femur.png",
-        "Normal": "us_abdomen.png"
-    }
-    return f"images/{mapping.get(label, 'us_abdomen.png')}"
+    img_path = f"images/{mapping.get(severity)}"
+
+    if os.path.exists(img_path):
+        st.image(img_path, caption="Grad-CAM")
 
 # -------------------------------
 # PATIENT DETAILS
 # -------------------------------
-def patient_details(case_id):
-    st.title(f"🧾 Case: {case_id}")
+def patient_details():
+    dept, pid = st.session_state.selected_patient
 
-    fusion = fusion_df[fusion_df['case_id'] == case_id].iloc[0]
-    rag    = rag_data.get(case_id, {})
+    df, id_col, sev_col = get_data_by_dept(dept)
+    row = df[df[id_col] == pid].iloc[0]
 
-    # -------------------------------
-    # SEVERITY
-    # -------------------------------
-    st.subheader("🤖 Multimodal Severity")
-    show_severity(fusion['fusion_label'])
+    st.title(f"🧾 Patient: {pid}")
 
-    col1, col2, col3 = st.columns(3)
-    col1.write(f"Lab: {fusion['lab_severity_label']}")
-    col2.write(f"CT: {fusion['ct_severity_label']}")
-    col3.write(f"US: {fusion['us_severity_label']}")
+    # Severity
+    st.subheader("🤖 AI Severity")
+    show_severity(row[sev_col])
 
-    # -------------------------------
-    # GRADCAM
-    # -------------------------------
-    st.subheader("🧠 Explainability (Grad-CAM)")
+    # Clinical context
+    st.subheader("📊 Patient Context")
 
-    col1, col2 = st.columns(2)
+    if dept == "Internal Medicine":
+        st.write("Diabetes Severity:", row.get("diabetes_severity_final", "N/A"))
+        st.write("CKD Severity:", row.get("ckd_severity", "N/A"))
 
-    ct_img = get_ct_image(fusion['ct_severity_label'])
-    us_img = get_us_image(fusion['us_severity_label'])
+        st.info("Normal HbA1c: < 5.7 | Diabetes: > 6.5")
 
-    if os.path.exists(ct_img):
-        col1.image(ct_img, caption="CT Grad-CAM")
+    # GradCAM
+    if dept in ["Neurology", "Obstetrics"]:
+        st.subheader("🧠 Explainability")
+        show_images(dept, row[sev_col])
 
-    if os.path.exists(us_img):
-        col2.image(us_img, caption="Ultrasound Grad-CAM")
-
-    # -------------------------------
-    # RAG SUMMARY
-    # -------------------------------
+    # RAG Summary
     st.subheader("📚 AI Clinical Summary")
 
-    scores = rag.get("scores", {})
+    report = rag_data.get(str(pid), "No report available")
+    st.write(report)
 
-    st.write(f"""
-**Clinical Interpretation:**
-Patient shows **{fusion['fusion_label']} severity** based on multimodal analysis.
-
-- Lab: {scores.get('lab', {}).get('label', 'N/A')}
-- CT: {scores.get('ct', {}).get('label', 'N/A')}
-- Ultrasound: {scores.get('ultrasound', {}).get('label', 'N/A')}
-""")
-
-    # -------------------------------
-    # RECOMMENDATIONS
-    # -------------------------------
-    st.subheader("💊 Recommendations")
-
-    if fusion['fusion_label'] == "Severe":
-        st.write("- Immediate clinical attention required")
-        st.write("- Specialist consultation recommended")
-    elif fusion['fusion_label'] == "Moderate":
-        st.write("- Follow-up tests advised")
-    else:
-        st.write("- Routine monitoring")
-
-    # -------------------------------
-    # DOCTOR ACTION
-    # -------------------------------
+    # Doctor approval
     st.subheader("👨‍⚕️ Doctor Decision")
 
-    if st.button("✅ Approve"):
+    if st.button("Approve"):
         st.success("Approved ✔")
 
-    # -------------------------------
-    # PATIENT MESSAGE
-    # -------------------------------
-    st.subheader("📩 Patient Message")
+    if st.button("Reject"):
+        st.error("Rejected ❌")
 
-    st.text_area("Preview", f"""
+    # Patient message
+    st.subheader("📩 Patient Message Preview")
+
+    msg = f"""
 Dear Patient,
 
-Your reports indicate **{fusion['fusion_label']} condition**.
+Your reports indicate {row[sev_col]} condition.
 
-Please follow doctor advice.
+Please follow doctor's advice.
 
 Stay healthy.
-""", height=150)
+"""
+
+    st.text_area("Message", msg, height=150)
 
     if st.button("⬅ Back"):
-        st.session_state.selected_case = None
+        st.session_state.selected_patient = None
 
 # -------------------------------
 # MAIN
@@ -191,7 +218,7 @@ Stay healthy.
 if not st.session_state.logged_in:
     login()
 else:
-    if st.session_state.selected_case is None:
-        patient_list()
+    if st.session_state.selected_patient is None:
+        patient_queue()
     else:
-        patient_details(st.session_state.selected_case)
+        patient_details()
