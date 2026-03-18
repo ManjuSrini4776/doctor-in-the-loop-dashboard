@@ -1,1 +1,51 @@
-
+case_id,lab_hadm_id,lab_score,lab_severity_label,ckd_severity,diabetes_severity_final,thyroid_severity_final,ct_image_id,ct_predicted_class,ct_confidence,ct_score,ct_severity_label,us_patient_id,us_predicted_class,us_confidence,us_score,us_severity_label,fusion_score,fusion_label,modalities_available,fusion_rule,max_single,avg_single
+MM-001,29279256,,Unknown,,Unknown,,Te-pi_0109.jpg,pituitary,0.9277,1,Mild,1213,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-002,26543543,1.0,Mild,G3a (Mild-Moderate),Normal,,Te-pi_0061.jpg,pituitary,0.9604,1,Mild,1566,Fetal thorax,0.9999,2,Moderate,2,Moderate,3,MAX,2.0,1.3333333333333333
+MM-003,26092000,,Unknown,,,Unknown,Te-gl_0198.jpg,glioma,0.9622,3,Severe,1566,Fetal thorax,0.9998,2,Moderate,3,Severe,2,MAX,3.0,2.5
+MM-004,20535571,,Unknown,,Unknown,,Te-me_0275.jpg,meningioma,0.5749,2,Moderate,1476,Fetal femur,0.9996,1,Mild,2,Moderate,2,MAX,2.0,1.5
+MM-005,21682290,,Unknown,,Unknown,,Te-me_0031.jpg,meningioma,0.5774,2,Moderate,1077,Fetal brain,0.9999,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-006,25546525,3.0,Severe,,Severe,,Te-no_0172.jpg,notumor,0.9483,0,Normal,1495,Fetal brain,0.9999,3,Severe,3,Severe,3,MAX,3.0,2.0
+MM-007,27851270,,Stable,,Normal,,Te-gl_0175.jpg,glioma,0.9806,3,Severe,1380,Fetal thorax,0.9997,2,Moderate,3,Severe,2,MAX,3.0,2.5
+MM-008,27261844,,Unknown,Unknown,,,Te-pi_0165.jpg,pituitary,0.9658,1,Mild,1212,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-009,25391244,,Unknown,,Unknown,,Te-no_0135.jpg,notumor,0.9085,0,Normal,1680,Fetal thorax,1.0,2,Moderate,2,Moderate,2,MAX,2.0,1.0
+MM-010,26634301,,Stable,,Normal,,Te-me_0046.jpg,meningioma,0.776,2,Moderate,810,Fetal femur,0.9999,1,Mild,2,Moderate,2,MAX,2.0,1.5
+MM-011,28772748,,Unknown,,,Unknown,Te-gl_0270.jpg,meningioma,0.6007,2,Moderate,1653,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-012,29604829,,Unknown,,,Unknown,Te-me_0243.jpg,meningioma,0.9318,2,Moderate,725,Fetal thorax,0.9995,2,Moderate,2,Moderate,2,MAX,2.0,2.0
+MM-013,29193376,3.0,Severe,,,Hyperthyroid,Te-pi_0183.jpg,pituitary,0.957,1,Mild,1399,Fetal thorax,0.999,2,Moderate,3,Severe,3,MAX,3.0,2.0
+MM-014,22827314,2.0,Moderate,G3b (Moderate-Severe),Mild,,Te-me_0226.jpg,meningioma,0.7897,2,Moderate,1765,Fetal thorax,0.9997,2,Moderate,2,Moderate,3,MAX,2.0,2.0
+MM-015,20064335,,Unknown,,Unknown,,Te-no_0281.jpg,notumor,0.9508,0,Normal,1730,Fetal brain,0.9983,3,Severe,3,Severe,2,MAX,3.0,1.5
+MM-016,25497799,,Unknown,,,Unknown,Te-no_0385.jpg,notumor,0.9862,0,Normal,1710,Fetal abdomen,0.9982,0,Normal,0,Normal,2,MAX,0.0,0.0
+MM-017,26466487,,Unknown,,Unknown,,Te-me_0054.jpg,meningioma,0.5131,2,Moderate,928,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-018,26051015,,Unknown,,,Unknown,Te-pi_0052.jpg,pituitary,0.8826,1,Mild,1697,Fetal thorax,0.9999,2,Moderate,2,Moderate,2,MAX,2.0,1.5
+MM-019,21964501,,Unknown,,Unknown,,Te-me_0194.jpg,meningioma,0.5258,2,Moderate,1606,Fetal femur,1.0,1,Mild,2,Moderate,2,MAX,2.0,1.5
+MM-020,29404849,,Unknown,,Unknown,,Te-me_0065.jpg,notumor,0.8226,0,Normal,954,Fetal thorax,0.9999,2,Moderate,2,Moderate,2,MAX,2.0,1.0
+MM-021,25721504,1.0,Mild,,Prediabetes,,Te-gl_0065.jpg,glioma,0.9981,3,Severe,1274,Fetal abdomen,0.9973,0,Normal,3,Severe,3,MAX,3.0,1.3333333333333333
+MM-022,22369459,2.0,Moderate,G3b (Moderate-Severe),Mild,Unknown,Te-gl_0101.jpg,glioma,0.9188,3,Severe,852,Fetal brain,1.0,3,Severe,3,Severe,3,MAX,3.0,2.6666666666666665
+MM-023,28121102,3.0,Severe,,Severe,,Te-no_0275.jpg,notumor,0.9956,0,Normal,1023,Fetal brain,1.0,3,Severe,3,Severe,3,MAX,3.0,2.0
+MM-024,28165107,,Unknown,,Unknown,,Te-no_0243.jpg,notumor,0.9769,0,Normal,1213,Fetal femur,1.0,1,Mild,1,Mild,2,MAX,1.0,0.5
+MM-025,24910015,,Unknown,,Unknown,,Te-me_0177.jpg,meningioma,0.9174,2,Moderate,870,Fetal femur,0.9998,1,Mild,2,Moderate,2,MAX,2.0,1.5
+MM-026,29003466,,Unknown,,Unknown,,Te-pi_0255.jpg,pituitary,0.95,1,Mild,887,Fetal thorax,0.9999,2,Moderate,2,Moderate,2,MAX,2.0,1.5
+MM-027,22626724,2.0,Moderate,G2 (Mild),Moderate,,Te-me_0067.jpg,glioma,0.41,3,Severe,777,Fetal abdomen,0.9991,0,Normal,3,Severe,3,MAX,3.0,1.6666666666666667
+MM-028,26473073,1.0,Mild,,Mild,,Te-gl_0233.jpg,glioma,0.525,3,Severe,1787,Fetal brain,0.9999,3,Severe,3,Severe,3,MAX,3.0,2.3333333333333335
+MM-029,28219289,3.0,Severe,G3b (Moderate-Severe),Severe,,Te-no_0239.jpg,notumor,0.985,0,Normal,1710,Fetal brain,0.9999,3,Severe,3,Severe,3,MAX,3.0,2.0
+MM-030,25314337,,Stable,,Normal,,Te-no_0249.jpg,notumor,0.976,0,Normal,1733,Fetal abdomen,0.9972,0,Normal,0,Normal,2,MAX,0.0,0.0
+MM-031,24726522,,Unknown,,Unknown,,Te-pi_0146.jpg,pituitary,0.9911,1,Mild,985,Fetal brain,0.999,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-032,25871339,,Unknown,,,Unknown,Te-me_0048.jpg,meningioma,0.4291,2,Moderate,813,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-033,22638942,,Unknown,,Unknown,Unknown,Te-gl_0051.jpg,glioma,0.995,3,Severe,1380,Fetal abdomen,0.9996,0,Normal,3,Severe,2,MAX,3.0,1.5
+MM-034,26271927,3.0,Severe,,Severe,,Te-no_0258.jpg,notumor,0.9907,0,Normal,1207,Fetal thorax,0.9999,2,Moderate,3,Severe,3,MAX,3.0,1.6666666666666667
+MM-035,20052469,1.0,Mild,,Prediabetes,,Te-gl_0115.jpg,glioma,0.8865,3,Severe,1023,Fetal abdomen,0.9972,0,Normal,3,Severe,3,MAX,3.0,1.3333333333333333
+MM-036,29334387,3.0,Severe,G5 (Kidney Failure),,,Te-me_0016.jpg,meningioma,0.3636,2,Moderate,867,Fetal femur,0.9998,1,Mild,3,Severe,3,MAX,3.0,2.0
+MM-037,21702700,,Unknown,,Unknown,,Te-pi_0258.jpg,pituitary,0.8219,1,Mild,1499,Fetal brain,0.9999,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-038,26259402,,Unknown,,,Unknown,Te-gl_0184.jpg,glioma,0.9564,3,Severe,1304,Fetal thorax,0.9999,2,Moderate,3,Severe,2,MAX,3.0,2.5
+MM-039,23748533,,Unknown,,,Unknown,Te-me_0110.jpg,meningioma,0.5313,2,Moderate,1710,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-040,22263045,3.0,Severe,G5 (Kidney Failure),Normal,,Te-pi_0218.jpg,pituitary,0.9643,1,Mild,713,Fetal brain,1.0,3,Severe,3,Severe,3,MAX,3.0,2.3333333333333335
+MM-041,24944670,,Unknown,,,Unknown,Te-no_0262.jpg,notumor,0.9958,0,Normal,964,Fetal femur,0.9999,1,Mild,1,Mild,2,MAX,1.0,0.5
+MM-042,22144279,,Unknown,,,Unknown,Te-me_0158.jpg,meningioma,0.7774,2,Moderate,767,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.5
+MM-043,20821114,,Unknown,,Unknown,,Te-me_0129.jpg,meningioma,0.7456,2,Moderate,950,Fetal thorax,0.9998,2,Moderate,2,Moderate,2,MAX,2.0,2.0
+MM-044,27488897,,Unknown,,Unknown,,Te-no_0110.jpg,notumor,0.9719,0,Normal,1769,Fetal brain,0.9997,3,Severe,3,Severe,2,MAX,3.0,1.5
+MM-045,21311334,1.0,Mild,G2 (Mild),Mild,,Te-no_0168.jpg,notumor,0.98,0,Normal,937,Fetal femur,0.9992,1,Mild,1,Mild,3,MAX,1.0,0.6666666666666666
+MM-046,23352243,,Unknown,,Unknown,,Te-pi_0016.jpg,pituitary,0.9272,1,Mild,922,Fetal thorax,0.9984,2,Moderate,2,Moderate,2,MAX,2.0,1.5
+MM-047,22957569,,Unknown,,Unknown,,Te-gl_0063.jpg,glioma,0.9971,3,Severe,1721,Fetal brain,0.9999,3,Severe,3,Severe,2,MAX,3.0,3.0
+MM-048,25054429,,Unknown,,Unknown,,Te-pi_0068.jpg,pituitary,0.6671,1,Mild,1322,Fetal brain,0.9999,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-049,27082083,,Unknown,,Unknown,,Te-pi_0276.jpg,pituitary,0.7531,1,Mild,1119,Fetal brain,1.0,3,Severe,3,Severe,2,MAX,3.0,2.0
+MM-050,29116786,1.0,Mild,,Mild,,Te-no_0037.jpg,notumor,0.9681,0,Normal,1679,Fetal brain,0.9999,3,Severe,3,Severe,3,MAX,3.0,1.3333333333333333
