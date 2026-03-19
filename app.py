@@ -92,8 +92,8 @@ DOCTORS = {
 
 
 # ── DATA LOADING ──────────────────────────────────────────────
-@st.cache_data
-def load_all():
+@st.cache_data(show_spinner=False)
+def load_all(version=2):  # bump version to force cache refresh
     def find(name):
         for p in [f'data/{name}', name]:
             if os.path.exists(p): return p
@@ -103,12 +103,14 @@ def load_all():
         p = find(name)
         if not p: return None
         df = pd.read_csv(p)
-        # Convert numeric NaN columns to Python-native — avoids numpy NaN issues
+        # Force numeric columns
         for col in ['egfr','hba1c','glucose','tsh','free_t4',
                     'ct_confidence','confidence','lab_score',
                     'ct_score','us_score','fusion_score']:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Replace ALL NaN with None so row.to_dict() gives Python None not numpy nan
+        df = df.where(pd.notnull(df), None)
         return df
 
     lab=ct=us=fus=None; rag={}
@@ -124,7 +126,7 @@ def load_all():
         with open(p) as f: rag=json.load(f)
     return lab,ct,us,fus,rag
 
-lab_df,ct_df,us_df,fus_df,rag_data = load_all()
+lab_df,ct_df,us_df,fus_df,rag_data = load_all(version=2)
 
 
 # ── SESSION STATE ─────────────────────────────────────────────
@@ -134,17 +136,21 @@ for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{}}
 
 # ── HELPERS ───────────────────────────────────────────────────
 def get_num(row, key):
+    """Safely extract numeric value from row dict, returns None for NaN/null."""
     v = row.get(key)
-    if v is None: return None
-    # Handle numpy NaN, pandas NA, string 'nan'
-    try:
-        if pd.isna(v): return None
-    except (TypeError, ValueError):
-        pass
+    # None check
+    if v is None:
+        return None
+    # String nan check
+    if str(v).strip().lower() in ('nan', 'none', 'null', '', 'na'):
+        return None
+    # Numeric conversion
     try:
         f = float(v)
-        import math
-        return None if (math.isnan(f) or math.isinf(f)) else f
+        # NaN check using comparison (works for all float NaN types)
+        if f != f:
+            return None
+        return f
     except (TypeError, ValueError):
         return None
 
