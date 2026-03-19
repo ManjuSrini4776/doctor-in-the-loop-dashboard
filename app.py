@@ -65,16 +65,16 @@ US_DESC = {
     'Fetal thorax': 'Thoracic plane identified. Cardiac and pulmonary assessment indicated.'
 }
 CT_IMAGE = {
-    'glioma':    'images/ct_glioma.png',
-    'meningioma':'images/ct_meningioma.png',
-    'pituitary': 'images/ct_pituitary.png',
-    'notumor':   'images/ct_notumor.png'
+    'glioma':    ('images/ct_glioma_original.jpg',    'images/ct_glioma_gradcam.png'),
+    'meningioma':('images/ct_meningioma_original.jpg','images/ct_meningioma_gradcam.png'),
+    'pituitary': ('images/ct_pituitary_original.jpg', 'images/ct_pituitary_gradcam.png'),
+    'notumor':   ('images/ct_notumor_original.jpg',   'images/ct_notumor_gradcam.png'),
 }
 US_IMAGE = {
-    'Fetal abdomen':'images/us_abdomen.png',
-    'Fetal brain':  'images/us_brain.png',
-    'Fetal femur':  'images/us_femur.png',
-    'Fetal thorax': 'images/us_thorax.png'
+    'Fetal abdomen':('images/us_abdomen_original.png','images/us_abdomen_gradcam.png'),
+    'Fetal brain':  ('images/us_brain_original.png',  'images/us_brain_gradcam.png'),
+    'Fetal femur':  ('images/us_femur_original.png',  'images/us_femur_gradcam.png'),
+    'Fetal thorax': ('images/us_thorax_original.png', 'images/us_thorax_gradcam.png'),
 }
 SCORE_MAP = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
 
@@ -118,42 +118,171 @@ DOCTORS = {
     },
 }
 
-PATIENT_MSG = {
-    'Normal': (
-        "Dear Patient,\n\n"
-        "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Good news — your results are within the normal healthy range. "
-        "No immediate medical attention is required.\n\n"
-        "Please continue your current medication and maintain a healthy lifestyle. "
-        "Routine follow-up in 3 months is recommended.\n\n"
-        "Regards,\nMedAI Clinical System"
-    ),
-    'Mild': (
-        "Dear Patient,\n\n"
-        "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Your results show mild findings that need monitoring. "
-        "No emergency at this time.\n\n"
-        "Please follow your doctor's prescription and schedule "
-        "a follow-up within 2 to 4 weeks.\n\n"
-        "Regards,\nMedAI Clinical System"
-    ),
-    'Moderate': (
-        "Dear Patient,\n\n"
-        "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Your results indicate findings that need medical attention. "
-        "Please follow your doctor's instructions carefully.\n\n"
-        "Book a follow-up appointment within 7 to 10 days.\n\n"
-        "Regards,\nMedAI Clinical System"
-    ),
-    'Severe': (
-        "Dear Patient,\n\n"
-        "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Your results require prompt medical attention. "
-        "Please contact your doctor today.\n\n"
-        "Do not delay — early treatment leads to the best outcomes.\n\n"
-        "Regards,\nMedAI Clinical System"
-    ),
-}
+def get_patient_message(sev, mtype, row):
+    """Generate condition-specific patient message."""
+    # Extract condition details
+    if mtype == 'Lab Report':
+        disease = str(row.get('disease_type','')).lower()
+        ckd = str(row.get('ckd_severity',''))
+        dia = str(row.get('diabetes_severity_final',''))
+        thy = str(row.get('thyroid_severity_final',''))
+
+        if 'ckd' in disease or 'kidney' in disease:
+            condition = f'Chronic Kidney Disease ({ckd})'
+            if sev == 'Normal':
+                detail = ('Your kidney function (eGFR) is within an acceptable range. '
+                          'No immediate treatment is required at this stage.')
+                action = 'Stay well-hydrated, avoid NSAIDs, and attend your '
+                'next kidney function check in 3 months.'
+            elif sev == 'Mild':
+                detail = ('Your kidney function shows mild reduction. '
+                          'This needs regular monitoring to prevent progression.')
+                action = ('Follow a low-sodium, low-protein diet as advised. '
+                          'Book a follow-up nephrology review in 4 weeks.')
+            else:
+                detail = ('Your kidney function is significantly reduced. '
+                          'Specialist care is needed to prevent further decline.')
+                action = ('Please contact your nephrologist immediately. '
+                          'Avoid any medications that stress the kidneys.')
+
+        elif 'diabetes' in disease:
+            glucose = row.get('glucose','')
+            gluc_str = f' (Glucose: {glucose} mg/dL)' \
+                       if glucose and str(glucose) not in ['None','nan'] else ''
+            condition = f'Diabetes Mellitus{gluc_str}'
+            if sev == 'Normal':
+                detail = ('Your blood glucose levels are within the target range. '
+                          'Your diabetes management is working well.')
+                action = ('Continue your current medication and diet plan. '
+                          'Check your blood glucose daily and review in 3 months.')
+            elif sev == 'Mild':
+                detail = ('Your blood glucose is mildly elevated. '
+                          'Small adjustments to your treatment may be needed.')
+                action = ('Follow the low-sugar diet plan provided. '
+                          'Please attend a follow-up in 2 to 4 weeks.')
+            else:
+                detail = ('Your blood glucose is significantly elevated. '
+                          'This requires prompt medical attention.')
+                action = ('Please contact your doctor today. '
+                          'Do not skip your medication. Avoid sugary foods entirely.')
+
+        elif 'thyroid' in disease:
+            tsh = row.get('tsh','')
+            tsh_str = f' (TSH: {tsh} mIU/L)' \
+                      if tsh and str(tsh) not in ['None','nan'] else ''
+            condition = f'Thyroid Disorder{tsh_str}'
+            if sev == 'Normal':
+                detail = ('Your thyroid hormone levels are within the normal range. '
+                          'Your thyroid is functioning well.')
+                action = ('Continue your current thyroid medication if prescribed. '
+                          'Routine thyroid check in 6 months.')
+            elif sev == 'Mild':
+                detail = ('Your TSH is mildly elevated, suggesting subclinical '
+                          'hypothyroidism. Your Free T4 is still normal.')
+                action = ('Your doctor may recommend starting low-dose '
+                          'Levothyroxine. Follow up in 4 to 6 weeks.')
+            else:
+                detail = ('Your thyroid levels indicate overt hypothyroidism '
+                          'requiring treatment.')
+                action = ('Please begin or adjust your Levothyroxine as prescribed. '
+                          'Review in 6 to 8 weeks after starting treatment.')
+        else:
+            condition = 'Chronic Disease Assessment'
+            detail    = 'Your lab results have been reviewed by your doctor.'
+            action    = 'Please follow your doctor\'s prescription carefully.'
+
+    elif mtype == 'CT Scan':
+        cls      = row.get('ct_predicted_class','')
+        conf     = row.get('ct_confidence', 0)
+        conf_str = str(round(float(conf)*100,1)) + '%'
+        names    = {'notumor':'No Brain Tumour', 'pituitary':'Pituitary Adenoma',
+                    'meningioma':'Meningioma',   'glioma':'Glioma'}
+        condition = names.get(cls, cls) + f' (AI confidence: {conf_str})'
+
+        if cls == 'notumor':
+            detail = ('Your brain CT scan shows no signs of any tumour or '
+                      'suspicious lesion. Your scan appears normal.')
+            action = 'No further imaging is needed at this time. '
+            'Routine follow-up as advised by your neurologist.'
+        elif cls == 'pituitary':
+            detail = ('A small benign pituitary gland tumour has been identified. '
+                      'This type of tumour is usually slow-growing and non-cancerous.')
+            action = ('An endocrinology referral has been arranged. '
+                      'Hormone level blood tests will be ordered.')
+        elif cls == 'meningioma':
+            detail = ('A meningioma has been identified. This is typically '
+                      'a slow-growing tumour of the brain lining.')
+            action = ('A neurosurgery consultation has been arranged. '
+                      'Further MRI imaging will be required.')
+        else:  # glioma
+            detail = ('A glioma has been identified on your brain scan. '
+                      'This requires urgent specialist attention.')
+            action = ('An urgent oncology referral has been made. '
+                      'Please attend the hospital as soon as possible.')
+
+    elif mtype == 'Ultrasound':
+        cls   = row.get('predicted_class','')
+        conf  = row.get('confidence', 0)
+        conf_str = str(round(float(conf)*100,1)) + '%'
+        names = {
+            'Fetal abdomen':'Fetal Abdomen Scan',
+            'Fetal brain':  'Fetal Brain Scan',
+            'Fetal femur':  'Fetal Femur Scan',
+            'Fetal thorax': 'Fetal Thorax Scan'
+        }
+        condition = names.get(cls, cls) + f' (AI confidence: {conf_str})'
+
+        if cls == 'Fetal abdomen':
+            detail = ('Your fetal abdominal ultrasound shows measurements '
+                      'within the normal expected range for gestational age.')
+            action = ('Continue your routine antenatal care. '
+                      'Next scan as per your scheduled appointment.')
+        elif cls == 'Fetal femur':
+            detail = ('Your baby\'s femur (thigh bone) length is within the '
+                      'normal range, indicating healthy fetal growth.')
+            action = ('No concerns at this stage. Continue your regular '
+                      'antenatal check-ups.')
+        elif cls == 'Fetal thorax':
+            detail = ('The fetal thorax (chest) plane has been assessed. '
+                      'A detailed cardiac and lung evaluation is recommended.')
+            action = ('A fetal echocardiography has been recommended. '
+                      'Please attend your specialist appointment within 7 days.')
+        else:  # brain
+            detail = ('The fetal brain scan requires further detailed evaluation. '
+                      'An anomaly scan has been recommended by your doctor.')
+            action = ('Please attend the fetal medicine unit within the next '
+                      '3 to 5 days for a detailed neurosonography scan.')
+
+    elif mtype == 'Combined Assessment':
+        fusion_sev = row.get('fusion_label', sev)
+        condition  = 'Multimodal Clinical Assessment (Lab + CT + Ultrasound)'
+        detail     = (f'Your combined assessment across all three tests shows '
+                      f'{fusion_sev.lower()} overall findings. '
+                      f'Each test result has been reviewed individually.')
+        action     = ('Please follow your doctor\'s specific instructions '
+                      'for each component of your assessment.')
+    else:
+        condition = 'Medical Assessment'
+        detail    = 'Your results have been reviewed by your doctor.'
+        action    = 'Please follow your doctor\'s prescription carefully.'
+
+    # Severity-specific urgency line
+    urgency_line = {
+        'Normal':   'No immediate hospital visit is required.',
+        'Mild':     'No emergency — but please book your follow-up appointment soon.',
+        'Moderate': 'Please do not delay your follow-up appointment.',
+        'Severe':   'Please contact the hospital or your doctor today without delay.',
+    }.get(sev, '')
+
+    return (
+        f"Dear Patient,\n\n"
+        f"Your test results have been reviewed and approved by your doctor.\n\n"
+        f"Condition: {condition}\n\n"
+        f"{detail}\n\n"
+        f"Next Steps: {action}\n\n"
+        f"{urgency_line}\n\n"
+        f"Regards,\nMedAI Clinical System"
+    )
 
 
 # ── Data loader ───────────────────────────────────────────────
@@ -430,20 +559,23 @@ def render_dept(doc_id, df, mtype, id_col, sev_col):
     # Stats
     sev_counts = df[sev_col].value_counts() if sev_col in df.columns else {}
     s1,s2,s3,s4 = st.columns(4)
-    for col,(lbl,clr) in zip([s1,s2,s3,s4],[
-        ('Severe','#FF3B3B'),('Moderate','#FF6B35'),
-        ('Mild','#FFB800'),  ('Normal','#00C48C')
+    for col,(lbl,clr,bg_clr) in zip([s1,s2,s3,s4],[
+        ('Severe',   '#FF3B3B','rgba(255,59,59,0.08)'),
+        ('Moderate', '#FF6B35','rgba(255,107,53,0.08)'),
+        ('Mild',     '#FFB800','rgba(255,184,0,0.08)'),
+        ('Normal',   '#00C48C','rgba(0,196,140,0.08)'),
     ]):
         cnt = int(sev_counts.get(lbl, 0))
         with col:
             st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-top:3px solid ' + clr + ';border-radius:10px;'
-                'padding:14px;text-align:center;margin-bottom:16px;">'
-                '<div style="font-size:30px;font-weight:800;color:' + clr + ';">'
-                + str(cnt) + '</div>'
-                '<div style="font-size:13px;color:#7A90A8;margin-top:4px;">'
-                + lbl + '</div>'
+                '<div style="background:' + bg_clr + ';'
+                'border:2px solid ' + clr + '44;'
+                'border-top:4px solid ' + clr + ';border-radius:12px;'
+                'padding:16px;text-align:center;margin-bottom:16px;">'
+                '<div style="font-size:36px;font-weight:800;color:' + clr + ';'
+                'line-height:1;">' + str(cnt) + '</div>'
+                '<div style="font-size:13px;color:' + clr + ';margin-top:6px;'
+                'font-weight:600;opacity:0.8;">' + lbl + '</div>'
                 '</div>',
                 unsafe_allow_html=True
             )
@@ -652,8 +784,8 @@ def render_patient(row, pid, sev, clr, bg, mtype, doc_id):
             label_visibility='collapsed'
         )
 
-        # Patient message preview
-        pat_msg = PATIENT_MSG.get(sev, PATIENT_MSG['Normal'])
+        # Patient message — condition specific
+        pat_msg = get_patient_message(sev, mtype, row)
         if notes:
             pat_msg += '\n\nDoctor\'s additional instructions:\n' + notes
 
@@ -1022,13 +1154,18 @@ def render_ct_findings(row, sev, clr):
         '</div></div>',
         unsafe_allow_html=True
     )
-    img = CT_IMAGE.get(str(cls),'')
-    if img and os.path.exists(img):
+    img_tuple = CT_IMAGE.get(str(cls),('',''))
+    orig_path = img_tuple[0] if isinstance(img_tuple,tuple) else ''
+    grad_path = img_tuple[1] if isinstance(img_tuple,tuple) else ''
+    if orig_path and os.path.exists(orig_path):
         gc1,gc2 = st.columns(2)
         with gc1:
-            st.image(img, caption='CT Scan', use_column_width=True)
+            st.markdown('<div style="font-size:11px;font-weight:600;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original CT Scan</div>',unsafe_allow_html=True)
+            st.image(orig_path, use_column_width=True)
         with gc2:
-            st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
+            st.markdown('<div style="font-size:11px;font-weight:600;color:#A78BFA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
+            if grad_path and os.path.exists(grad_path):
+                st.image(grad_path, use_column_width=True)
         st.markdown(
             '<div style="font-size:12px;color:#4A6080;margin-bottom:12px;">'
             'Highlighted regions indicate areas of diagnostic significance '
@@ -1058,13 +1195,18 @@ def render_us_findings(row, sev, clr):
         '</div></div>',
         unsafe_allow_html=True
     )
-    img = US_IMAGE.get(str(cls),'')
-    if img and os.path.exists(img):
+    img_tuple = US_IMAGE.get(str(cls),('',''))
+    orig_path = img_tuple[0] if isinstance(img_tuple,tuple) else ''
+    grad_path = img_tuple[1] if isinstance(img_tuple,tuple) else ''
+    if orig_path and os.path.exists(orig_path):
         ug1,ug2 = st.columns(2)
         with ug1:
-            st.image(img, caption='Ultrasound Scan', use_column_width=True)
+            st.markdown('<div style="font-size:11px;font-weight:600;color:#34D399;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original Ultrasound</div>',unsafe_allow_html=True)
+            st.image(orig_path, use_column_width=True)
         with ug2:
-            st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
+            st.markdown('<div style="font-size:11px;font-weight:600;color:#A78BFA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
+            if grad_path and os.path.exists(grad_path):
+                st.image(grad_path, use_column_width=True)
 
 
 def render_combined_findings(row):
