@@ -395,19 +395,24 @@ def render_patient(p, pid, doc_id):
     elif mtype=='Combined Assessment': render_combined(p,sev,clr)
 
     # RAG
-    st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;">AI Clinical Summary</div>',unsafe_allow_html=True)
-    # ── RAG (FIXED) ─────────────────────────────────────────────
-    if mtype=='Combined Assessment':
+   # ── RAG (🔥 PATIENT-SPECIFIC FIX — SAFE VERSION) ─────────────
+   if mtype == 'Combined Assessment':
     parsed = get_mm_rag(p)
-    cites = parsed.pop('citations', [])
+    cites = parsed.pop('citations', []) if isinstance(parsed, dict) else []
+   else:
+    pid = p.get('patient_id', '')
+
+    raw = RAG_DATA.get(pid)
+
+    # Handle both formats (string OR dict)
+    if isinstance(raw, dict):
+        raw_text = raw.get('raw_text', '')
+        cites = raw.get('citations', [])
     else:
-    # 🔥 FIX: Use patient_id instead of rag_class_key
-    pid = p.get('patient_id')
+        raw_text = raw if isinstance(raw, str) else ''
+        cites = []
 
-    raw = RAG_DATA.get(pid, "")
-
-    # Your RAG file is plain text → parse directly
-    parsed = parse_rag(raw) if raw else {}
+    parsed = parse_rag(raw_text) if raw_text else {}
 
     cites = []
     render_rag(parsed,cites)
