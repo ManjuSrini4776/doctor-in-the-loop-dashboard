@@ -397,25 +397,24 @@ def render_patient(p, pid, doc_id):
     # RAG
    # ── RAG (🔥 PATIENT-SPECIFIC FIX — SAFE VERSION) ─────────────
    if mtype == 'Combined Assessment':
-    parsed = get_mm_rag(p)
-    cites = parsed.pop('citations', []) if isinstance(parsed, dict) else []
+      parsed = get_mm_rag(p)
+      cites = parsed.pop('citations', []) if isinstance(parsed, dict) else []
    else:
-    pid = p.get('patient_id', '')
+      pid = p.get('patient_id', '')
 
-    raw = RAG_DATA.get(pid)
+      raw = RAG_DATA.get(pid)
 
     # Handle both formats (string OR dict)
-    if isinstance(raw, dict):
+      if isinstance(raw, dict):
         raw_text = raw.get('raw_text', '')
         cites = raw.get('citations', [])
-    else:
+      else:
         raw_text = raw if isinstance(raw, str) else ''
         cites = []
 
-    parsed = parse_rag(raw_text) if raw_text else {}
+      parsed = parse_rag(raw_text) if raw_text else {}
 
-    cites = []
-    render_rag(parsed,cites)
+      
 
     # Decision
     st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 12px;">Doctor Review & Decision</div>',unsafe_allow_html=True)
