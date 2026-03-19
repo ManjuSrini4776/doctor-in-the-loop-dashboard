@@ -593,17 +593,20 @@ def render_dept(doc_id,df,mtype,id_col,sev_col):
 
         match=df[df[id_col]==sel_pid]
         if match.empty: return
-        # Get the actual dataframe index for direct numeric access
         df_idx = match.index[0]
         row=match.iloc[0].to_dict()
-        # Override numeric columns directly from df to avoid serialization NaN issues
-        for num_col in ['egfr','hba1c','glucose','tsh','free_t4',
-                        'ct_confidence','confidence','lab_score',
-                        'ct_score','us_score','fusion_score',
-                        'lab_hadm_id']:
-            if num_col in df.columns:
-                val = df.at[df_idx, num_col]
-                row[num_col] = None if pd.isna(val) else val
+        # Fix: re-read numeric values directly from df bypassing serialization
+        for col in ['egfr','hba1c','glucose','tsh','free_t4',
+                    'ct_confidence','confidence','lab_score',
+                    'ct_score','us_score','fusion_score']:
+            if col in df.columns:
+                v = df.loc[df_idx, col]
+                try:
+                    import math
+                    f = float(v)
+                    row[col] = None if math.isnan(f) else f
+                except:
+                    row[col] = None
         sev=str(row.get(sev_col,'Unknown'))
         clr=SEV_COLOR.get(sev,'#6B7A99')
         bg =SEV_BG.get(sev,'rgba(107,122,153,0.1)')
