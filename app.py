@@ -11,37 +11,46 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# ── BRIGHT COLORFUL THEME ─────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-html,body,[class*="css"]{font-family:'Inter',sans-serif!important;background:#0D1B2E!important;color:#E8EDF5!important;}
-.stApp{background:#0D1B2E!important;}
+html,body,[class*="css"]{font-family:'Inter',sans-serif!important;background:#060E1A!important;color:#E8EDF5!important;}
+.stApp{background:#060E1A!important;}
 #MainMenu,footer,header{visibility:hidden;}
 .block-container{padding:0!important;max-width:100%!important;}
-.stTextInput>div>div>input{background:#162236!important;color:#E8EDF5!important;border:1.5px solid #263A55!important;border-radius:8px!important;font-size:16px!important;padding:10px 14px!important;}
-.stSelectbox>div>div{background:#162236!important;color:#E8EDF5!important;border:1.5px solid #263A55!important;border-radius:8px!important;font-size:15px!important;}
-.stTextArea textarea{background:#162236!important;color:#E8EDF5!important;border:1.5px solid #263A55!important;border-radius:8px!important;font-size:14px!important;}
-.stButton>button{font-family:'Inter',sans-serif!important;font-weight:600!important;font-size:15px!important;border-radius:8px!important;padding:10px 20px!important;}
-.stButton>button[kind="primary"]{background:#2563EB!important;border:none!important;color:white!important;}
-.stButton>button[kind="secondary"]{background:#162236!important;border:1.5px solid #263A55!important;color:#94A3B8!important;}
-.stTabs [data-baseweb="tab-list"]{background:#0A1628!important;border-bottom:2px solid #1E3250!important;padding:0 8px!important;}
-.stTabs [data-baseweb="tab"]{font-size:15px!important;font-weight:500!important;color:#64748B!important;padding:14px 22px!important;}
-.stTabs [aria-selected="true"]{color:#4A9EFF!important;border-bottom:3px solid #4A9EFF!important;background:transparent!important;font-weight:700!important;}
-hr{border-color:#1E3250!important;}
-label{color:#94A3B8!important;font-size:14px!important;}
+.stTextInput>div>div>input{background:#0F1E33!important;color:#F0F6FF!important;border:2px solid #1E3A5F!important;border-radius:10px!important;font-size:16px!important;padding:10px 16px!important;}
+.stSelectbox>div>div{background:#0F1E33!important;color:#F0F6FF!important;border:2px solid #1E3A5F!important;border-radius:10px!important;font-size:15px!important;}
+.stTextArea textarea{background:#0F1E33!important;color:#F0F6FF!important;border:2px solid #1E3A5F!important;border-radius:10px!important;font-size:14px!important;}
+.stButton>button{font-family:'Inter',sans-serif!important;font-weight:700!important;font-size:15px!important;border-radius:10px!important;padding:11px 22px!important;transition:all 0.2s!important;}
+.stButton>button[kind="primary"]{background:linear-gradient(135deg,#2563EB,#1D4ED8)!important;border:none!important;color:white!important;box-shadow:0 4px 15px rgba(37,99,235,0.4)!important;}
+.stButton>button[kind="secondary"]{background:#0F1E33!important;border:2px solid #1E3A5F!important;color:#94A3B8!important;}
+.stButton>button[kind="secondary"]:hover{border-color:#2563EB!important;color:#60A5FA!important;}
+.stTabs [data-baseweb="tab-list"]{background:#080F1C!important;border-bottom:2px solid #1E3A5F!important;padding:0 8px!important;}
+.stTabs [data-baseweb="tab"]{font-size:15px!important;font-weight:600!important;color:#4A6080!important;padding:14px 22px!important;}
+.stTabs [aria-selected="true"]{color:#60A5FA!important;border-bottom:3px solid #2563EB!important;background:transparent!important;}
+hr{border-color:#1E3A5F!important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Constants ─────────────────────────────────────────────────
+# ── CONSTANTS ─────────────────────────────────────────────────
 SEV_COLOR = {
-    'Normal':'#00C48C','Mild':'#FFB800',
-    'Moderate':'#FF6B35','Severe':'#FF3B3B','Unknown':'#8892A4'
+    'Normal':  '#00E5A0', 'Mild':    '#FFD000',
+    'Moderate':'#FF7A35', 'Severe':  '#FF3B5C', 'Unknown':'#6B7A99'
 }
 SEV_BG = {
-    'Normal':'rgba(0,196,140,0.12)','Mild':'rgba(255,184,0,0.12)',
-    'Moderate':'rgba(255,107,53,0.12)','Severe':'rgba(255,59,59,0.12)',
-    'Unknown':'rgba(136,146,164,0.12)'
+    'Normal':  'rgba(0,229,160,0.1)',  'Mild':    'rgba(255,208,0,0.1)',
+    'Moderate':'rgba(255,122,53,0.1)', 'Severe':  'rgba(255,59,92,0.1)',
+    'Unknown': 'rgba(107,122,153,0.1)'
 }
+SEV_GRAD = {
+    'Normal':  'linear-gradient(135deg,rgba(0,229,160,0.2),rgba(0,229,160,0.05))',
+    'Mild':    'linear-gradient(135deg,rgba(255,208,0,0.2),rgba(255,208,0,0.05))',
+    'Moderate':'linear-gradient(135deg,rgba(255,122,53,0.2),rgba(255,122,53,0.05))',
+    'Severe':  'linear-gradient(135deg,rgba(255,59,92,0.2),rgba(255,59,92,0.05))',
+    'Unknown': 'linear-gradient(135deg,rgba(107,122,153,0.15),rgba(107,122,153,0.05))',
+}
+SCORE_MAP = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
 CT_NAMES = {
     'notumor':'No Brain Tumour Detected','pituitary':'Pituitary Adenoma',
     'meningioma':'Meningioma','glioma':'Glioma'
@@ -53,16 +62,14 @@ CT_DESC = {
     'glioma':    'Malignant brain tumour. Urgent oncology referral required.'
 }
 US_NAMES = {
-    'Fetal abdomen':'Fetal Abdomen — Normal',
-    'Fetal brain':  'Fetal Brain Plane',
-    'Fetal femur':  'Fetal Femur — Normal Growth',
-    'Fetal thorax': 'Fetal Thorax Plane'
+    'Fetal abdomen':'Fetal Abdomen — Normal','Fetal brain':'Fetal Brain Plane',
+    'Fetal femur':'Fetal Femur — Normal Growth','Fetal thorax':'Fetal Thorax Plane'
 }
 US_DESC = {
     'Fetal abdomen':'Abdominal measurements within expected range for gestational age.',
-    'Fetal brain':  'Neurosonography plane identified. Detailed anomaly scan recommended.',
+    'Fetal brain':  'Neurosonography plane. Detailed anomaly scan recommended.',
     'Fetal femur':  'Femur length within normal range. Fetal growth on track.',
-    'Fetal thorax': 'Thoracic plane identified. Cardiac and pulmonary assessment indicated.'
+    'Fetal thorax': 'Thoracic plane. Cardiac and pulmonary assessment indicated.'
 }
 CT_IMAGE = {
     'glioma':    ('images/ct_glioma_original.jpg',    'images/ct_glioma_gradcam.png'),
@@ -76,203 +83,307 @@ US_IMAGE = {
     'Fetal femur':  ('images/us_femur_original.png',  'images/us_femur_gradcam.png'),
     'Fetal thorax': ('images/us_thorax_original.png', 'images/us_thorax_gradcam.png'),
 }
-SCORE_MAP = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
-
-# ── Doctor definitions with department routing ────────────────
 DOCTORS = {
-    'DR001': {
-        'name':     'Dr. Priya Sharma',
-        'dept':     'Internal Medicine',
-        'specialty':'Nephrology & Chronic Disease',
-        'color':    '#4A9EFF',
-        'password': '1234',
-        'mtype':    'Lab Report',
-        'tab_idx':  0,
-    },
-    'DR002': {
-        'name':     'Dr. Arjun Mehta',
-        'dept':     'Neurology',
-        'specialty':'Neuro-Oncology',
-        'color':    '#A78BFA',
-        'password': '1234',
-        'mtype':    'CT Scan',
-        'tab_idx':  1,
-    },
-    'DR003': {
-        'name':     'Dr. Kavitha Rajan',
-        'dept':     'Obstetrics',
-        'specialty':'Fetal Medicine',
-        'color':    '#34D399',
-        'password': '1234',
-        'mtype':    'Ultrasound',
-        'tab_idx':  2,
-    },
-    'DR004': {
-        'name':     'Dr. Suresh Kumar',
-        'dept':     'General Medicine',
-        'specialty':'Multimodal Assessment',
-        'color':    '#FBBF24',
-        'password': '1234',
-        'mtype':    'Combined Assessment',
-        'tab_idx':  3,
-    },
+    'DR001':{'name':'Dr. Priya Sharma', 'dept':'Internal Medicine','specialty':'Nephrology & Chronic Disease','color':'#60A5FA','password':'1234','mtype':'Lab Report'},
+    'DR002':{'name':'Dr. Arjun Mehta',  'dept':'Neurology',        'specialty':'Neuro-Oncology',             'color':'#C084FC','password':'1234','mtype':'CT Scan'},
+    'DR003':{'name':'Dr. Kavitha Rajan','dept':'Obstetrics',        'specialty':'Fetal Medicine',             'color':'#34D399','password':'1234','mtype':'Ultrasound'},
+    'DR004':{'name':'Dr. Suresh Kumar', 'dept':'General Medicine',  'specialty':'Multimodal Assessment',      'color':'#FBBF24','password':'1234','mtype':'Combined Assessment'},
 }
 
+
+# ── DATA LOADING ──────────────────────────────────────────────
+@st.cache_data
+def load_all():
+    def find(name):
+        for p in [f'data/{name}', name]:
+            if os.path.exists(p): return p
+        return None
+    lab=ct=us=fus=None; rag={}
+    p=find('lab_data.csv')
+    if p:
+        lab=pd.read_csv(p)
+        lab['final_severity_label']=lab['final_severity_label'].replace('Stable','Normal')
+    p=find('ct_data.csv');   ct  = pd.read_csv(p) if p else None
+    p=find('us_data.csv');   us  = pd.read_csv(p) if p else None
+    p=find('fusion_data.csv');fus= pd.read_csv(p) if p else None
+    p=find('rag_summaries.json')
+    if p:
+        with open(p) as f: rag=json.load(f)
+    return lab,ct,us,fus,rag
+
+lab_df,ct_df,us_df,fus_df,rag_data = load_all()
+
+
+# ── SESSION STATE ─────────────────────────────────────────────
+for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{}}.items():
+    if k not in st.session_state: st.session_state[k]=v
+
+
+# ── HELPERS ───────────────────────────────────────────────────
+def get_num(row, key):
+    v = row.get(key)
+    if v is None: return None
+    try:
+        f = float(v)
+        return None if f!=f else f
+    except: return None
+
+def fmt(v, unit=''):
+    if v is None: return '—'
+    return str(round(v,2)) + (' '+unit if unit else '')
+
+def sev_badge(status):
+    cfg = {
+        'Normal':    ('#00E5A0','rgba(0,229,160,0.15)',   '✓ Normal'),
+        'Abnormal':  ('#FF3B5C','rgba(255,59,92,0.15)',   '✗ Abnormal'),
+        'Borderline':('#FFD000','rgba(255,208,0,0.15)',   '⚠ Borderline'),
+        'N/A':       ('#6B7A99','rgba(107,122,153,0.15)', '— Not tested'),
+    }.get(status, ('#6B7A99','rgba(107,122,153,0.15)','—'))
+    return (f'<span style="background:{cfg[1]};color:{cfg[0]};font-size:12px;'
+            f'font-weight:700;padding:4px 12px;border-radius:20px;">{cfg[2]}</span>')
+
+def parse_rag(raw_text):
+    s={'clinical_summary':'','key_findings':[],'recommendations':[],'followup':'','urgency':''}
+    cur=None
+    for line in raw_text.split('\n'):
+        line=line.strip()
+        if not line: continue
+        lu=line.upper()
+        if 'CLINICAL SUMMARY' in lu: cur='s'
+        elif 'KEY FINDINGS' in lu: cur='f'
+        elif 'RECOMMENDATION' in lu: cur='r'
+        elif 'FOLLOW' in lu and 'PLAN' in lu: cur='fu'
+        elif lu.startswith('URGENCY'): s['urgency']=line.split(':')[-1].strip(); cur=None
+        elif cur=='s' and not lu.startswith('CLINICAL'): s['clinical_summary']+=line+' '
+        elif cur=='f' and line.startswith('•'): s['key_findings'].append(line[1:].strip())
+        elif cur=='r' and line.startswith('•'): s['recommendations'].append(line[1:].strip())
+        elif cur=='fu' and not lu.startswith('FOLLOW'): s['followup']+=line+' '
+    return s
+
+
+# ── MM RAG: build combined summary for all 3 modalities ───────
+def get_mm_rag_summary(row):
+    """Combine RAG summaries from all 3 modalities for MM patients."""
+    SCORE_TO_SEV = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
+
+    # Get each modality's severity
+    lab_s   = get_num(row,'lab_score')
+    ct_s    = get_num(row,'ct_score')
+    us_s    = get_num(row,'us_score')
+    fus_sev = str(row.get('fusion_label', row.get('_sev','Normal')))
+
+    lab_sev = SCORE_TO_SEV.get(int(lab_s),'Normal') if lab_s is not None else 'Unknown'
+    ct_sev  = SCORE_TO_SEV.get(int(ct_s), 'Normal') if ct_s  is not None else 'Unknown'
+    us_sev  = SCORE_TO_SEV.get(int(us_s), 'Normal') if us_s  is not None else 'Unknown'
+
+    # Get keys for each modality
+    ckd = str(row.get('ckd_severity',''))
+    dia = str(row.get('diabetes_severity_final',''))
+    thy = str(row.get('thyroid_severity_final',''))
+
+    disease = 'ckd' if ckd and ckd not in ['Not tested','nan','None'] \
+              else 'diabetes' if dia and dia not in ['Not tested','nan','None'] \
+              else 'thyroid'
+    lab_key = f'lab_{disease}_{lab_sev.lower()}'
+
+    ct_cls  = str(row.get('ct_predicted_class','notumor'))
+    ct_key  = f'ct_{ct_cls}'
+
+    us_cls  = str(row.get('us_predicted_class', row.get('predicted_class','Fetal abdomen')))
+    us_key  = 'us_brain'   if 'brain'   in us_cls.lower() else \
+              'us_thorax'  if 'thorax'  in us_cls.lower() else \
+              'us_femur'   if 'femur'   in us_cls.lower() else 'us_abdomen'
+
+    # Pull each RAG entry
+    def get_section(key, section):
+        entry = rag_data.get(key,{})
+        raw   = entry.get('raw_text','') if isinstance(entry,dict) else ''
+        parsed= parse_rag(raw)
+        return parsed.get(section,[]) if isinstance(parsed.get(section),list) \
+               else [parsed.get(section,'')] if parsed.get(section) else []
+
+    # Build unified summary
+    lab_summary = rag_data.get(lab_key,{}).get('raw_text','') if lab_key in rag_data else ''
+    ct_summary  = rag_data.get(ct_key,{}).get('raw_text','')  if ct_key  in rag_data else ''
+    us_summary  = rag_data.get(us_key,{}).get('raw_text','')  if us_key  in rag_data else ''
+
+    lab_parsed  = parse_rag(lab_summary) if lab_summary else {}
+    ct_parsed   = parse_rag(ct_summary)  if ct_summary  else {}
+    us_parsed   = parse_rag(us_summary)  if us_summary  else {}
+
+    # Merge all findings and recommendations
+    all_findings = []
+    all_recs     = []
+    citations    = []
+
+    if lab_parsed.get('key_findings'):
+        all_findings.append(f'[Lab — {lab_sev}]')
+        all_findings.extend(lab_parsed['key_findings'][:2])
+    if ct_parsed.get('key_findings'):
+        all_findings.append(f'[CT — {CT_NAMES.get(ct_cls,ct_cls)} — {ct_sev}]')
+        all_findings.extend(ct_parsed['key_findings'][:2])
+    if us_parsed.get('key_findings'):
+        all_findings.append(f'[Ultrasound — {US_NAMES.get(us_cls,us_cls)} — {us_sev}]')
+        us_parsed['key_findings'][:2]
+        all_findings.extend(us_parsed['key_findings'][:2])
+
+    if lab_parsed.get('recommendations'):
+        all_recs.extend(lab_parsed['recommendations'][:2])
+    if ct_parsed.get('recommendations'):
+        all_recs.extend(ct_parsed['recommendations'][:2])
+    if us_parsed.get('recommendations'):
+        all_recs.extend(us_parsed['recommendations'][:2])
+
+    for key in [lab_key, ct_key, us_key]:
+        entry = rag_data.get(key,{})
+        if isinstance(entry,dict):
+            citations.extend(entry.get('citations',[]))
+
+    # Unified clinical summary
+    urgency_map = {'Normal':'Routine','Mild':'Routine','Moderate':'Semi-urgent','Severe':'Urgent'}
+    urgency     = urgency_map.get(fus_sev,'Routine')
+
+    clinical_summary = (
+        f"This patient has undergone a multimodal assessment covering laboratory tests "
+        f"({lab_sev} severity), CT brain imaging ({CT_NAMES.get(ct_cls,ct_cls)} — {ct_sev}), "
+        f"and obstetric ultrasound ({US_NAMES.get(us_cls,us_cls)} — {us_sev}). "
+        f"The combined MAX-fusion severity is {fus_sev}, indicating {urgency.lower()} clinical priority."
+    )
+
+    followup_map = {
+        'Normal':   'Routine review in 3 months for all modalities.',
+        'Mild':     'Follow-up within 4 weeks. Monitor all three conditions.',
+        'Moderate': 'Specialist review within 7 days for the most severe finding.',
+        'Severe':   'Immediate specialist referral for the most critical finding.',
+    }
+
+    return {
+        'clinical_summary': clinical_summary,
+        'key_findings':     all_findings,
+        'recommendations':  list(dict.fromkeys(all_recs)),  # deduplicate
+        'followup':         followup_map.get(fus_sev,'Follow-up as clinically indicated.'),
+        'urgency':          urgency,
+        'citations':        list(dict.fromkeys(citations)),
+    }
+
+
+# ── PATIENT MESSAGE ───────────────────────────────────────────
 def get_patient_message(sev, mtype, row):
-    """Generate condition-specific patient message."""
-    # Extract condition details
-    if mtype == 'Lab Report':
-        disease = str(row.get('disease_type','')).lower()
-        ckd = str(row.get('ckd_severity',''))
-        dia = str(row.get('diabetes_severity_final',''))
-        thy = str(row.get('thyroid_severity_final',''))
+    def safe_num(key):
+        v=row.get(key)
+        if v is None: return None
+        try:
+            f=float(v); return None if f!=f else f
+        except: return None
+
+    if mtype=='Lab Report':
+        disease=str(row.get('disease_type','')).lower()
+        ckd=str(row.get('ckd_severity',''))
+        dia=str(row.get('diabetes_severity_final',''))
+        thy=str(row.get('thyroid_severity_final',''))
 
         if 'ckd' in disease or 'kidney' in disease:
-            condition = f'Chronic Kidney Disease ({ckd})'
-            if sev == 'Normal':
-                detail = ('Your kidney function (eGFR) is within an acceptable range. '
-                          'No immediate treatment is required at this stage.')
-                action = 'Stay well-hydrated, avoid NSAIDs, and attend your '
-                'next kidney function check in 3 months.'
-            elif sev == 'Mild':
-                detail = ('Your kidney function shows mild reduction. '
-                          'This needs regular monitoring to prevent progression.')
-                action = ('Follow a low-sodium, low-protein diet as advised. '
-                          'Book a follow-up nephrology review in 4 weeks.')
+            egfr_v=safe_num('egfr')
+            egfr_str=f' (eGFR: {round(egfr_v,1)} mL/min)' if egfr_v else ''
+            condition=f'Chronic Kidney Disease — {ckd}{egfr_str}'
+            if sev=='Normal':
+                detail='Your kidney function is within an acceptable range. No treatment is needed at this stage.'
+                action='Stay well-hydrated, avoid NSAIDs, and attend your kidney function check in 3 months.'
+            elif sev=='Mild':
+                detail='Your kidney function shows mild reduction and needs regular monitoring to prevent progression.'
+                action='Follow a low-sodium, low-protein diet. Book a nephrology follow-up within 4 weeks.'
             else:
-                detail = ('Your kidney function is significantly reduced. '
-                          'Specialist care is needed to prevent further decline.')
-                action = ('Please contact your nephrologist immediately. '
-                          'Avoid any medications that stress the kidneys.')
+                detail='Your kidney function is significantly reduced and requires specialist attention.'
+                action='Please contact your nephrologist immediately. Avoid all medications that stress the kidneys.'
 
         elif 'diabetes' in disease:
-            glucose = row.get('glucose','')
-            gluc_str = f' (Glucose: {glucose} mg/dL)' \
-                       if glucose and str(glucose) not in ['None','nan'] else ''
-            condition = f'Diabetes Mellitus{gluc_str}'
-            if sev == 'Normal':
-                detail = ('Your blood glucose levels are within the target range. '
-                          'Your diabetes management is working well.')
-                action = ('Continue your current medication and diet plan. '
-                          'Check your blood glucose daily and review in 3 months.')
-            elif sev == 'Mild':
-                detail = ('Your blood glucose is mildly elevated. '
-                          'Small adjustments to your treatment may be needed.')
-                action = ('Follow the low-sugar diet plan provided. '
-                          'Please attend a follow-up in 2 to 4 weeks.')
+            gluc_v=safe_num('glucose')
+            gluc_str=f' (Glucose: {round(gluc_v,1)} mg/dL)' if gluc_v else ''
+            condition=f'Diabetes Mellitus{gluc_str}'
+            if sev=='Normal':
+                detail='Your blood glucose levels are well controlled and within the target range.'
+                action='Continue your current medication and diet plan. Check blood glucose daily. Review in 3 months.'
+            elif sev=='Mild':
+                detail='Your blood glucose is mildly elevated and needs closer monitoring.'
+                action='Follow the low-sugar diet plan. Please attend a follow-up appointment in 2 to 4 weeks.'
             else:
-                detail = ('Your blood glucose is significantly elevated. '
-                          'This requires prompt medical attention.')
-                action = ('Please contact your doctor today. '
-                          'Do not skip your medication. Avoid sugary foods entirely.')
+                gluc_display=f'{round(gluc_v,1)} mg/dL' if gluc_v else 'elevated'
+                detail=f'Your blood glucose is significantly elevated ({gluc_display}) and requires prompt attention.'
+                action='Please contact your doctor today. Do not skip your medication. Avoid all sugary foods.'
 
         elif 'thyroid' in disease:
-            tsh = row.get('tsh','')
-            tsh_str = f' (TSH: {tsh} mIU/L)' \
-                      if tsh and str(tsh) not in ['None','nan'] else ''
-            condition = f'Thyroid Disorder{tsh_str}'
-            if sev == 'Normal':
-                detail = ('Your thyroid hormone levels are within the normal range. '
-                          'Your thyroid is functioning well.')
-                action = ('Continue your current thyroid medication if prescribed. '
-                          'Routine thyroid check in 6 months.')
-            elif sev == 'Mild':
-                detail = ('Your TSH is mildly elevated, suggesting subclinical '
-                          'hypothyroidism. Your Free T4 is still normal.')
-                action = ('Your doctor may recommend starting low-dose '
-                          'Levothyroxine. Follow up in 4 to 6 weeks.')
+            tsh_v=safe_num('tsh')
+            tsh_str=f' (TSH: {round(tsh_v,2)} mIU/L)' if tsh_v else ''
+            condition=f'Thyroid Disorder{tsh_str}'
+            if sev=='Normal':
+                detail='Your thyroid hormone levels are within the normal range. Your thyroid is functioning well.'
+                action='Continue your current thyroid medication if prescribed. Routine thyroid check in 6 months.'
+            elif sev=='Mild':
+                detail='Your TSH is mildly elevated (subclinical hypothyroidism). Your Free T4 is still normal.'
+                action='Your doctor may recommend low-dose Levothyroxine. Follow up in 4 to 6 weeks.'
             else:
-                detail = ('Your thyroid levels indicate overt hypothyroidism '
-                          'requiring treatment.')
-                action = ('Please begin or adjust your Levothyroxine as prescribed. '
-                          'Review in 6 to 8 weeks after starting treatment.')
+                detail='Your thyroid levels indicate overt hypothyroidism requiring prompt treatment.'
+                action='Please begin or adjust your Levothyroxine as prescribed. Review in 6 to 8 weeks.'
         else:
-            condition = 'Chronic Disease Assessment'
-            detail    = 'Your lab results have been reviewed by your doctor.'
-            action    = 'Please follow your doctor\'s prescription carefully.'
+            condition='Chronic Disease Assessment'
+            detail='Your lab results have been reviewed by your doctor.'
+            action="Please follow your doctor's prescription carefully."
 
-    elif mtype == 'CT Scan':
-        cls      = row.get('ct_predicted_class','')
-        conf     = row.get('ct_confidence', 0)
-        conf_str = str(round(float(conf)*100,1)) + '%'
-        names    = {'notumor':'No Brain Tumour', 'pituitary':'Pituitary Adenoma',
-                    'meningioma':'Meningioma',   'glioma':'Glioma'}
-        condition = names.get(cls, cls) + f' (AI confidence: {conf_str})'
+    elif mtype=='CT Scan':
+        cls=row.get('ct_predicted_class','')
+        conf=row.get('ct_confidence',0)
+        names={'notumor':'No Brain Tumour','pituitary':'Pituitary Adenoma','meningioma':'Meningioma','glioma':'Glioma'}
+        condition=names.get(cls,cls)+f' (AI confidence: {round(float(conf)*100,1)}%)'
+        if cls=='notumor':
+            detail='Your brain CT scan shows no signs of any tumour or suspicious lesion. Your scan is normal.'
+            action='No further imaging is needed at this time. Routine follow-up as advised by your neurologist.'
+        elif cls=='pituitary':
+            detail='A small benign pituitary gland tumour has been identified. This type is usually slow-growing.'
+            action='An endocrinology referral has been arranged. Hormone level blood tests will be ordered.'
+        elif cls=='meningioma':
+            detail='A meningioma has been identified — typically a slow-growing tumour of the brain lining.'
+            action='A neurosurgery consultation has been arranged. Further MRI imaging will be required.'
+        else:
+            detail='A glioma has been identified on your brain scan. This requires urgent specialist attention.'
+            action='An urgent oncology referral has been made. Please attend the hospital as soon as possible.'
 
-        if cls == 'notumor':
-            detail = ('Your brain CT scan shows no signs of any tumour or '
-                      'suspicious lesion. Your scan appears normal.')
-            action = 'No further imaging is needed at this time. '
-            'Routine follow-up as advised by your neurologist.'
-        elif cls == 'pituitary':
-            detail = ('A small benign pituitary gland tumour has been identified. '
-                      'This type of tumour is usually slow-growing and non-cancerous.')
-            action = ('An endocrinology referral has been arranged. '
-                      'Hormone level blood tests will be ordered.')
-        elif cls == 'meningioma':
-            detail = ('A meningioma has been identified. This is typically '
-                      'a slow-growing tumour of the brain lining.')
-            action = ('A neurosurgery consultation has been arranged. '
-                      'Further MRI imaging will be required.')
-        else:  # glioma
-            detail = ('A glioma has been identified on your brain scan. '
-                      'This requires urgent specialist attention.')
-            action = ('An urgent oncology referral has been made. '
-                      'Please attend the hospital as soon as possible.')
+    elif mtype=='Ultrasound':
+        cls=row.get('predicted_class','')
+        conf=row.get('confidence',0)
+        names={'Fetal abdomen':'Fetal Abdomen Scan','Fetal brain':'Fetal Brain Scan','Fetal femur':'Fetal Femur Scan','Fetal thorax':'Fetal Thorax Scan'}
+        condition=names.get(cls,cls)+f' (AI confidence: {round(float(conf)*100,1)}%)'
+        if cls=='Fetal abdomen':
+            detail='Your fetal abdominal measurements are within the normal expected range for gestational age.'
+            action='Continue routine antenatal care. Next scan as per your scheduled appointment.'
+        elif cls=='Fetal femur':
+            detail="Your baby's femur length is within the normal range, indicating healthy fetal growth."
+            action='No concerns at this stage. Continue your regular antenatal check-ups.'
+        elif cls=='Fetal thorax':
+            detail='The fetal thorax (chest) plane has been assessed. A detailed cardiac evaluation is recommended.'
+            action='A fetal echocardiography has been recommended. Please attend within 7 days.'
+        else:
+            detail='The fetal brain scan requires further detailed evaluation. An anomaly scan has been recommended.'
+            action='Please attend the fetal medicine unit within 3 to 5 days for a detailed neurosonography.'
 
-    elif mtype == 'Ultrasound':
-        cls   = row.get('predicted_class','')
-        conf  = row.get('confidence', 0)
-        conf_str = str(round(float(conf)*100,1)) + '%'
-        names = {
-            'Fetal abdomen':'Fetal Abdomen Scan',
-            'Fetal brain':  'Fetal Brain Scan',
-            'Fetal femur':  'Fetal Femur Scan',
-            'Fetal thorax': 'Fetal Thorax Scan'
-        }
-        condition = names.get(cls, cls) + f' (AI confidence: {conf_str})'
-
-        if cls == 'Fetal abdomen':
-            detail = ('Your fetal abdominal ultrasound shows measurements '
-                      'within the normal expected range for gestational age.')
-            action = ('Continue your routine antenatal care. '
-                      'Next scan as per your scheduled appointment.')
-        elif cls == 'Fetal femur':
-            detail = ('Your baby\'s femur (thigh bone) length is within the '
-                      'normal range, indicating healthy fetal growth.')
-            action = ('No concerns at this stage. Continue your regular '
-                      'antenatal check-ups.')
-        elif cls == 'Fetal thorax':
-            detail = ('The fetal thorax (chest) plane has been assessed. '
-                      'A detailed cardiac and lung evaluation is recommended.')
-            action = ('A fetal echocardiography has been recommended. '
-                      'Please attend your specialist appointment within 7 days.')
-        else:  # brain
-            detail = ('The fetal brain scan requires further detailed evaluation. '
-                      'An anomaly scan has been recommended by your doctor.')
-            action = ('Please attend the fetal medicine unit within the next '
-                      '3 to 5 days for a detailed neurosonography scan.')
-
-    elif mtype == 'Combined Assessment':
-        fusion_sev = row.get('fusion_label', sev)
-        condition  = 'Multimodal Clinical Assessment (Lab + CT + Ultrasound)'
-        detail     = (f'Your combined assessment across all three tests shows '
-                      f'{fusion_sev.lower()} overall findings. '
-                      f'Each test result has been reviewed individually.')
-        action     = ('Please follow your doctor\'s specific instructions '
-                      'for each component of your assessment.')
+    elif mtype=='Combined Assessment':
+        fus_sev=row.get('fusion_label',sev)
+        ct_cls=row.get('ct_predicted_class','')
+        us_cls=row.get('us_predicted_class',row.get('predicted_class',''))
+        condition=f'Multimodal Assessment — Lab + {CT_NAMES.get(ct_cls,"CT")} + {US_NAMES.get(us_cls,"Ultrasound")}'
+        detail=(f'Your combined assessment shows {fus_sev.lower()} overall findings. '
+                f'All three tests — laboratory, CT scan and ultrasound — have been individually reviewed.')
+        action="Please follow your doctor's specific instructions for each component of your assessment."
     else:
-        condition = 'Medical Assessment'
-        detail    = 'Your results have been reviewed by your doctor.'
-        action    = 'Please follow your doctor\'s prescription carefully.'
+        condition='Medical Assessment'
+        detail='Your results have been reviewed by your doctor.'
+        action="Please follow your doctor's prescription carefully."
 
-    # Severity-specific urgency line
-    urgency_line = {
-        'Normal':   'No immediate hospital visit is required.',
-        'Mild':     'No emergency — but please book your follow-up appointment soon.',
-        'Moderate': 'Please do not delay your follow-up appointment.',
-        'Severe':   'Please contact the hospital or your doctor today without delay.',
-    }.get(sev, '')
+    urgency_line={
+        'Normal':  'No immediate hospital visit is required.',
+        'Mild':    'No emergency — but please book your follow-up appointment soon.',
+        'Moderate':'Please do not delay your follow-up appointment.',
+        'Severe':  'Please contact the hospital or your doctor today without delay.',
+    }.get(sev,'')
 
     return (
         f"Dear Patient,\n\n"
@@ -285,1070 +396,643 @@ def get_patient_message(sev, mtype, row):
     )
 
 
-# ── Data loader ───────────────────────────────────────────────
-@st.cache_data
-def load_all_data():
-    def find(name):
-        for p in [f'data/{name}', name]:
-            if os.path.exists(p):
-                return p
-        return None
-
-    lab = ct = us = fus = None
-    rag = {}
-
-    p = find('lab_data.csv')
-    if p:
-        lab = pd.read_csv(p)
-        lab['final_severity_label'] = lab['final_severity_label'].replace('Stable','Normal')
-
-    p = find('ct_data.csv')
-    if p:
-        ct = pd.read_csv(p)
-
-    p = find('us_data.csv')
-    if p:
-        us = pd.read_csv(p)
-
-    p = find('fusion_data.csv')
-    if p:
-        fus = pd.read_csv(p)
-
-    p = find('rag_summaries.json')
-    if p:
-        with open(p) as f:
-            rag = json.load(f)
-
-    return lab, ct, us, fus, rag
-
-
-def parse_rag(raw_text: str) -> dict:
-    sections = {
-        'clinical_summary':'','key_findings':[],
-        'recommendations':[],'followup':'','urgency':'',
-    }
-    current = None
-    for line in raw_text.split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-        lu = line.upper()
-        if 'CLINICAL SUMMARY' in lu:
-            current = 'clinical_summary'
-        elif 'KEY FINDINGS' in lu:
-            current = 'key_findings'
-        elif 'RECOMMENDATION' in lu:
-            current = 'recommendations'
-        elif 'FOLLOW' in lu and 'PLAN' in lu:
-            current = 'followup'
-        elif lu.startswith('URGENCY'):
-            sections['urgency'] = line.split(':')[-1].strip()
-            current = None
-        elif current == 'clinical_summary' and not lu.startswith('CLINICAL'):
-            sections['clinical_summary'] += line + ' '
-        elif current == 'key_findings' and line.startswith('•'):
-            sections['key_findings'].append(line[1:].strip())
-        elif current == 'recommendations' and line.startswith('•'):
-            sections['recommendations'].append(line[1:].strip())
-        elif current == 'followup' and not lu.startswith('FOLLOW'):
-            sections['followup'] += line + ' '
-    return sections
-
-
-def get_mm_rag_key(row: dict, rag_data: dict) -> str:
-    """
-    For combined patients pick best matching RAG key
-    based on highest severity modality.
-    """
-    fusion_sev = str(row.get('fusion_label', row.get('_sev','Normal'))).lower()
-
-    # Check each modality score — pick the most severe one
-    lab_s = row.get('lab_score')
-    ct_s  = row.get('ct_score')
-    us_s  = row.get('us_score')
-
-    try:
-        lab_s = int(float(lab_s)) if lab_s is not None and str(lab_s) not in ['None','nan'] else -1
-    except Exception:
-        lab_s = -1
-    try:
-        ct_s = int(float(ct_s)) if ct_s is not None and str(ct_s) not in ['None','nan'] else -1
-    except Exception:
-        ct_s = -1
-    try:
-        us_s = int(float(us_s)) if us_s is not None and str(us_s) not in ['None','nan'] else -1
-    except Exception:
-        us_s = -1
-
-    # Pick dominant modality
-    scores = {'lab': lab_s, 'ct': ct_s, 'us': us_s}
-    dominant = max(scores, key=lambda k: scores[k])
-
-    sev_str = {0:'normal',1:'mild',2:'moderate',3:'severe'}.get(
-        max(lab_s, ct_s, us_s), 'normal')
-
-    if dominant == 'ct':
-        ct_cls = str(row.get('ct_predicted_class','notumor')).lower()
-        key    = f'ct_{ct_cls}'
-        if key in rag_data:
-            return key
-    elif dominant == 'us':
-        us_cls = str(row.get('us_predicted_class',
-                              row.get('predicted_class','')))
-        if 'brain'   in us_cls.lower(): return 'us_brain'
-        if 'thorax'  in us_cls.lower(): return 'us_thorax'
-        if 'femur'   in us_cls.lower(): return 'us_femur'
-        if 'abdomen' in us_cls.lower(): return 'us_abdomen'
-
-    # Default to lab diabetes key
-    return f'lab_diabetes_{sev_str}'
-
-
-# ── Session state ─────────────────────────────────────────────
-for k, v in {
-    'logged_in':     False,
-    'active_doctor': None,
-    'selected':      {},    # doc_id → pid
-    'decisions':     {},    # pid → 'APPROVED'/'REJECTED' + details
-}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
-
-lab_df, ct_df, us_df, fus_df, rag_data = load_all_data()
-
-
-# ══════════════════════════════════════════════════════════════
-# LOGIN
-# ══════════════════════════════════════════════════════════════
+# ── LOGIN ─────────────────────────────────────────────────────
 def render_login():
-    _, col, _ = st.columns([1,2,1])
+    _,col,_ = st.columns([1,2,1])
     with col:
         st.markdown('<div style="margin-top:80px;">', unsafe_allow_html=True)
         st.markdown(
-            '<div style="text-align:center;margin-bottom:32px;">'
-            '<div style="background:#2563EB;width:56px;height:56px;'
-            'border-radius:14px;display:flex;align-items:center;'
-            'justify-content:center;font-size:28px;margin:0 auto 14px;">🏥</div>'
-            '<div style="font-size:26px;font-weight:800;color:#F0F6FF;">'
-            'MedAI Clinical System</div>'
-            '<div style="font-size:15px;color:#7A90A8;margin-top:6px;">'
-            'Doctor Login</div>'
+            '<div style="text-align:center;margin-bottom:36px;">'
+            '<div style="background:linear-gradient(135deg,#2563EB,#7C3AED);'
+            'width:64px;height:64px;border-radius:18px;display:flex;'
+            'align-items:center;justify-content:center;font-size:32px;'
+            'margin:0 auto 16px;box-shadow:0 8px 32px rgba(37,99,235,0.5);">🏥</div>'
+            '<div style="font-size:30px;font-weight:800;color:#F0F6FF;'
+            'letter-spacing:-0.5px;">MedAI Clinical System</div>'
+            '<div style="font-size:15px;color:#4A6080;margin-top:6px;">Doctor Login Portal</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<div style="background:#112033;border:1.5px solid #1E3250;'
-            'border-radius:16px;padding:32px 36px;">',
+            '<div style="background:linear-gradient(135deg,#0F1E33,#0A1525);'
+            'border:2px solid #1E3A5F;border-radius:18px;padding:36px;">',
             unsafe_allow_html=True
         )
-        st.markdown(
-            '<div style="font-size:13px;font-weight:600;color:#64748B;'
-            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-            'Select Doctor</div>',
-            unsafe_allow_html=True
-        )
-        doc_labels = {
-            f"{v['name']} — {v['dept']}": k for k,v in DOCTORS.items()
-        }
-        sel_label = st.selectbox(
-            'Doctor', list(doc_labels.keys()),
-            label_visibility='collapsed', key='login_doc'
-        )
-        sel_id = doc_labels[sel_label]
-
-        st.markdown(
-            '<div style="font-size:13px;font-weight:600;color:#64748B;'
-            'text-transform:uppercase;letter-spacing:0.08em;'
-            'margin:16px 0 6px;">Password</div>',
-            unsafe_allow_html=True
-        )
-        pwd = st.text_input(
-            'Password', type='password',
-            placeholder='Enter your password',
-            label_visibility='collapsed', key='login_pwd'
-        )
-
-        st.markdown('<br>', unsafe_allow_html=True)
-        if st.button('Login →', use_container_width=True, type='primary'):
-            if pwd == DOCTORS[sel_id]['password']:
-                st.session_state.logged_in     = True
-                st.session_state.active_doctor = sel_id
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Select Doctor</div>',unsafe_allow_html=True)
+        doc_labels={f"{v['name']} — {v['dept']}":k for k,v in DOCTORS.items()}
+        sel_label=st.selectbox('Doctor',list(doc_labels.keys()),label_visibility='collapsed',key='login_doc')
+        sel_id=doc_labels[sel_label]
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin:16px 0 8px;">Password</div>',unsafe_allow_html=True)
+        pwd=st.text_input('Password',type='password',placeholder='Enter password...',label_visibility='collapsed',key='login_pwd')
+        st.markdown('<br>',unsafe_allow_html=True)
+        if st.button('Login →',use_container_width=True,type='primary'):
+            if pwd==DOCTORS[sel_id]['password']:
+                st.session_state.logged_in=True
+                st.session_state.active_doctor=sel_id
                 st.rerun()
             else:
                 st.error('Incorrect password.')
-
-        st.markdown(
-            '<div style="font-size:12px;color:#4A6080;text-align:center;'
-            'margin-top:14px;">Demo password: 1234</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;color:#2A3A50;text-align:center;margin-top:14px;">Demo password: 1234</div>',unsafe_allow_html=True)
+        st.markdown('</div>',unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════════════════════
-# DASHBOARD
-# ══════════════════════════════════════════════════════════════
+# ── DASHBOARD ─────────────────────────────────────────────────
 def render_dashboard():
-    active_id = st.session_state.active_doctor
-    active    = DOCTORS[active_id]
+    active_id=st.session_state.active_doctor
+    active=DOCTORS[active_id]
 
     # Top bar
-    c1,c2,c3 = st.columns([1,4,1])
-    with c1:
-        st.markdown(
-            '<div style="padding:16px 0 0 28px;font-size:18px;'
-            'font-weight:800;color:#F0F6FF;">🏥 MedAI</div>',
-            unsafe_allow_html=True
-        )
-    with c2:
-        st.markdown(
-            '<div style="padding:12px 0;">'
-            '<span style="font-size:15px;font-weight:700;color:#F0F6FF;">'
-            + active['name'] + '</span>'
-            '<span style="font-size:13px;color:#7A90A8;margin-left:12px;">'
-            + active['dept'] + '  ·  ' + active['specialty'] + '</span>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-    with c3:
-        st.markdown('<div style="padding:14px 28px 0 0;">', unsafe_allow_html=True)
-        if st.button('Logout', key='logout_btn'):
-            for k in ['logged_in','active_doctor','selected']:
-                st.session_state[k] = False if k=='logged_in' else None if k=='active_doctor' else {}
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<hr style="margin:0;">', unsafe_allow_html=True)
-    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
-
-    # ── DEPARTMENT ROUTING ────────────────────────────────────
-    # Each doctor sees ONLY their department tab + a summary of others
-    mtype     = active['mtype']
-    dept_icon = {'Lab Report':'🧪','CT Scan':'🧠',
-                 'Ultrasound':'🔬','Combined Assessment':'⚡'}.get(mtype,'📋')
-
     st.markdown(
-        '<div style="font-size:22px;font-weight:800;color:#F0F6FF;'
-        'letter-spacing:-0.5px;margin-bottom:6px;">'
-        + dept_icon + '  ' + active['dept'] + ' — Patient Reports</div>'
-        '<div style="font-size:15px;color:#7A90A8;margin-bottom:20px;">'
-        'Showing reports ordered by ' + active['name'] + '</div>',
+        '<div style="background:linear-gradient(90deg,#080F1C,#0D1B2E);'
+        'border-bottom:2px solid #1E3A5F;padding:0 28px;height:64px;'
+        'display:flex;align-items:center;justify-content:space-between;">'
+        '<div style="display:flex;align-items:center;gap:12px;">'
+        '<div style="background:linear-gradient(135deg,#2563EB,#7C3AED);'
+        'width:38px;height:38px;border-radius:10px;display:flex;'
+        'align-items:center;justify-content:center;font-size:20px;">🏥</div>'
+        '<div><div style="font-size:18px;font-weight:800;color:#F0F6FF;">MedAI</div>'
+        '<div style="font-size:10px;color:#2A3A50;font-weight:600;'
+        'letter-spacing:0.1em;text-transform:uppercase;">Clinical System</div>'
+        '</div></div>'
+        '<div style="display:flex;align-items:center;gap:16px;">'
+        '<div><div style="font-size:14px;font-weight:700;color:#F0F6FF;">'
+        + active['name'] + '</div>'
+        '<div style="font-size:12px;color:#4A6080;">'
+        + active['dept'] + '  ·  ' + active['specialty'] + '</div>'
+        '</div>'
+        '<div style="background:rgba(0,229,160,0.15);border:2px solid rgba(0,229,160,0.4);'
+        'color:#00E5A0;font-size:12px;font-weight:700;padding:5px 14px;'
+        'border-radius:20px;">● Active</div>'
+        '</div></div>',
         unsafe_allow_html=True
     )
 
-    # Get correct dataframe and columns for this doctor
-    df_map = {
-        'Lab Report':          (lab_df,  'patient_id',  'final_severity_label'),
-        'CT Scan':             (ct_df,   'patient_id',  'fusion_label'),
-        'Ultrasound':          (us_df,   'patient_id',  'fusion_label'),
-        'Combined Assessment': (fus_df,  'patient_id',  'fusion_label'),
+    c1,_,c2=st.columns([8,1,1])
+    with c2:
+        st.markdown('<div style="padding:10px 28px 0 0;">',unsafe_allow_html=True)
+        if st.button('Logout',key='logout_btn'):
+            st.session_state.logged_in=False
+            st.session_state.active_doctor=None
+            st.session_state.selected={}
+            st.rerun()
+        st.markdown('</div>',unsafe_allow_html=True)
+
+    st.markdown('<div style="padding:20px 28px;">',unsafe_allow_html=True)
+
+    mtype=active['mtype']
+    dept_icon={'Lab Report':'🧪','CT Scan':'🧠','Ultrasound':'🔬','Combined Assessment':'⚡'}.get(mtype,'📋')
+
+    st.markdown(
+        '<div style="margin-bottom:20px;">'
+        '<div style="font-size:24px;font-weight:800;color:#F0F6FF;letter-spacing:-0.5px;">'
+        + dept_icon + '  ' + active['dept'] + ' — Patient Reports</div>'
+        '<div style="font-size:14px;color:#4A6080;margin-top:4px;">'
+        'Showing reports assigned to ' + active['name'] + '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    df_map={
+        'Lab Report':          (lab_df, 'patient_id','final_severity_label'),
+        'CT Scan':             (ct_df,  'patient_id','fusion_label'),
+        'Ultrasound':          (us_df,  'patient_id','fusion_label'),
+        'Combined Assessment': (fus_df, 'patient_id','fusion_label'),
     }
-    df, id_col, sev_col = df_map.get(mtype, (None, None, None))
+    df,id_col,sev_col=df_map.get(mtype,(None,None,None))
+    if df is None: st.warning('No data.'); return
 
-    if df is None:
-        st.warning('No data available for your department.')
-        return
-
-    render_dept(active_id, df, mtype, id_col, sev_col)
-    st.markdown('</div>', unsafe_allow_html=True)
+    render_dept(active_id,df,mtype,id_col,sev_col)
+    st.markdown('</div>',unsafe_allow_html=True)
 
 
-def render_dept(doc_id, df, mtype, id_col, sev_col):
-    doc = DOCTORS[doc_id]
-
-    # Stats
-    sev_counts = df[sev_col].value_counts() if sev_col in df.columns else {}
-    s1,s2,s3,s4 = st.columns(4)
-    for col,(lbl,clr,bg_clr) in zip([s1,s2,s3,s4],[
-        ('Severe',   '#FF3B3B','rgba(255,59,59,0.08)'),
-        ('Moderate', '#FF6B35','rgba(255,107,53,0.08)'),
-        ('Mild',     '#FFB800','rgba(255,184,0,0.08)'),
-        ('Normal',   '#00C48C','rgba(0,196,140,0.08)'),
+def render_dept(doc_id,df,mtype,id_col,sev_col):
+    # Stat cards — colorful gradient
+    sev_counts=df[sev_col].value_counts() if sev_col in df.columns else {}
+    s1,s2,s3,s4=st.columns(4)
+    for col,(lbl,clr,grad) in zip([s1,s2,s3,s4],[
+        ('Severe',  '#FF3B5C','linear-gradient(135deg,rgba(255,59,92,0.25),rgba(255,59,92,0.05))'),
+        ('Moderate','#FF7A35','linear-gradient(135deg,rgba(255,122,53,0.25),rgba(255,122,53,0.05))'),
+        ('Mild',    '#FFD000','linear-gradient(135deg,rgba(255,208,0,0.25),rgba(255,208,0,0.05))'),
+        ('Normal',  '#00E5A0','linear-gradient(135deg,rgba(0,229,160,0.25),rgba(0,229,160,0.05))'),
     ]):
-        cnt = int(sev_counts.get(lbl, 0))
+        cnt=int(sev_counts.get(lbl,0))
         with col:
             st.markdown(
-                '<div style="background:' + bg_clr + ';'
-                'border:2px solid ' + clr + '44;'
-                'border-top:4px solid ' + clr + ';border-radius:12px;'
-                'padding:16px;text-align:center;margin-bottom:16px;">'
-                '<div style="font-size:36px;font-weight:800;color:' + clr + ';'
-                'line-height:1;">' + str(cnt) + '</div>'
-                '<div style="font-size:13px;color:' + clr + ';margin-top:6px;'
-                'font-weight:600;opacity:0.8;">' + lbl + '</div>'
-                '</div>',
+                f'<div style="background:{grad};border:2px solid {clr}55;'
+                f'border-top:4px solid {clr};border-radius:14px;'
+                f'padding:18px;text-align:center;margin-bottom:18px;">'
+                f'<div style="font-size:40px;font-weight:800;color:{clr};line-height:1;">{cnt}</div>'
+                f'<div style="font-size:13px;color:{clr};margin-top:8px;'
+                f'font-weight:700;opacity:0.9;">{lbl}</div>'
+                f'</div>',
                 unsafe_allow_html=True
             )
 
-    left, right = st.columns([1, 2.5], gap='large')
-
+    left,right=st.columns([1,2.5],gap='large')
     with left:
-        st.markdown(
-            '<div style="font-size:12px;font-weight:700;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">'
-            'Patient Queue</div>',
-            unsafe_allow_html=True
-        )
-        sev_filter = st.selectbox(
-            'Filter', ['All','Severe','Moderate','Mild','Normal'],
-            key='filter_' + doc_id, label_visibility='collapsed'
-        )
-        filt = df if sev_filter == 'All' \
-               else df[df[sev_col] == sev_filter]
-        sev_ord = {'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
+        st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Patient Queue</div>',unsafe_allow_html=True)
+        sev_filter=st.selectbox('Filter',['All','Severe','Moderate','Mild','Normal'],key='filter_'+doc_id,label_visibility='collapsed')
+        filt=df if sev_filter=='All' else df[df[sev_col]==sev_filter]
+        sev_ord={'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
         if sev_col in filt.columns:
-            filt = filt.sort_values(sev_col, key=lambda x: x.map(sev_ord))
+            filt=filt.sort_values(sev_col,key=lambda x:x.map(sev_ord))
 
-        for _, row in filt.iterrows():
-            pid    = str(row[id_col])
-            sev    = str(row.get(sev_col,'Unknown'))
-            is_sel = st.session_state.selected.get(doc_id) == pid
-            dec    = st.session_state.decisions.get(pid,{}).get('status','')
-            icon   = {'APPROVED':'✓ ','REJECTED':'✗ '}.get(dec,'')
-
-            if st.button(
-                icon + pid + '  ·  ' + sev,
-                key='pat_' + doc_id + '_' + pid,
-                use_container_width=True,
-                type='primary' if is_sel else 'secondary'
-            ):
-                st.session_state.selected[doc_id] = pid
+        for _,row in filt.iterrows():
+            pid=str(row[id_col])
+            sev=str(row.get(sev_col,'Unknown'))
+            clr=SEV_COLOR.get(sev,'#6B7A99')
+            is_sel=st.session_state.selected.get(doc_id)==pid
+            dec=st.session_state.decisions.get(pid,{}).get('status','')
+            icon={'APPROVED':'✓ ','REJECTED':'✗ '}.get(dec,'')
+            if st.button(icon+pid+'  ·  '+sev,key='p_'+doc_id+'_'+pid,
+                         use_container_width=True,
+                         type='primary' if is_sel else 'secondary'):
+                st.session_state.selected[doc_id]=pid
                 st.rerun()
 
     with right:
-        sel_pid = st.session_state.selected.get(doc_id)
+        sel_pid=st.session_state.selected.get(doc_id)
         if not sel_pid:
             st.markdown(
-                '<div style="background:#112033;border:2px dashed #1E3250;'
-                'border-radius:14px;padding:80px;text-align:center;">'
-                '<div style="font-size:36px;margin-bottom:14px;">👈</div>'
-                '<div style="font-size:16px;color:#7A90A8;">'
-                'Select a patient from the queue</div>'
+                '<div style="background:linear-gradient(135deg,#0A1525,#0D1B2E);'
+                'border:2px dashed #1E3A5F;border-radius:16px;padding:80px;text-align:center;">'
+                '<div style="font-size:40px;margin-bottom:14px;">👈</div>'
+                '<div style="font-size:16px;color:#4A6080;">Select a patient from the queue</div>'
                 '</div>',
                 unsafe_allow_html=True
             )
             return
 
-        match = df[df[id_col] == sel_pid]
-        if match.empty:
-            return
-        row = match.iloc[0].to_dict()
-        sev = str(row.get(sev_col,'Unknown'))
-        clr = SEV_COLOR.get(sev,'#8892A4')
-        bg  = SEV_BG.get(sev,'rgba(136,146,164,0.1)')
+        match=df[df[id_col]==sel_pid]
+        if match.empty: return
+        row=match.iloc[0].to_dict()
+        sev=str(row.get(sev_col,'Unknown'))
+        clr=SEV_COLOR.get(sev,'#6B7A99')
+        bg =SEV_BG.get(sev,'rgba(107,122,153,0.1)')
+        grad=SEV_GRAD.get(sev,'')
+        render_patient(row,sel_pid,sev,clr,bg,grad,mtype,doc_id)
 
-        render_patient(row, sel_pid, sev, clr, bg, mtype, doc_id)
 
+def render_patient(row,pid,sev,clr,bg,grad,mtype,doc_id):
+    doc=DOCTORS[doc_id]
+    urgency={'Severe':'🚨 URGENT','Moderate':'⚠️ SEMI-URGENT','Mild':'📋 ROUTINE','Normal':'✅ ROUTINE'}.get(sev,'📋 REVIEW')
+    urg_clr={'Severe':'#FF3B5C','Moderate':'#FF7A35','Mild':'#FFD000','Normal':'#00E5A0'}.get(sev,'#6B7A99')
+    current_dec=st.session_state.decisions.get(pid,{}).get('status','')
 
-def render_patient(row, pid, sev, clr, bg, mtype, doc_id):
-    doc     = DOCTORS[doc_id]
-    urgency = {'Severe':'URGENT','Moderate':'SEMI-URGENT',
-               'Mild':'ROUTINE','Normal':'ROUTINE'}.get(sev,'REVIEW')
-    urg_clr = {'Severe':'#FF3B3B','Moderate':'#FF6B35',
-               'Mild':'#FFB800','Normal':'#00C48C'}.get(sev,'#8892A4')
-
-    # Current decision
-    current_decision = st.session_state.decisions.get(pid,{}).get('status','')
-
-    # Patient header
+    # Patient header — colorful gradient
     st.markdown(
-        '<div style="background:#112033;border:1.5px solid #1E3250;'
-        'border-radius:14px;padding:18px 22px;margin-bottom:18px;">'
-        '<div style="display:flex;justify-content:space-between;align-items:center;">'
-        '<div>'
-        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-        'letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Patient ID</div>'
-        '<div style="font-size:22px;font-weight:800;color:#F0F6FF;'
-        'font-family:monospace;">' + pid + '</div>'
-        '<div style="font-size:13px;color:#7A90A8;margin-top:4px;">'
-        + mtype + '  ·  Ordered by ' + doc['name'] + '</div>'
-        '</div>'
-        '<div style="background:' + bg + ';border:2px solid ' + urg_clr + '44;'
-        'border-radius:10px;padding:10px 18px;text-align:center;">'
-        '<div style="font-size:11px;font-weight:700;color:' + urg_clr + ';'
-        'letter-spacing:0.12em;margin-bottom:4px;">' + urgency + '</div>'
-        '<div style="font-size:20px;font-weight:800;color:' + clr + ';">'
-        + sev + '</div>'
-        '</div></div></div>',
+        f'<div style="background:{grad};border:2px solid {clr}44;'
+        f'border-radius:16px;padding:20px 24px;margin-bottom:20px;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        f'<div>'
+        f'<div style="font-size:11px;font-weight:700;color:{clr};letter-spacing:0.12em;'
+        f'text-transform:uppercase;margin-bottom:6px;">Patient ID</div>'
+        f'<div style="font-size:24px;font-weight:800;color:#F0F6FF;font-family:monospace;">{pid}</div>'
+        f'<div style="font-size:13px;color:#4A6080;margin-top:6px;">{mtype}  ·  {doc["name"]}</div>'
+        f'</div>'
+        f'<div style="background:{bg};border:2px solid {clr}66;border-radius:14px;'
+        f'padding:14px 24px;text-align:center;">'
+        f'<div style="font-size:13px;font-weight:700;color:{urg_clr};margin-bottom:6px;">{urgency}</div>'
+        f'<div style="font-size:22px;font-weight:800;color:{clr};">{sev}</div>'
+        f'</div></div></div>',
         unsafe_allow_html=True
     )
 
-    # ── Test Findings ─────────────────────────────────────────
+    # Test findings
     st.markdown(
-        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">'
-        'Test Findings</div>',
+        f'<div style="font-size:12px;font-weight:700;color:#4A9EFF;'
+        f'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;">Test Findings</div>',
         unsafe_allow_html=True
     )
+    if mtype=='Lab Report':         render_lab(row,sev,clr)
+    elif mtype=='CT Scan':          render_ct(row,sev,clr)
+    elif mtype=='Ultrasound':       render_us(row,sev,clr)
+    elif mtype=='Combined Assessment': render_combined(row,sev,clr)
 
-    if mtype == 'Lab Report':
-        render_lab_findings(row, sev, clr)
-
-    elif mtype == 'CT Scan':
-        render_ct_findings(row, sev, clr)
-
-    elif mtype == 'Ultrasound':
-        render_us_findings(row, sev, clr)
-
-    elif mtype == 'Combined Assessment':
-        render_combined_findings(row)
-
-    # ── RAG Summary ───────────────────────────────────────────
+    # RAG Summary
     st.markdown(
-        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.1em;margin:18px 0 12px;">'
+        '<div style="font-size:12px;font-weight:700;color:#4A9EFF;'
+        'text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;">'
         'AI Clinical Summary</div>',
         unsafe_allow_html=True
     )
 
-    # Get correct RAG key
-    if mtype == 'Combined Assessment':
-        rag_key = get_mm_rag_key(row, rag_data)
+    if mtype=='Combined Assessment':
+        parsed   = get_mm_rag_summary(row)
+        citations= parsed.pop('citations',[])
     else:
-        rag_key = str(row.get('rag_class_key',''))
+        rag_key  = str(row.get('rag_class_key',''))
+        rag_raw  = rag_data.get(rag_key,{})
+        raw_text = rag_raw.get('raw_text','') if isinstance(rag_raw,dict) else ''
+        citations= rag_raw.get('citations',[]) if isinstance(rag_raw,dict) else []
+        parsed   = parse_rag(raw_text) if raw_text else {}
 
-    rag_raw   = rag_data.get(rag_key,{})
-    raw_text  = rag_raw.get('raw_text','') if isinstance(rag_raw, dict) else ''
-    citations = rag_raw.get('citations',[]) if isinstance(rag_raw, dict) else []
+    render_rag(parsed,citations)
 
-    if raw_text:
-        parsed = parse_rag(raw_text)
-        render_rag_sections(parsed, citations)
-    else:
-        st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-radius:10px;padding:16px 20px;color:#64748B;">'
-            'RAG summary not available for this patient class.</div>',
-            unsafe_allow_html=True
-        )
-
-    # ── Decision section ──────────────────────────────────────
-    # Show decision section ONLY if not yet decided
+    # Doctor decision
     st.markdown(
-        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.1em;margin:18px 0 10px;">'
+        '<div style="font-size:12px;font-weight:700;color:#4A9EFF;'
+        'text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 12px;">'
         'Doctor Review & Decision</div>',
         unsafe_allow_html=True
     )
 
-    if current_decision == 'APPROVED':
-        ap = st.session_state.decisions[pid]
+    if current_dec=='APPROVED':
+        ap=st.session_state.decisions[pid]
         st.markdown(
-            '<div style="background:rgba(0,196,140,0.1);'
-            'border:1.5px solid rgba(0,196,140,0.3);border-radius:12px;'
-            'padding:18px 22px;">'
-            '<div style="font-size:16px;font-weight:700;color:#00C48C;'
-            'margin-bottom:8px;">✅  Report Approved</div>'
-            '<div style="font-size:14px;color:#7A90A8;line-height:1.7;">'
+            '<div style="background:linear-gradient(135deg,rgba(0,229,160,0.15),'
+            'rgba(0,229,160,0.05));border:2px solid rgba(0,229,160,0.4);'
+            'border-radius:14px;padding:20px 24px;">'
+            '<div style="font-size:16px;font-weight:800;color:#00E5A0;margin-bottom:8px;">'
+            '✅  Report Approved & Released</div>'
+            '<div style="font-size:14px;color:#4A6080;line-height:1.7;">'
             'Approved by: <b style="color:#F0F6FF;">' + ap['doctor'] + '</b><br>'
             'Time: ' + ap['time'] + '<br>'
-            'Patient message has been sent.</div>'
-            '</div>',
+            '<span style="color:#00E5A0;font-weight:600;">Patient message sent successfully.</span>'
+            '</div></div>',
             unsafe_allow_html=True
         )
-
-        # Show message preview for reference
         with st.expander('📱 View Patient Message Sent'):
             st.markdown(
-                '<div style="background:#0A1628;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:16px 20px;font-size:14px;'
+                '<div style="background:#0A1525;border:2px solid #1E3A5F;'
+                'border-radius:12px;padding:20px;font-size:14px;'
                 'color:#C8D6E8;white-space:pre-wrap;line-height:1.8;">'
                 + ap['message'] + '</div>',
                 unsafe_allow_html=True
             )
 
-    elif current_decision == 'REJECTED':
+    elif current_dec=='REJECTED':
         st.markdown(
-            '<div style="background:rgba(255,59,59,0.1);'
-            'border:1.5px solid rgba(255,59,59,0.3);border-radius:12px;'
-            'padding:18px 22px;">'
-            '<div style="font-size:16px;font-weight:700;color:#FF3B3B;'
-            'margin-bottom:8px;">❌  Report Rejected</div>'
-            '<div style="font-size:14px;color:#7A90A8;">'
-            'This report has been rejected. Patient has NOT been notified.<br>'
-            'Please review and resubmit or request further tests.</div>'
+            '<div style="background:linear-gradient(135deg,rgba(255,59,92,0.15),'
+            'rgba(255,59,92,0.05));border:2px solid rgba(255,59,92,0.4);'
+            'border-radius:14px;padding:20px 24px;">'
+            '<div style="font-size:16px;font-weight:800;color:#FF3B5C;margin-bottom:8px;">'
+            '❌  Report Rejected</div>'
+            '<div style="font-size:14px;color:#4A6080;">'
+            'Patient has NOT been notified. No message sent.<br>'
+            'Please review findings and resubmit or request further tests.</div>'
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button('↺  Reset Decision', key='reset_' + pid):
+        if st.button('↺  Reset Decision',key='reset_'+pid):
             del st.session_state.decisions[pid]
             st.rerun()
 
     else:
-        # No decision yet — show input form
-        notes = st.text_area(
+        notes=st.text_area(
             'Clinical notes / prescription',
-            placeholder='Add prescription, amendments, or clinical instructions...',
-            height=100,
-            key='notes_' + doc_id + '_' + pid,
-            label_visibility='collapsed'
+            placeholder='Add prescription, clinical notes, or amendments...',
+            height=100,key='notes_'+doc_id+'_'+pid,label_visibility='collapsed'
         )
-
-        # Patient message — condition specific
-        pat_msg = get_patient_message(sev, mtype, row)
-        if notes:
-            pat_msg += '\n\nDoctor\'s additional instructions:\n' + notes
+        pat_msg=get_patient_message(sev,mtype,row)
+        if notes: pat_msg+='\n\nDoctor\'s additional instructions:\n'+notes
 
         with st.expander('📱  Preview Patient Message'):
             st.markdown(
-                '<div style="background:#0A1628;border:1.5px solid #1E3250;'
-                'border-radius:12px;padding:18px 22px;">'
-                '<div style="font-size:12px;font-weight:600;color:#00C48C;'
-                'margin-bottom:10px;letter-spacing:0.08em;">MESSAGE TO PATIENT</div>'
+                '<div style="background:#0A1525;border:2px solid #1E3A5F;'
+                'border-radius:12px;padding:20px 24px;">'
+                '<div style="font-size:12px;font-weight:700;color:#00E5A0;'
+                'margin-bottom:12px;letter-spacing:0.08em;">MESSAGE TO PATIENT</div>'
                 '<div style="font-size:14px;color:#C8D6E8;line-height:1.8;'
-                'white-space:pre-wrap;">' + pat_msg + '</div>'
-                '</div>',
+                'white-space:pre-wrap;">' + pat_msg + '</div></div>',
                 unsafe_allow_html=True
             )
 
-        st.markdown('<br>', unsafe_allow_html=True)
-        b1,b2,b3 = st.columns(3)
-
+        st.markdown('<br>',unsafe_allow_html=True)
+        b1,b2,b3=st.columns(3)
         with b1:
-            if st.button('✅  Approve & Send',
-                         key='app_' + doc_id + '_' + pid,
-                         use_container_width=True, type='primary'):
-                st.session_state.decisions[pid] = {
-                    'status':  'APPROVED',
-                    'doctor':  doc['name'],
-                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
-                    'notes':   notes,
-                    'message': pat_msg,
-                }
+            if st.button('✅  Approve & Send',key='app_'+doc_id+'_'+pid,
+                         use_container_width=True,type='primary'):
+                st.session_state.decisions[pid]={'status':'APPROVED','doctor':DOCTORS[doc_id]['name'],
+                    'time':datetime.now().strftime('%Y-%m-%d %H:%M'),'notes':notes,'message':pat_msg}
                 st.rerun()
-
         with b2:
-            if st.button('✏️  Approve with Edits',
-                         key='edit_' + doc_id + '_' + pid,
-                         use_container_width=True):
-                st.session_state.decisions[pid] = {
-                    'status':  'APPROVED',
-                    'doctor':  doc['name'],
-                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
-                    'notes':   notes,
-                    'message': pat_msg,
-                }
+            if st.button('✏️  Approve with Edits',key='edit_'+doc_id+'_'+pid,use_container_width=True):
+                st.session_state.decisions[pid]={'status':'APPROVED','doctor':DOCTORS[doc_id]['name'],
+                    'time':datetime.now().strftime('%Y-%m-%d %H:%M'),'notes':notes,'message':pat_msg}
                 st.rerun()
-
         with b3:
-            if st.button('❌  Reject',
-                         key='rej_' + doc_id + '_' + pid,
-                         use_container_width=True):
-                st.session_state.decisions[pid] = {
-                    'status':  'REJECTED',
-                    'doctor':  doc['name'],
-                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
-                }
+            if st.button('❌  Reject',key='rej_'+doc_id+'_'+pid,use_container_width=True):
+                st.session_state.decisions[pid]={'status':'REJECTED','doctor':DOCTORS[doc_id]['name'],
+                    'time':datetime.now().strftime('%Y-%m-%d %H:%M')}
                 st.rerun()
 
 
-# ── Findings renderers ────────────────────────────────────────
-def render_lab_findings(row, sev, clr):
-    ckd     = str(row.get('ckd_severity','Not tested'))
-    dia     = str(row.get('diabetes_severity_final','Not tested'))
-    thy     = str(row.get('thyroid_severity_final','Not tested'))
-    egfr    = row.get('egfr', None)
-    hba1c   = row.get('hba1c', None)
-    glucose = row.get('glucose', None)
-    tsh     = row.get('tsh', None)
-    free_t4 = row.get('free_t4', None)
-    disease = str(row.get('disease_type','')).lower()
-
-    # Clean None/nan
-    def clean(v):
-        return 'Not tested' if str(v) in ['None','nan','NaN','Unknown','Not tested',''] else str(v)
-    ckd = clean(ckd)
-    dia = clean(dia)
-    thy = clean(thy)
-
-    # ── Patient Values row ────────────────────────────────────
-    c1,c2,c3 = st.columns(3)
-    for col,(lbl,val) in zip([c1,c2,c3],[
-        ('Kidney Function', ckd),
-        ('Blood Sugar',     dia),
-        ('Thyroid Function',thy)
-    ]):
-        v_clr = clr if val != 'Not tested' else '#4A6080'
-        with col:
-            st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:16px;margin-bottom:12px;">'
-                '<div style="font-size:11px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-                + lbl + '</div>'
-                '<div style="font-size:17px;font-weight:700;color:' + v_clr + ';">'
-                + val + '</div>'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-    # ── Patient vs Guideline comparison table ─────────────────
-    st.markdown(
-        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.08em;'
-        'margin:4px 0 10px;">Patient Values vs Clinical Guidelines</div>',
-        unsafe_allow_html=True
+# ── FINDINGS RENDERERS ────────────────────────────────────────
+def finding_card(title, value, color='#F0F6FF', border_color=None):
+    border = f'border-left:4px solid {border_color};' if border_color else ''
+    return (
+        f'<div style="background:#0A1525;border:2px solid #1E3A5F;'
+        f'{border}border-radius:12px;padding:16px;">'
+        f'<div style="font-size:11px;font-weight:700;color:#4A6080;'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">{title}</div>'
+        f'<div style="font-size:17px;font-weight:700;color:{color};">{value}</div>'
+        f'</div>'
     )
 
-    # Build comparison rows based on disease
-    def status_badge(status):
-        cfg = {
-            'Normal':   ('#00C48C','rgba(0,196,140,0.12)','✓ Within range'),
-            'Abnormal': ('#FF3B3B','rgba(255,59,59,0.12)', '✗ Out of range'),
-            'Borderline':('#FFB800','rgba(255,184,0,0.12)','⚠ Borderline'),
-            'N/A':      ('#4A6080','rgba(74,96,128,0.12)', '— Not tested'),
-        }.get(status, ('#4A6080','rgba(74,96,128,0.12)','— N/A'))
-        return (
-            '<span style="background:' + cfg[1] + ';color:' + cfg[0] + ';'
-            'font-size:12px;font-weight:600;padding:3px 10px;'
-            'border-radius:20px;">' + cfg[2] + '</span>'
-        )
-
-    def fmt_val(v):
-        if v is None or str(v) in ['None','nan','NaN']:
-            return '—'
-        try:
-            return str(round(float(v), 2))
-        except Exception:
-            return str(v)
-
-    # Determine comparison rows
-    if 'ckd' in disease or 'kidney' in disease:
-        egfr_val = fmt_val(egfr)
-
-        # eGFR → KDIGO stage label + clinical interpretation
-        try:
-            egfr_f = float(egfr) if egfr is not None \
-                     and str(egfr) not in ['None','nan'] else None
-        except Exception:
-            egfr_f = None
-
-        if egfr_f is not None:
-            if egfr_f >= 90:
-                egfr_stage  = 'G1 (≥90) — Normal or High'
-                egfr_status = 'Normal'
-            elif egfr_f >= 60:
-                egfr_stage  = 'G2 (60–89) — Mildly Reduced'
-                egfr_status = 'Normal'      # G1+G2 = Normal clinically
-            elif egfr_f >= 45:
-                egfr_stage  = 'G3a (45–59) — Mildly-Moderately Reduced'
-                egfr_status = 'Borderline'
-            elif egfr_f >= 30:
-                egfr_stage  = 'G3b (30–44) — Moderately-Severely Reduced'
-                egfr_status = 'Abnormal'
-            elif egfr_f >= 15:
-                egfr_stage  = 'G4 (15–29) — Severely Reduced'
-                egfr_status = 'Abnormal'
-            else:
-                egfr_stage  = 'G5 (<15) — Kidney Failure'
-                egfr_status = 'Abnormal'
-        else:
-            egfr_stage  = 'Not measured'
-            egfr_status = 'N/A'
-
-        # Clinical severity from label
-        sev_status = {
-            'Normal':'Normal', 'Mild':'Borderline',
-            'Moderate':'Abnormal', 'Severe':'Abnormal'
-        }.get(sev, 'N/A')
-
-        rows = [
-            ('eGFR Value',
-             egfr_val + ' mL/min/1.73m²' if egfr_val != '—' else '—',
-             'G1: ≥90  ·  G2: 60–89  ·  G3a: 45–59  ·  G3b: 30–44  ·  G4: 15–29  ·  G5: <15',
-             egfr_status),
-            ('KDIGO Stage',
-             egfr_stage,
-             'G1–G2 = Normal clinically  ·  G3a = Mild  ·  G3b = Moderate  ·  G4–G5 = Severe',
-             egfr_status),
-            ('Clinical Severity',
-             sev,
-             'Based on eGFR + albuminuria + symptoms (KDIGO 2022)',
-             sev_status),
-            ('BP Target',
-             '—',
-             '<130/80 mmHg  ·  ACE inhibitor if proteinuria present',
-             'N/A'),
-        ]
-        source = 'KDIGO 2022 Clinical Practice Guideline for CKD'
-
-    elif 'diabetes' in disease:
-        gluc_val = fmt_val(glucose)
-        # Glucose status based on ADA thresholds
-        try:
-            gluc_f   = float(glucose) if glucose is not None \
-                       and str(glucose) not in ['None','nan'] else None
-            g_status = 'Normal'     if gluc_f and gluc_f < 100 \
-                       else 'Borderline' if gluc_f and gluc_f < 126 \
-                       else 'Abnormal'   if gluc_f else 'N/A'
-        except Exception:
-            gluc_f   = None
-            g_status = 'N/A'
-
-        # Severity status
-        d_status = 'Normal'   if dia == 'Mild'   else \
-                   'Abnormal' if dia == 'Severe'  else \
-                   'Normal'   if dia == 'Normal'  else 'N/A'
-
-        rows = [
-            ('Glucose (Fasting)',
-             gluc_val + ' mg/dL' if gluc_val != '—' else '—',
-             'Normal: <100 mg/dL · Pre-diabetic: 100–125 · Diabetic: ≥126',
-             g_status),
-            ('Diabetes Severity',
-             dia,
-             'Normal: <100 mg/dL · Mild: 126–180 · Severe: >180 mg/dL',
-             d_status),
-            ('HbA1c Target',
-             'Not available in MIMIC-IV',
-             'Target: <7.0% (most adults) · <8.0% (elderly)',
-             'N/A'),
-            ('Monitoring',
-             '—',
-             'Self-monitoring blood glucose daily · HbA1c every 3 months',
-             'N/A'),
-        ]
-        source = 'ADA Standards of Medical Care in Diabetes 2024'
-
-    elif 'thyroid' in disease:
-        tsh_val = fmt_val(tsh)
-        t4_val  = fmt_val(free_t4)
-
-        try:
-            tsh_f = float(tsh) if tsh is not None \
-                    and str(tsh) not in ['None','nan'] else None
-            # 0.4-4.0 = Normal, 4.1-10.0 = Subclinical (Borderline), >10 = Overt (Abnormal)
-            t_status = 'Normal'     if tsh_f and 0.4 <= tsh_f <= 4.0 \
-                       else 'Borderline' if tsh_f and 4.0 < tsh_f <= 10.0 \
-                       else 'Abnormal'   if tsh_f and tsh_f > 10.0 \
-                       else 'N/A'
-            tsh_interp = 'Normal (Euthyroid)'           if tsh_f and 0.4 <= tsh_f <= 4.0 \
-                         else 'Subclinical Hypothyroid'  if tsh_f and 4.0 < tsh_f <= 10.0 \
-                         else 'Overt Hypothyroid'        if tsh_f and tsh_f > 10.0 \
-                         else '—'
-        except Exception:
-            tsh_f      = None
-            t_status   = 'N/A'
-            tsh_interp = '—'
-
-        try:
-            t4_f = float(free_t4) if free_t4 is not None \
-                   and str(free_t4) not in ['None','nan'] else None
-            # T4 within 0.8-1.8 = Normal
-            t4_status = 'Normal'     if t4_f and 0.8 <= t4_f <= 1.8 \
-                        else 'Abnormal' if t4_f else 'N/A'
-            t4_interp = 'Normal'     if t4_f and 0.8 <= t4_f <= 1.8 \
-                        else 'Low — Hypothyroid' if t4_f and t4_f < 0.8 \
-                        else 'High — Hyperthyroid' if t4_f else '—'
-        except Exception:
-            t4_f      = None
-            t4_status = 'N/A'
-            t4_interp = '—'
-
-        # Overall thyroid status
-        # Subclinical (TSH high, T4 normal) = Mild = Borderline clinically
-        if tsh_f and tsh_f > 10.0:
-            thy_status = 'Abnormal'    # Overt hypothyroid
-        elif tsh_f and tsh_f > 4.0:
-            thy_status = 'Borderline'  # Subclinical = Mild
-        elif tsh_f:
-            thy_status = 'Normal'
-        else:
-            thy_status = 'N/A'
-
-        rows = [
-            ('TSH Level',
-             tsh_val + ' mIU/L' if tsh_val != '—' else '—',
-             'Normal: 0.4–4.0  ·  Subclinical: 4.1–10.0  ·  Overt Hypothyroid: >10.0',
-             t_status),
-            ('TSH Interpretation',
-             tsh_interp,
-             'Subclinical = TSH high but T4 still normal → monitor or treat if symptomatic',
-             t_status),
-            ('Free T4',
-             t4_val + ' ng/dL (' + t4_interp + ')' if t4_val != '—' else 'Not measured',
-             'Normal: 0.8–1.8 ng/dL  ·  Low T4 = Overt Hypothyroidism',
-             t4_status),
-            ('Clinical Severity',
-             thy + ' — ' + ('Subclinical Hypothyroid' if thy=='Mild' and tsh_f and tsh_f<=10 else thy),
-             'Mild = Subclinical (TSH↑, T4 normal)  ·  Severe = Overt (TSH↑↑, T4 low)',
-             thy_status),
-            ('Treatment Threshold',
-             '—',
-             'Treat if TSH >10 mIU/L  ·  Or if TSH 4–10 with symptoms',
-             'N/A'),
-        ]
-        source = 'ATA/AACE Clinical Practice Guidelines for Hypothyroidism 2023'
-
-    else:
-        rows = [
-            ('HbA1c',  '—', 'Normal <5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%', 'N/A'),
-            ('eGFR',   '—', 'G1 ≥90 · G2 60–89 · G3 30–59 · G4 15–29 · G5 <15',     'N/A'),
-            ('TSH',    '—', 'Normal 0.4–4.0 mIU/L · Free T4: 0.8–1.8 ng/dL',          'N/A'),
-        ]
-        source = 'WHO / Standard Clinical Guidelines'
-
-    # Render table
-    header = (
+def ref_table(rows, source):
+    header=(
         '<div style="display:grid;grid-template-columns:1fr 1.2fr 2fr 1fr;'
-        'gap:0;border-bottom:2px solid #263A55;padding-bottom:8px;margin-bottom:4px;">'
-        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;">Parameter</div>'
-        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;">Patient Value</div>'
-        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;">Guideline Range</div>'
-        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;">Status</div>'
-        '</div>'
+        'gap:0;border-bottom:2px solid #1E3A5F;padding-bottom:8px;margin-bottom:4px;">'
+        +''.join([f'<div style="font-size:11px;font-weight:700;color:#4A9EFF;'
+                  f'text-transform:uppercase;letter-spacing:0.06em;">{h}</div>'
+                  for h in ['Parameter','Patient Value','Guideline Range','Status']])
+        +'</div>'
     )
-    body = ''
-    for param, pat_val, guide_range, status in rows:
-        pv_clr = {
-            'Normal':'#00C48C','Abnormal':'#FF3B3B',
-            'Borderline':'#FFB800','N/A':'#4A6080'
-        }.get(status,'#4A6080')
-        body += (
+    body=''
+    for param,pat_val,guide,status in rows:
+        pv_clr={'Normal':'#00E5A0','Abnormal':'#FF3B5C','Borderline':'#FFD000','N/A':'#4A6080'}.get(status,'#4A6080')
+        body+=(
             '<div style="display:grid;grid-template-columns:1fr 1.2fr 2fr 1fr;'
-            'gap:0;padding:10px 0;border-bottom:1px solid #1E3250;align-items:center;">'
-            '<div style="font-size:13px;font-weight:600;color:#E8EDF5;">'
-            + param + '</div>'
-            '<div style="font-size:13px;font-weight:700;color:' + pv_clr + ';">'
-            + pat_val + '</div>'
-            '<div style="font-size:12px;color:#7A90A8;line-height:1.5;">'
-            + guide_range + '</div>'
-            '<div>' + status_badge(status) + '</div>'
+            'gap:0;padding:10px 0;border-bottom:1px solid #1E3A5F;align-items:center;">'
+            f'<div style="font-size:13px;font-weight:600;color:#E8EDF5;">{param}</div>'
+            f'<div style="font-size:13px;font-weight:700;color:{pv_clr};">{pat_val}</div>'
+            f'<div style="font-size:12px;color:#4A6080;line-height:1.5;">{guide}</div>'
+            f'<div>{sev_badge(status)}</div>'
             '</div>'
         )
-
-    st.markdown(
-        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-        'border-left:4px solid #4A9EFF;border-radius:12px;'
+    return (
+        '<div style="background:#0A1525;border:2px solid #1E3A5F;'
+        'border-left:4px solid #4A9EFF;border-radius:14px;'
         'padding:16px 20px;margin-bottom:14px;">'
         + header + body +
-        '<div style="font-size:11px;color:#334155;margin-top:10px;'
-        'font-style:italic;">Source: ' + source + '</div>'
-        '</div>',
-        unsafe_allow_html=True
+        f'<div style="font-size:11px;color:#2A3A50;margin-top:10px;'
+        f'font-style:italic;">Source: {source}</div>'
+        '</div>'
     )
 
+def render_lab(row,sev,clr):
+    ckd=str(row.get('ckd_severity','Not tested'))
+    dia=str(row.get('diabetes_severity_final','Not tested'))
+    thy=str(row.get('thyroid_severity_final','Not tested'))
+    for f in ['ckd_severity','diabetes_severity_final','thyroid_severity_final']:
+        if str(row.get(f,'')) in ['None','nan','NaN','']:
+            if f=='ckd_severity': ckd='Not tested'
+            elif f=='diabetes_severity_final': dia='Not tested'
+            else: thy='Not tested'
 
-def render_ct_findings(row, sev, clr):
-    cls  = row.get('ct_predicted_class', row.get('disease_type',''))
-    conf = row.get('ct_confidence', 0)
-    name = CT_NAMES.get(cls, cls)
-    desc = CT_DESC.get(cls,'')
+    egfr=get_num(row,'egfr'); glucose=get_num(row,'glucose')
+    tsh=get_num(row,'tsh');   free_t4=get_num(row,'free_t4')
+    disease=str(row.get('disease_type','')).lower()
 
-    st.markdown(
-        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-        'border-left:5px solid ' + clr + ';border-radius:10px;'
-        'padding:18px 22px;margin-bottom:14px;">'
-        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-        'CT Brain Imaging</div>'
-        '<div style="font-size:18px;font-weight:700;color:#F0F6FF;margin-bottom:6px;">'
-        + name + '</div>'
-        '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">' + desc + '</div>'
-        '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
-        + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
-        '</div></div>',
-        unsafe_allow_html=True
-    )
-    img_tuple = CT_IMAGE.get(str(cls),('',''))
-    orig_path = img_tuple[0] if isinstance(img_tuple,tuple) else ''
-    grad_path = img_tuple[1] if isinstance(img_tuple,tuple) else ''
-    if orig_path and os.path.exists(orig_path):
-        gc1,gc2 = st.columns(2)
-        with gc1:
-            st.markdown('<div style="font-size:11px;font-weight:600;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original CT Scan</div>',unsafe_allow_html=True)
-            st.image(orig_path, use_column_width=True)
-        with gc2:
-            st.markdown('<div style="font-size:11px;font-weight:600;color:#A78BFA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
-            if grad_path and os.path.exists(grad_path):
-                st.image(grad_path, use_column_width=True)
-        st.markdown(
-            '<div style="font-size:12px;color:#4A6080;margin-bottom:12px;">'
-            'Highlighted regions indicate areas of diagnostic significance '
-            'identified by the AI model.</div>',
-            unsafe_allow_html=True
-        )
-
-
-def render_us_findings(row, sev, clr):
-    cls  = row.get('predicted_class', row.get('disease_type',''))
-    conf = row.get('confidence', 0)
-    name = US_NAMES.get(cls, cls)
-    desc = US_DESC.get(cls,'')
-
-    st.markdown(
-        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-        'border-left:5px solid ' + clr + ';border-radius:10px;'
-        'padding:18px 22px;margin-bottom:14px;">'
-        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-        'Obstetric Ultrasound</div>'
-        '<div style="font-size:18px;font-weight:700;color:#F0F6FF;margin-bottom:6px;">'
-        + name + '</div>'
-        '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">' + desc + '</div>'
-        '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
-        + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
-        '</div></div>',
-        unsafe_allow_html=True
-    )
-    img_tuple = US_IMAGE.get(str(cls),('',''))
-    orig_path = img_tuple[0] if isinstance(img_tuple,tuple) else ''
-    grad_path = img_tuple[1] if isinstance(img_tuple,tuple) else ''
-    if orig_path and os.path.exists(orig_path):
-        ug1,ug2 = st.columns(2)
-        with ug1:
-            st.markdown('<div style="font-size:11px;font-weight:600;color:#34D399;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original Ultrasound</div>',unsafe_allow_html=True)
-            st.image(orig_path, use_column_width=True)
-        with ug2:
-            st.markdown('<div style="font-size:11px;font-weight:600;color:#A78BFA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
-            if grad_path and os.path.exists(grad_path):
-                st.image(grad_path, use_column_width=True)
-
-
-def render_combined_findings(row):
-    c1,c2,c3,c4 = st.columns(4)
-    for col,(lbl,key) in zip([c1,c2,c3,c4],[
-        ('Lab','lab_score'),('CT','ct_score'),
-        ('Ultrasound','us_score'),('Fusion','fusion_score')
+    c1,c2,c3=st.columns(3)
+    for col,(lbl,val) in zip([c1,c2,c3],[
+        ('Kidney Function',ckd),('Blood Sugar',dia),('Thyroid Function',thy)
     ]):
-        val = row.get(key)
-        try:
-            v = SCORE_MAP.get(int(float(val)),'—') \
-                if val is not None and str(val) not in ['None','nan'] else '—'
-        except Exception:
-            v = '—'
-        vc = SEV_COLOR.get(v,'#4A6080')
+        v=val if val not in ['Not tested','None','nan','NaN','Unknown'] else 'Not tested'
+        vc=clr if v!='Not tested' else '#2A3A50'
+        with col:
+            st.markdown(finding_card(lbl,v,vc),unsafe_allow_html=True)
+
+    # Build reference table
+    rows=[]
+    if 'ckd' in disease or 'kidney' in disease:
+        if egfr is not None:
+            st_='Normal' if egfr>=60 else 'Borderline' if egfr>=30 else 'Abnormal'
+            stage='G1' if egfr>=90 else 'G2' if egfr>=60 else 'G3a' if egfr>=45 else 'G3b' if egfr>=30 else 'G4' if egfr>=15 else 'G5'
+            rows.append(('eGFR',fmt(egfr,'mL/min'),'≥90:G1(Normal) · 60–89:G2(Normal) · 45–59:G3a · 30–44:G3b · <30:G4-G5',st_))
+            rows.append(('KDIGO Stage',stage+' — '+ckd,'G1–G2=Normal · G3=Moderate · G4–G5=Severe','Normal' if egfr>=60 else 'Borderline' if egfr>=45 else 'Abnormal'))
+        rows.append(('Clinical Severity',sev,'KDIGO 2022: based on eGFR + albuminuria','Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal'))
+        rows.append(('BP Target','—','<130/80 mmHg · ACE inhibitor if proteinuria','N/A'))
+        src='KDIGO 2022 Clinical Practice Guideline for CKD'
+
+    elif 'diabetes' in disease:
+        if glucose is not None:
+            gs='Normal' if glucose<100 else 'Borderline' if glucose<126 else 'Abnormal'
+            rows.append(('Glucose',fmt(glucose,'mg/dL'),'Normal:<100 · Pre-diabetic:100–125 · Diabetic:≥126',gs))
+        rows.append(('Diabetes Status',dia,'Normal:<100 · Mild:126–180 · Severe:>180 mg/dL','Normal' if dia=='Normal' else 'Borderline' if dia=='Mild' else 'Abnormal' if dia=='Severe' else 'N/A'))
+        rows.append(('HbA1c Target','—','Target:<7.0% (most) · <8.0% (elderly)','N/A'))
+        rows.append(('Monitoring','—','Daily glucose · HbA1c every 3 months','N/A'))
+        src='ADA Standards of Medical Care in Diabetes 2024'
+
+    elif 'thyroid' in disease:
+        if tsh is not None:
+            ts='Normal' if 0.4<=tsh<=4.0 else 'Borderline' if tsh<=10 else 'Abnormal'
+            interp='Euthyroid' if 0.4<=tsh<=4.0 else 'Subclinical Hypothyroid' if tsh<=10 else 'Overt Hypothyroid'
+            rows.append(('TSH',fmt(tsh,'mIU/L'),'Normal:0.4–4.0 · Subclinical:4.1–10.0 · Overt:>10.0',ts))
+            rows.append(('TSH Interpretation',interp,'Subclinical=TSH↑ T4 normal · Overt=TSH↑↑ T4 low',ts))
+        if free_t4 is not None:
+            t4s='Normal' if 0.8<=free_t4<=1.8 else 'Abnormal'
+            rows.append(('Free T4',fmt(free_t4,'ng/dL'),'Normal:0.8–1.8 ng/dL · Low=Hypothyroid',t4s))
+        rows.append(('Thyroid Status',thy,'Normal:TSH+T4 normal · Mild:Subclinical · Severe:Overt','Normal' if thy in ['Normal','Mild'] else 'Abnormal' if thy=='Severe' else 'N/A'))
+        rows.append(('Treatment','—','Levothyroxine if TSH>10 or symptomatic at 4–10','N/A'))
+        src='ATA/AACE Guidelines for Hypothyroidism 2023'
+    else:
+        src='WHO / Standard Clinical Guidelines'
+
+    if rows:
+        st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.08em;margin:12px 0 10px;">Patient Values vs Clinical Guidelines</div>',unsafe_allow_html=True)
+        st.markdown(ref_table(rows,src),unsafe_allow_html=True)
+
+
+def render_ct(row,sev,clr):
+    cls=row.get('ct_predicted_class',row.get('disease_type',''))
+    conf=row.get('ct_confidence',0)
+    name=CT_NAMES.get(cls,cls); desc=CT_DESC.get(cls,'')
+    st.markdown(
+        f'<div style="background:#0A1525;border:2px solid #1E3A5F;'
+        f'border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+        f'<div style="font-size:11px;font-weight:700;color:#4A9EFF;text-transform:uppercase;'
+        f'letter-spacing:0.08em;margin-bottom:10px;">CT Brain Imaging</div>'
+        f'<div style="font-size:20px;font-weight:800;color:#F0F6FF;margin-bottom:6px;">{name}</div>'
+        f'<div style="font-size:14px;color:#4A6080;margin-bottom:10px;">{desc}</div>'
+        f'<div style="display:flex;gap:16px;">'
+        f'<span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;'
+        f'color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
+        f'<span style="color:#4A6080;font-size:13px;">AI Confidence: '
+        f'<b style="color:#F0F6FF;">{round(float(conf)*100,1)}%</b></span>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
+    t=CT_IMAGE.get(str(cls),('',''))
+    orig=t[0]; grad=t[1]
+    if orig and os.path.exists(orig):
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#F0F6FF;margin-bottom:10px;">Scan Images & AI Attention Map</div>',unsafe_allow_html=True)
+        gc1,gc2=st.columns(2)
+        with gc1:
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original CT Scan</div>',unsafe_allow_html=True)
+            st.image(orig,use_column_width=True)
+        with gc2:
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
+            if grad and os.path.exists(grad): st.image(grad,use_column_width=True)
+        st.markdown('<div style="background:#0A1525;border:2px solid #1E3A5F;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#4A6080;">🔍 <b style="color:#F0F6FF;">Grad-CAM:</b> Warm colours (red/yellow) = high AI attention. Cool colours (blue) = low attention areas.</div>',unsafe_allow_html=True)
+
+
+def render_us(row,sev,clr):
+    cls=row.get('predicted_class',row.get('disease_type',''))
+    conf=row.get('confidence',0)
+    name=US_NAMES.get(cls,cls); desc=US_DESC.get(cls,'')
+    st.markdown(
+        f'<div style="background:#0A1525;border:2px solid #1E3A5F;'
+        f'border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+        f'<div style="font-size:11px;font-weight:700;color:#34D399;text-transform:uppercase;'
+        f'letter-spacing:0.08em;margin-bottom:10px;">Obstetric Ultrasound</div>'
+        f'<div style="font-size:20px;font-weight:800;color:#F0F6FF;margin-bottom:6px;">{name}</div>'
+        f'<div style="font-size:14px;color:#4A6080;margin-bottom:10px;">{desc}</div>'
+        f'<div style="display:flex;gap:16px;">'
+        f'<span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;'
+        f'color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
+        f'<span style="color:#4A6080;font-size:13px;">AI Confidence: '
+        f'<b style="color:#F0F6FF;">{round(float(conf)*100,1)}%</b></span>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
+    t=US_IMAGE.get(str(cls),('',''))
+    orig=t[0]; grad=t[1]
+    if orig and os.path.exists(orig):
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#F0F6FF;margin-bottom:10px;">Scan Images & AI Attention Map</div>',unsafe_allow_html=True)
+        ug1,ug2=st.columns(2)
+        with ug1:
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original Ultrasound</div>',unsafe_allow_html=True)
+            st.image(orig,use_column_width=True)
+        with ug2:
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
+            if grad and os.path.exists(grad): st.image(grad,use_column_width=True)
+        st.markdown('<div style="background:#0A1525;border:2px solid #1E3A5F;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#4A6080;">🔍 <b style="color:#F0F6FF;">Grad-CAM:</b> Highlighted regions show where the AI focused during fetal plane classification.</div>',unsafe_allow_html=True)
+
+
+def render_combined(row,sev,clr):
+    # Score cards
+    c1,c2,c3,c4=st.columns(4)
+    for col,(lbl,key) in zip([c1,c2,c3,c4],[('Lab','lab_score'),('CT','ct_score'),('Ultrasound','us_score'),('Fusion','fusion_score')]):
+        val=row.get(key)
+        try: v=SCORE_MAP.get(int(float(val)),'—') if val is not None and str(val) not in ['None','nan'] else '—'
+        except: v='—'
+        vc=SEV_COLOR.get(v,'#4A6080')
         with col:
             st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:14px;text-align:center;margin-bottom:12px;">'
-                '<div style="font-size:11px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">'
-                + lbl + '</div>'
-                '<div style="font-size:22px;font-weight:800;color:' + vc + ';">'
-                + v + '</div>'
-                '</div>',
-                unsafe_allow_html=True
+                f'<div style="background:{SEV_BG.get(v,"rgba(74,96,128,0.1)")};'
+                f'border:2px solid {vc}55;border-radius:12px;padding:14px;'
+                f'text-align:center;margin-bottom:12px;">'
+                f'<div style="font-size:11px;font-weight:700;color:{vc};text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:6px;">{lbl}</div>'
+                f'<div style="font-size:24px;font-weight:800;color:{vc};">{v}</div>'
+                f'</div>',unsafe_allow_html=True
             )
 
-    # Show CT and US details for combined patients
-    ct_cls = row.get('ct_predicted_class','')
-    us_cls = row.get('us_predicted_class', row.get('predicted_class',''))
-    if ct_cls:
+    ct_cls=row.get('ct_predicted_class',''); us_cls=row.get('us_predicted_class',row.get('predicted_class',''))
+    if ct_cls or us_cls:
+        parts=[]
+        if ct_cls: parts.append('🧠 CT: <b style="color:#F0F6FF;">'+CT_NAMES.get(ct_cls,ct_cls)+'</b>')
+        if us_cls: parts.append('🔬 US: <b style="color:#F0F6FF;">'+US_NAMES.get(us_cls,us_cls)+'</b>')
+        st.markdown('<div style="font-size:13px;color:#4A6080;margin-bottom:14px;">'+' &nbsp;·&nbsp; '.join(parts)+'</div>',unsafe_allow_html=True)
+
+    # Lab values for combined patients
+    ckd=str(row.get('ckd_severity','Not tested')); dia=str(row.get('diabetes_severity_final','Not tested')); thy=str(row.get('thyroid_severity_final','Not tested'))
+    egfr=get_num(row,'egfr'); glucose=get_num(row,'glucose'); tsh=get_num(row,'tsh'); free_t4=get_num(row,'free_t4')
+
+    rows=[]
+    if egfr is not None:
+        st_='Normal' if egfr>=60 else 'Borderline' if egfr>=30 else 'Abnormal'
+        rows.append(('eGFR',fmt(egfr,'mL/min'),'≥90:Normal · 60–89:G2 · 45–59:G3a · <30:G4-G5',st_))
+    if ckd not in ['Not tested','None','nan','NaN','']:
+        rows.append(('CKD Stage',ckd,'G1–G2=Normal · G3a–G3b=Moderate · G4–G5=Severe','Normal' if 'G1' in ckd or 'G2' in ckd else 'Borderline' if 'G3' in ckd else 'Abnormal'))
+    if glucose is not None:
+        gs='Normal' if glucose<100 else 'Borderline' if glucose<126 else 'Abnormal'
+        rows.append(('Glucose',fmt(glucose,'mg/dL'),'Normal:<100 · Pre-diabetic:100–125 · Diabetic:≥126',gs))
+    if dia not in ['Not tested','None','nan','NaN','']:
+        rows.append(('Diabetes',dia,'Normal:<100 · Mild:126–180 · Severe:>180','Normal' if dia=='Normal' else 'Borderline' if dia=='Mild' else 'Abnormal' if dia=='Severe' else 'N/A'))
+    if tsh is not None:
+        ts='Normal' if 0.4<=tsh<=4.0 else 'Borderline' if tsh<=10 else 'Abnormal'
+        rows.append(('TSH',fmt(tsh,'mIU/L'),'Normal:0.4–4.0 · Subclinical:4.1–10 · Overt:>10',ts))
+    if free_t4 is not None:
+        rows.append(('Free T4',fmt(free_t4,'ng/dL'),'Normal:0.8–1.8 ng/dL',('Normal' if 0.8<=free_t4<=1.8 else 'Abnormal')))
+    if thy not in ['Not tested','None','nan','NaN','']:
+        rows.append(('Thyroid',thy,'Normal · Mild:Subclinical · Severe:Overt','Normal' if thy in ['Normal','Mild'] else 'Abnormal'))
+
+    if rows:
+        st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 10px;">Lab Values vs Reference Ranges</div>',unsafe_allow_html=True)
+        st.markdown(ref_table(rows,'KDIGO 2022 · ADA 2024 · ATA/AACE 2023'),unsafe_allow_html=True)
+
+
+def render_rag(parsed,citations):
+    if not parsed: st.markdown('<div style="background:#0A1525;border:2px solid #1E3A5F;border-radius:10px;padding:14px 18px;color:#4A6080;">RAG summary not available.</div>',unsafe_allow_html=True); return
+
+    if parsed.get('clinical_summary'):
         st.markdown(
-            '<div style="font-size:13px;color:#7A90A8;margin-bottom:6px;">'
-            '🧠 CT: <b style="color:#F0F6FF;">' + CT_NAMES.get(ct_cls,ct_cls) + '</b>'
-            '  ·  🔬 US: <b style="color:#F0F6FF;">' + US_NAMES.get(us_cls,us_cls) + '</b>'
-            '</div>',
+            '<div style="background:linear-gradient(135deg,#130A2E,#0D1B2E);'
+            'border:2px solid #3B1FA8;border-left:5px solid #7C3AED;'
+            'border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+            '<div style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;'
+            'letter-spacing:0.1em;margin-bottom:10px;">Clinical Overview</div>'
+            '<div style="font-size:15px;color:#E8EDF5;line-height:1.85;">'
+            + parsed['clinical_summary'] + '</div></div>',
             unsafe_allow_html=True
         )
 
-
-def render_rag_sections(parsed, citations):
-    if parsed['clinical_summary']:
-        st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #263A55;'
-            'border-left:5px solid #7C3AED;border-radius:12px;'
-            'padding:18px 22px;margin-bottom:12px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">'
-            'Clinical Overview</div>'
-            '<div style="font-size:15px;color:#E8EDF5;line-height:1.8;">'
-            + parsed['clinical_summary'] + '</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-
-    if parsed['key_findings']:
-        fh = ''.join([
-            '<div style="display:flex;gap:10px;padding:8px 0;'
-            'border-bottom:1px solid #1E3250;">'
-            '<span style="color:#7C3AED;font-weight:700;flex-shrink:0;">•</span>'
-            '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
-            + f + '</span></div>'
+    if parsed.get('key_findings'):
+        fh=''.join([
+            f'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1E3A5F;">'
+            f'<span style="color:#C084FC;font-weight:700;font-size:16px;flex-shrink:0;">•</span>'
+            f'<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">{f}</span></div>'
             for f in parsed['key_findings']
         ])
         st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-radius:10px;padding:16px 20px;margin-bottom:12px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
-            'Key Findings</div>' + fh + '</div>',
+            '<div style="background:#0A1525;border:2px solid #1E3A5F;'
+            'border-radius:12px;padding:16px 20px;margin-bottom:14px;">'
+            '<div style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;'
+            'letter-spacing:0.1em;margin-bottom:10px;">Key Findings</div>'
+            + fh + '</div>',
             unsafe_allow_html=True
         )
 
-    if parsed['recommendations']:
-        rh = ''.join([
-            '<div style="display:flex;gap:12px;padding:10px 0;'
-            'border-bottom:1px solid #1E3250;">'
-            '<span style="background:#2563EB22;color:#4A9EFF;font-weight:700;'
-            'font-size:13px;padding:2px 8px;border-radius:6px;flex-shrink:0;">'
-            + str(i+1) + '</span>'
-            '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
-            + r + '</span></div>'
+    if parsed.get('recommendations'):
+        rh=''.join([
+            f'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1E3A5F;">'
+            f'<span style="background:linear-gradient(135deg,#2563EB,#1D4ED8);color:white;'
+            f'font-weight:800;font-size:13px;padding:3px 10px;border-radius:8px;flex-shrink:0;'
+            f'min-width:28px;text-align:center;">{i+1}</span>'
+            f'<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">{r}</span></div>'
             for i,r in enumerate(parsed['recommendations'])
         ])
         st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-left:5px solid #00C48C;border-radius:10px;'
-            'padding:16px 20px;margin-bottom:12px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
-            'Clinical Recommendations</div>' + rh + '</div>',
+            '<div style="background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(0,229,160,0.02));'
+            'border:2px solid rgba(0,229,160,0.3);border-left:5px solid #00E5A0;'
+            'border-radius:14px;padding:16px 20px;margin-bottom:14px;">'
+            '<div style="font-size:11px;font-weight:700;color:#00E5A0;text-transform:uppercase;'
+            'letter-spacing:0.1em;margin-bottom:10px;">Clinical Recommendations</div>'
+            + rh + '</div>',
             unsafe_allow_html=True
         )
 
-    fu_col,ug_col = st.columns(2)
+    fu_col,ug_col=st.columns(2)
     with fu_col:
-        if parsed['followup']:
+        if parsed.get('followup'):
             st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-                'Follow-up Plan</div>'
-                '<div style="font-size:14px;color:#E8EDF5;font-weight:500;">'
-                + parsed['followup'] + '</div>'
-                '</div>',
+                '<div style="background:#0A1525;border:2px solid #1E3A5F;'
+                'border-radius:12px;padding:14px 18px;margin-bottom:12px;">'
+                '<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;'
+                'letter-spacing:0.08em;margin-bottom:6px;">Follow-up Plan</div>'
+                '<div style="font-size:14px;color:#F0F6FF;font-weight:600;">'
+                + parsed['followup'] + '</div></div>',
                 unsafe_allow_html=True
             )
     with ug_col:
-        if parsed['urgency']:
-            uc = {'URGENT':'#FF3B3B','SEMI-URGENT':'#FF6B35',
-                  'ROUTINE':'#00C48C'}.get(parsed['urgency'].upper(),'#8892A4')
+        if parsed.get('urgency'):
+            uc={'URGENT':'#FF3B5C','SEMI-URGENT':'#FF7A35','ROUTINE':'#00E5A0'}.get(parsed['urgency'].upper(),'#6B7A99')
             st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-                'Urgency</div>'
-                '<div style="font-size:18px;font-weight:800;color:' + uc + ';">'
-                + parsed['urgency'] + '</div>'
-                '</div>',
+                f'<div style="background:{SEV_BG.get({"URGENT":"Severe","SEMI-URGENT":"Moderate","ROUTINE":"Normal"}.get(parsed["urgency"].upper(),"Unknown"),"")};'
+                f'border:2px solid {uc}55;border-radius:12px;padding:14px 18px;margin-bottom:12px;">'
+                f'<div style="font-size:11px;font-weight:700;color:{uc};text-transform:uppercase;'
+                f'letter-spacing:0.08em;margin-bottom:6px;">Urgency</div>'
+                f'<div style="font-size:20px;font-weight:800;color:{uc};">{parsed["urgency"]}</div>'
+                f'</div>',
                 unsafe_allow_html=True
             )
 
     if citations:
         st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+            '<div style="background:#0A1525;border:2px solid #1E3A5F;'
             'border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-            'Guideline References</div>'
-            '<div style="font-size:13px;color:#64748B;font-family:monospace;">'
-            + '  ·  '.join(citations) + '</div>'
-            '</div>',
+            '<div style="font-size:11px;font-weight:700;color:#4A9EFF;text-transform:uppercase;'
+            'letter-spacing:0.08em;margin-bottom:6px;">Guideline References</div>'
+            '<div style="font-size:13px;color:#2A3A50;font-family:monospace;">'
+            + '  ·  '.join(list(dict.fromkeys(citations))) + '</div></div>',
             unsafe_allow_html=True
         )
 
 
-# ══════════════════════════════════════════════════════════════
-# ENTRY POINT
-# ══════════════════════════════════════════════════════════════
+# ── ENTRY POINT ───────────────────────────────────────────────
 if not st.session_state.logged_in:
     render_login()
 else:
