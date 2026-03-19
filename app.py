@@ -712,21 +712,29 @@ def render_patient(row, pid, sev, clr, bg, mtype, doc_id):
 
 # ── Findings renderers ────────────────────────────────────────
 def render_lab_findings(row, sev, clr):
-    ckd = str(row.get('ckd_severity','Not tested'))
-    dia = str(row.get('diabetes_severity_final','Not tested'))
-    thy = str(row.get('thyroid_severity_final','Not tested'))
+    ckd     = str(row.get('ckd_severity','Not tested'))
+    dia     = str(row.get('diabetes_severity_final','Not tested'))
+    thy     = str(row.get('thyroid_severity_final','Not tested'))
+    egfr    = row.get('egfr', None)
+    hba1c   = row.get('hba1c', None)
+    glucose = row.get('glucose', None)
+    tsh     = row.get('tsh', None)
+    free_t4 = row.get('free_t4', None)
     disease = str(row.get('disease_type','')).lower()
 
-    # Clean up None/nan
-    ckd = 'Not tested' if ckd in ['None','nan','NaN','Unknown'] else ckd
-    dia = 'Not tested' if dia in ['None','nan','NaN','Unknown'] else dia
-    thy = 'Not tested' if thy in ['None','nan','NaN','Unknown'] else thy
+    # Clean None/nan
+    def clean(v):
+        return 'Not tested' if str(v) in ['None','nan','NaN','Unknown','Not tested',''] else str(v)
+    ckd = clean(ckd)
+    dia = clean(dia)
+    thy = clean(thy)
 
+    # ── Patient Values row ────────────────────────────────────
     c1,c2,c3 = st.columns(3)
     for col,(lbl,val) in zip([c1,c2,c3],[
-        ('Kidney Function (eGFR)', ckd),
-        ('Blood Sugar (HbA1c)',    dia),
-        ('Thyroid (TSH)',           thy)
+        ('Kidney Function', ckd),
+        ('Blood Sugar',     dia),
+        ('Thyroid Function',thy)
     ]):
         v_clr = clr if val != 'Not tested' else '#4A6080'
         with col:
@@ -742,48 +750,252 @@ def render_lab_findings(row, sev, clr):
                 unsafe_allow_html=True
             )
 
-    # Patient-specific reference range based on disease type
+    # ── Patient vs Guideline comparison table ─────────────────
+    st.markdown(
+        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.08em;'
+        'margin:4px 0 10px;">Patient Values vs Clinical Guidelines</div>',
+        unsafe_allow_html=True
+    )
+
+    # Build comparison rows based on disease
+    def status_badge(status):
+        cfg = {
+            'Normal':   ('#00C48C','rgba(0,196,140,0.12)','✓ Within range'),
+            'Abnormal': ('#FF3B3B','rgba(255,59,59,0.12)', '✗ Out of range'),
+            'Borderline':('#FFB800','rgba(255,184,0,0.12)','⚠ Borderline'),
+            'N/A':      ('#4A6080','rgba(74,96,128,0.12)', '— Not tested'),
+        }.get(status, ('#4A6080','rgba(74,96,128,0.12)','— N/A'))
+        return (
+            '<span style="background:' + cfg[1] + ';color:' + cfg[0] + ';'
+            'font-size:12px;font-weight:600;padding:3px 10px;'
+            'border-radius:20px;">' + cfg[2] + '</span>'
+        )
+
+    def fmt_val(v):
+        if v is None or str(v) in ['None','nan','NaN']:
+            return '—'
+        try:
+            return str(round(float(v), 2))
+        except Exception:
+            return str(v)
+
+    # Determine comparison rows
     if 'ckd' in disease or 'kidney' in disease:
-        ref_html = (
-            '<b style="color:#F0F6FF;">Patient Condition: Chronic Kidney Disease</b><br>'
-            'eGFR Stages: G1 ≥90 (Normal) · G2 60–89 (Mild) · '
-            'G3a 45–59 (Mild-Moderate) · G3b 30–44 (Moderate-Severe) · '
-            'G4 15–29 (Severe) · G5 &lt;15 (Kidney Failure)<br>'
-            'Target: Blood pressure &lt;130/80 mmHg · Protein restriction if proteinuria present<br>'
-            'Source: KDIGO 2022 Clinical Practice Guidelines'
-        )
+        egfr_val = fmt_val(egfr)
+
+        # eGFR → KDIGO stage label + clinical interpretation
+        try:
+            egfr_f = float(egfr) if egfr is not None \
+                     and str(egfr) not in ['None','nan'] else None
+        except Exception:
+            egfr_f = None
+
+        if egfr_f is not None:
+            if egfr_f >= 90:
+                egfr_stage  = 'G1 (≥90) — Normal or High'
+                egfr_status = 'Normal'
+            elif egfr_f >= 60:
+                egfr_stage  = 'G2 (60–89) — Mildly Reduced'
+                egfr_status = 'Normal'      # G1+G2 = Normal clinically
+            elif egfr_f >= 45:
+                egfr_stage  = 'G3a (45–59) — Mildly-Moderately Reduced'
+                egfr_status = 'Borderline'
+            elif egfr_f >= 30:
+                egfr_stage  = 'G3b (30–44) — Moderately-Severely Reduced'
+                egfr_status = 'Abnormal'
+            elif egfr_f >= 15:
+                egfr_stage  = 'G4 (15–29) — Severely Reduced'
+                egfr_status = 'Abnormal'
+            else:
+                egfr_stage  = 'G5 (<15) — Kidney Failure'
+                egfr_status = 'Abnormal'
+        else:
+            egfr_stage  = 'Not measured'
+            egfr_status = 'N/A'
+
+        # Clinical severity from label
+        sev_status = {
+            'Normal':'Normal', 'Mild':'Borderline',
+            'Moderate':'Abnormal', 'Severe':'Abnormal'
+        }.get(sev, 'N/A')
+
+        rows = [
+            ('eGFR Value',
+             egfr_val + ' mL/min/1.73m²' if egfr_val != '—' else '—',
+             'G1: ≥90  ·  G2: 60–89  ·  G3a: 45–59  ·  G3b: 30–44  ·  G4: 15–29  ·  G5: <15',
+             egfr_status),
+            ('KDIGO Stage',
+             egfr_stage,
+             'G1–G2 = Normal clinically  ·  G3a = Mild  ·  G3b = Moderate  ·  G4–G5 = Severe',
+             egfr_status),
+            ('Clinical Severity',
+             sev,
+             'Based on eGFR + albuminuria + symptoms (KDIGO 2022)',
+             sev_status),
+            ('BP Target',
+             '—',
+             '<130/80 mmHg  ·  ACE inhibitor if proteinuria present',
+             'N/A'),
+        ]
+        source = 'KDIGO 2022 Clinical Practice Guideline for CKD'
+
     elif 'diabetes' in disease:
-        ref_html = (
-            '<b style="color:#F0F6FF;">Patient Condition: Diabetes Mellitus</b><br>'
-            'HbA1c: Normal &lt;5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%<br>'
-            'Target HbA1c: &lt;7.0% (most adults) · &lt;8.0% (elderly/complex patients)<br>'
-            'Fasting Glucose: Normal &lt;100 mg/dL · Diabetic ≥126 mg/dL<br>'
-            'Source: ADA Standards of Medical Care in Diabetes 2024'
-        )
+        gluc_val = fmt_val(glucose)
+        # Glucose status based on ADA thresholds
+        try:
+            gluc_f   = float(glucose) if glucose is not None \
+                       and str(glucose) not in ['None','nan'] else None
+            g_status = 'Normal'     if gluc_f and gluc_f < 100 \
+                       else 'Borderline' if gluc_f and gluc_f < 126 \
+                       else 'Abnormal'   if gluc_f else 'N/A'
+        except Exception:
+            gluc_f   = None
+            g_status = 'N/A'
+
+        # Severity status
+        d_status = 'Normal'   if dia == 'Mild'   else \
+                   'Abnormal' if dia == 'Severe'  else \
+                   'Normal'   if dia == 'Normal'  else 'N/A'
+
+        rows = [
+            ('Glucose (Fasting)',
+             gluc_val + ' mg/dL' if gluc_val != '—' else '—',
+             'Normal: <100 mg/dL · Pre-diabetic: 100–125 · Diabetic: ≥126',
+             g_status),
+            ('Diabetes Severity',
+             dia,
+             'Normal: <100 mg/dL · Mild: 126–180 · Severe: >180 mg/dL',
+             d_status),
+            ('HbA1c Target',
+             'Not available in MIMIC-IV',
+             'Target: <7.0% (most adults) · <8.0% (elderly)',
+             'N/A'),
+            ('Monitoring',
+             '—',
+             'Self-monitoring blood glucose daily · HbA1c every 3 months',
+             'N/A'),
+        ]
+        source = 'ADA Standards of Medical Care in Diabetes 2024'
+
     elif 'thyroid' in disease:
-        ref_html = (
-            '<b style="color:#F0F6FF;">Patient Condition: Thyroid Disorder</b><br>'
-            'TSH: Normal 0.4–4.0 mIU/L · Subclinical Hypothyroid 4.0–10.0 · Overt &gt;10.0<br>'
-            'Free T4: Normal 0.8–1.8 ng/dL · Low T4 = Hypothyroidism<br>'
-            'Treatment: Levothyroxine therapy if TSH &gt;10 mIU/L or symptomatic<br>'
-            'Source: ATA/AACE Guidelines for Thyroid Disease Management'
-        )
+        tsh_val = fmt_val(tsh)
+        t4_val  = fmt_val(free_t4)
+
+        try:
+            tsh_f = float(tsh) if tsh is not None \
+                    and str(tsh) not in ['None','nan'] else None
+            # 0.4-4.0 = Normal, 4.1-10.0 = Subclinical (Borderline), >10 = Overt (Abnormal)
+            t_status = 'Normal'     if tsh_f and 0.4 <= tsh_f <= 4.0 \
+                       else 'Borderline' if tsh_f and 4.0 < tsh_f <= 10.0 \
+                       else 'Abnormal'   if tsh_f and tsh_f > 10.0 \
+                       else 'N/A'
+            tsh_interp = 'Normal (Euthyroid)'           if tsh_f and 0.4 <= tsh_f <= 4.0 \
+                         else 'Subclinical Hypothyroid'  if tsh_f and 4.0 < tsh_f <= 10.0 \
+                         else 'Overt Hypothyroid'        if tsh_f and tsh_f > 10.0 \
+                         else '—'
+        except Exception:
+            tsh_f      = None
+            t_status   = 'N/A'
+            tsh_interp = '—'
+
+        try:
+            t4_f = float(free_t4) if free_t4 is not None \
+                   and str(free_t4) not in ['None','nan'] else None
+            # T4 within 0.8-1.8 = Normal
+            t4_status = 'Normal'     if t4_f and 0.8 <= t4_f <= 1.8 \
+                        else 'Abnormal' if t4_f else 'N/A'
+            t4_interp = 'Normal'     if t4_f and 0.8 <= t4_f <= 1.8 \
+                        else 'Low — Hypothyroid' if t4_f and t4_f < 0.8 \
+                        else 'High — Hyperthyroid' if t4_f else '—'
+        except Exception:
+            t4_f      = None
+            t4_status = 'N/A'
+            t4_interp = '—'
+
+        # Overall thyroid status
+        # Subclinical (TSH high, T4 normal) = Mild = Borderline clinically
+        if tsh_f and tsh_f > 10.0:
+            thy_status = 'Abnormal'    # Overt hypothyroid
+        elif tsh_f and tsh_f > 4.0:
+            thy_status = 'Borderline'  # Subclinical = Mild
+        elif tsh_f:
+            thy_status = 'Normal'
+        else:
+            thy_status = 'N/A'
+
+        rows = [
+            ('TSH Level',
+             tsh_val + ' mIU/L' if tsh_val != '—' else '—',
+             'Normal: 0.4–4.0  ·  Subclinical: 4.1–10.0  ·  Overt Hypothyroid: >10.0',
+             t_status),
+            ('TSH Interpretation',
+             tsh_interp,
+             'Subclinical = TSH high but T4 still normal → monitor or treat if symptomatic',
+             t_status),
+            ('Free T4',
+             t4_val + ' ng/dL (' + t4_interp + ')' if t4_val != '—' else 'Not measured',
+             'Normal: 0.8–1.8 ng/dL  ·  Low T4 = Overt Hypothyroidism',
+             t4_status),
+            ('Clinical Severity',
+             thy + ' — ' + ('Subclinical Hypothyroid' if thy=='Mild' and tsh_f and tsh_f<=10 else thy),
+             'Mild = Subclinical (TSH↑, T4 normal)  ·  Severe = Overt (TSH↑↑, T4 low)',
+             thy_status),
+            ('Treatment Threshold',
+             '—',
+             'Treat if TSH >10 mIU/L  ·  Or if TSH 4–10 with symptoms',
+             'N/A'),
+        ]
+        source = 'ATA/AACE Clinical Practice Guidelines for Hypothyroidism 2023'
+
     else:
-        ref_html = (
-            'HbA1c: Normal &lt;5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%<br>'
-            'eGFR: G1 ≥90 · G2 60–89 · G3 30–59 · G4 15–29 · G5 &lt;15<br>'
-            'TSH: Normal 0.4–4.0 mIU/L · Free T4: 0.8–1.8 ng/dL'
+        rows = [
+            ('HbA1c',  '—', 'Normal <5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%', 'N/A'),
+            ('eGFR',   '—', 'G1 ≥90 · G2 60–89 · G3 30–59 · G4 15–29 · G5 <15',     'N/A'),
+            ('TSH',    '—', 'Normal 0.4–4.0 mIU/L · Free T4: 0.8–1.8 ng/dL',          'N/A'),
+        ]
+        source = 'WHO / Standard Clinical Guidelines'
+
+    # Render table
+    header = (
+        '<div style="display:grid;grid-template-columns:1fr 1.2fr 2fr 1fr;'
+        'gap:0;border-bottom:2px solid #263A55;padding-bottom:8px;margin-bottom:4px;">'
+        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Parameter</div>'
+        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Patient Value</div>'
+        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Guideline Range</div>'
+        '<div style="font-size:11px;font-weight:700;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Status</div>'
+        '</div>'
+    )
+    body = ''
+    for param, pat_val, guide_range, status in rows:
+        pv_clr = {
+            'Normal':'#00C48C','Abnormal':'#FF3B3B',
+            'Borderline':'#FFB800','N/A':'#4A6080'
+        }.get(status,'#4A6080')
+        body += (
+            '<div style="display:grid;grid-template-columns:1fr 1.2fr 2fr 1fr;'
+            'gap:0;padding:10px 0;border-bottom:1px solid #1E3250;align-items:center;">'
+            '<div style="font-size:13px;font-weight:600;color:#E8EDF5;">'
+            + param + '</div>'
+            '<div style="font-size:13px;font-weight:700;color:' + pv_clr + ';">'
+            + pat_val + '</div>'
+            '<div style="font-size:12px;color:#7A90A8;line-height:1.5;">'
+            + guide_range + '</div>'
+            '<div>' + status_badge(status) + '</div>'
+            '</div>'
         )
 
     st.markdown(
         '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-        'border-left:4px solid #4A9EFF;border-radius:10px;'
-        'padding:14px 18px;margin-bottom:14px;">'
-        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-        'Patient Reference Ranges & Guidelines</div>'
-        '<div style="font-size:13px;color:#7A90A8;line-height:1.9;">'
-        + ref_html + '</div>'
+        'border-left:4px solid #4A9EFF;border-radius:12px;'
+        'padding:16px 20px;margin-bottom:14px;">'
+        + header + body +
+        '<div style="font-size:11px;color:#334155;margin-top:10px;'
+        'font-style:italic;">Source: ' + source + '</div>'
         '</div>',
         unsafe_allow_html=True
     )
