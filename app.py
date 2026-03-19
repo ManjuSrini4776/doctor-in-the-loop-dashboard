@@ -11,7 +11,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── Global CSS ────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -35,13 +34,13 @@ label{color:#94A3B8!important;font-size:14px!important;}
 
 # ── Constants ─────────────────────────────────────────────────
 SEV_COLOR = {
-    'Normal':  '#00C48C', 'Mild':    '#FFB800',
-    'Moderate':'#FF6B35', 'Severe':  '#FF3B3B', 'Unknown':'#8892A4'
+    'Normal':'#00C48C','Mild':'#FFB800',
+    'Moderate':'#FF6B35','Severe':'#FF3B3B','Unknown':'#8892A4'
 }
 SEV_BG = {
-    'Normal':  'rgba(0,196,140,0.12)',  'Mild':    'rgba(255,184,0,0.12)',
-    'Moderate':'rgba(255,107,53,0.12)', 'Severe':  'rgba(255,59,59,0.12)',
-    'Unknown': 'rgba(136,146,164,0.12)'
+    'Normal':'rgba(0,196,140,0.12)','Mild':'rgba(255,184,0,0.12)',
+    'Moderate':'rgba(255,107,53,0.12)','Severe':'rgba(255,59,59,0.12)',
+    'Unknown':'rgba(136,146,164,0.12)'
 }
 CT_NAMES = {
     'notumor':'No Brain Tumour Detected','pituitary':'Pituitary Adenoma',
@@ -66,14 +65,20 @@ US_DESC = {
     'Fetal thorax': 'Thoracic plane identified. Cardiac and pulmonary assessment indicated.'
 }
 CT_IMAGE = {
-    'glioma':'images/ct_glioma.png','meningioma':'images/ct_meningioma.png',
-    'pituitary':'images/ct_pituitary.png','notumor':'images/ct_notumor.png'
+    'glioma':    'images/ct_glioma.png',
+    'meningioma':'images/ct_meningioma.png',
+    'pituitary': 'images/ct_pituitary.png',
+    'notumor':   'images/ct_notumor.png'
 }
 US_IMAGE = {
-    'Fetal abdomen':'images/us_abdomen.png','Fetal brain':'images/us_brain.png',
-    'Fetal femur':'images/us_femur.png','Fetal thorax':'images/us_thorax.png'
+    'Fetal abdomen':'images/us_abdomen.png',
+    'Fetal brain':  'images/us_brain.png',
+    'Fetal femur':  'images/us_femur.png',
+    'Fetal thorax': 'images/us_thorax.png'
 }
+SCORE_MAP = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
 
+# ── Doctor definitions with department routing ────────────────
 DOCTORS = {
     'DR001': {
         'name':     'Dr. Priya Sharma',
@@ -81,7 +86,8 @@ DOCTORS = {
         'specialty':'Nephrology & Chronic Disease',
         'color':    '#4A9EFF',
         'password': '1234',
-        'tab_label':'🧪  Internal Medicine — Dr. Priya Sharma'
+        'mtype':    'Lab Report',
+        'tab_idx':  0,
     },
     'DR002': {
         'name':     'Dr. Arjun Mehta',
@@ -89,7 +95,8 @@ DOCTORS = {
         'specialty':'Neuro-Oncology',
         'color':    '#A78BFA',
         'password': '1234',
-        'tab_label':'🧠  Neurology — Dr. Arjun Mehta'
+        'mtype':    'CT Scan',
+        'tab_idx':  1,
     },
     'DR003': {
         'name':     'Dr. Kavitha Rajan',
@@ -97,7 +104,8 @@ DOCTORS = {
         'specialty':'Fetal Medicine',
         'color':    '#34D399',
         'password': '1234',
-        'tab_label':'🔬  Obstetrics — Dr. Kavitha Rajan'
+        'mtype':    'Ultrasound',
+        'tab_idx':  2,
     },
     'DR004': {
         'name':     'Dr. Suresh Kumar',
@@ -105,7 +113,8 @@ DOCTORS = {
         'specialty':'Multimodal Assessment',
         'color':    '#FBBF24',
         'password': '1234',
-        'tab_label':'⚡  General Medicine — Dr. Suresh Kumar'
+        'mtype':    'Combined Assessment',
+        'tab_idx':  3,
     },
 }
 
@@ -114,20 +123,18 @@ PATIENT_MSG = {
         "Dear Patient,\n\n"
         "Your test results have been reviewed and approved by your doctor.\n\n"
         "Good news — your results are within the normal healthy range. "
-        "No immediate medical attention is required at this time.\n\n"
+        "No immediate medical attention is required.\n\n"
         "Please continue your current medication and maintain a healthy lifestyle. "
-        "Your next routine check-up is recommended in 3 months.\n\n"
-        "If you have any concerns, please do not hesitate to contact us.\n\n"
+        "Routine follow-up in 3 months is recommended.\n\n"
         "Regards,\nMedAI Clinical System"
     ),
     'Mild': (
         "Dear Patient,\n\n"
         "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Your results show some mild findings that need to be monitored. "
-        "There is no emergency at this time.\n\n"
-        "Please follow your doctor's prescription carefully and schedule "
-        "a follow-up appointment within 2 to 4 weeks.\n\n"
-        "Contact your doctor if your symptoms worsen.\n\n"
+        "Your results show mild findings that need monitoring. "
+        "No emergency at this time.\n\n"
+        "Please follow your doctor's prescription and schedule "
+        "a follow-up within 2 to 4 weeks.\n\n"
         "Regards,\nMedAI Clinical System"
     ),
     'Moderate': (
@@ -135,29 +142,23 @@ PATIENT_MSG = {
         "Your test results have been reviewed and approved by your doctor.\n\n"
         "Your results indicate findings that need medical attention. "
         "Please follow your doctor's instructions carefully.\n\n"
-        "Please book a follow-up appointment within the next 7 to 10 days. "
-        "Bring this report to your appointment.\n\n"
-        "Early treatment leads to better outcomes.\n\n"
+        "Book a follow-up appointment within 7 to 10 days.\n\n"
         "Regards,\nMedAI Clinical System"
     ),
     'Severe': (
         "Dear Patient,\n\n"
         "Your test results have been reviewed and approved by your doctor.\n\n"
-        "Your results indicate findings that require prompt medical attention. "
-        "Please do not delay in following your doctor's instructions.\n\n"
-        "Please contact your doctor today or visit the hospital immediately "
-        "if you feel unwell. Your doctor may contact you directly.\n\n"
-        "Early treatment is critical for the best outcomes.\n\n"
+        "Your results require prompt medical attention. "
+        "Please contact your doctor today.\n\n"
+        "Do not delay — early treatment leads to the best outcomes.\n\n"
         "Regards,\nMedAI Clinical System"
     ),
 }
 
 
-# ── Data loaders ──────────────────────────────────────────────
+# ── Data loader ───────────────────────────────────────────────
 @st.cache_data
 def load_all_data():
-    """Load all CSV files and RAG summaries once."""
-    # Find files — check data/ folder and root
     def find(name):
         for p in [f'data/{name}', name]:
             if os.path.exists(p):
@@ -192,14 +193,10 @@ def load_all_data():
     return lab, ct, us, fus, rag
 
 
-def parse_rag_summary(raw_text: str) -> dict:
-    """Parse RAG summary text into structured sections."""
+def parse_rag(raw_text: str) -> dict:
     sections = {
-        'clinical_summary': '',
-        'key_findings':     [],
-        'recommendations':  [],
-        'followup':         '',
-        'urgency':          '',
+        'clinical_summary':'','key_findings':[],
+        'recommendations':[],'followup':'','urgency':'',
     }
     current = None
     for line in raw_text.split('\n'):
@@ -211,188 +208,231 @@ def parse_rag_summary(raw_text: str) -> dict:
             current = 'clinical_summary'
         elif 'KEY FINDINGS' in lu:
             current = 'key_findings'
-        elif 'CLINICAL RECOMMENDATIONS' in lu or 'RECOMMENDATIONS' in lu:
+        elif 'RECOMMENDATION' in lu:
             current = 'recommendations'
         elif 'FOLLOW' in lu and 'PLAN' in lu:
             current = 'followup'
-        elif 'URGENCY' in lu:
+        elif lu.startswith('URGENCY'):
             sections['urgency'] = line.split(':')[-1].strip()
             current = None
-        elif current == 'clinical_summary':
+        elif current == 'clinical_summary' and not lu.startswith('CLINICAL'):
             sections['clinical_summary'] += line + ' '
         elif current == 'key_findings' and line.startswith('•'):
             sections['key_findings'].append(line[1:].strip())
         elif current == 'recommendations' and line.startswith('•'):
             sections['recommendations'].append(line[1:].strip())
-        elif current == 'followup':
+        elif current == 'followup' and not lu.startswith('FOLLOW'):
             sections['followup'] += line + ' '
     return sections
 
 
+def get_mm_rag_key(row: dict, rag_data: dict) -> str:
+    """
+    For combined patients pick best matching RAG key
+    based on highest severity modality.
+    """
+    fusion_sev = str(row.get('fusion_label', row.get('_sev','Normal'))).lower()
+
+    # Check each modality score — pick the most severe one
+    lab_s = row.get('lab_score')
+    ct_s  = row.get('ct_score')
+    us_s  = row.get('us_score')
+
+    try:
+        lab_s = int(float(lab_s)) if lab_s is not None and str(lab_s) not in ['None','nan'] else -1
+    except Exception:
+        lab_s = -1
+    try:
+        ct_s = int(float(ct_s)) if ct_s is not None and str(ct_s) not in ['None','nan'] else -1
+    except Exception:
+        ct_s = -1
+    try:
+        us_s = int(float(us_s)) if us_s is not None and str(us_s) not in ['None','nan'] else -1
+    except Exception:
+        us_s = -1
+
+    # Pick dominant modality
+    scores = {'lab': lab_s, 'ct': ct_s, 'us': us_s}
+    dominant = max(scores, key=lambda k: scores[k])
+
+    sev_str = {0:'normal',1:'mild',2:'moderate',3:'severe'}.get(
+        max(lab_s, ct_s, us_s), 'normal')
+
+    if dominant == 'ct':
+        ct_cls = str(row.get('ct_predicted_class','notumor')).lower()
+        key    = f'ct_{ct_cls}'
+        if key in rag_data:
+            return key
+    elif dominant == 'us':
+        us_cls = str(row.get('us_predicted_class',
+                              row.get('predicted_class','')))
+        if 'brain'   in us_cls.lower(): return 'us_brain'
+        if 'thorax'  in us_cls.lower(): return 'us_thorax'
+        if 'femur'   in us_cls.lower(): return 'us_femur'
+        if 'abdomen' in us_cls.lower(): return 'us_abdomen'
+
+    # Default to lab diabetes key
+    return f'lab_diabetes_{sev_str}'
+
+
 # ── Session state ─────────────────────────────────────────────
 for k, v in {
-    'logged_in':        False,
-    'active_doctor':    None,
-    'selected_patient': None,
-    'approved':         {},   # pid → {notes, timestamp}
+    'logged_in':     False,
+    'active_doctor': None,
+    'selected':      {},    # doc_id → pid
+    'decisions':     {},    # pid → 'APPROVED'/'REJECTED' + details
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# Load data
 lab_df, ct_df, us_df, fus_df, rag_data = load_all_data()
 
 
 # ══════════════════════════════════════════════════════════════
-# LOGIN PAGE
+# LOGIN
 # ══════════════════════════════════════════════════════════════
 def render_login():
-    st.markdown(
-        '<div style="max-width:480px;margin:80px auto;">'
-        '<div style="text-align:center;margin-bottom:40px;">'
-        '<div style="background:#2563EB;width:56px;height:56px;border-radius:14px;'
-        'display:flex;align-items:center;justify-content:center;'
-        'font-size:28px;margin:0 auto 16px;">🏥</div>'
-        '<div style="font-size:28px;font-weight:800;color:#F0F6FF;'
-        'letter-spacing:-0.5px;">MedAI Clinical System</div>'
-        '<div style="font-size:15px;color:#7A90A8;margin-top:6px;">'
-        'Doctor Login Portal</div>'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    with st.container():
+    _, col, _ = st.columns([1,2,1])
+    with col:
+        st.markdown('<div style="margin-top:80px;">', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="text-align:center;margin-bottom:32px;">'
+            '<div style="background:#2563EB;width:56px;height:56px;'
+            'border-radius:14px;display:flex;align-items:center;'
+            'justify-content:center;font-size:28px;margin:0 auto 14px;">🏥</div>'
+            '<div style="font-size:26px;font-weight:800;color:#F0F6FF;">'
+            'MedAI Clinical System</div>'
+            '<div style="font-size:15px;color:#7A90A8;margin-top:6px;">'
+            'Doctor Login</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
         st.markdown(
             '<div style="background:#112033;border:1.5px solid #1E3250;'
             'border-radius:16px;padding:32px 36px;">',
             unsafe_allow_html=True
         )
-
         st.markdown(
-            '<div style="font-size:14px;font-weight:600;color:#94A3B8;'
-            'margin-bottom:6px;text-transform:uppercase;'
-            'letter-spacing:0.08em;">Select Doctor</div>',
+            '<div style="font-size:13px;font-weight:600;color:#64748B;'
+            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
+            'Select Doctor</div>',
             unsafe_allow_html=True
         )
         doc_labels = {
-            f"{v['name']} — {v['dept']}": k
-            for k, v in DOCTORS.items()
+            f"{v['name']} — {v['dept']}": k for k,v in DOCTORS.items()
         }
         sel_label = st.selectbox(
             'Doctor', list(doc_labels.keys()),
-            label_visibility='collapsed',
-            key='login_doc'
+            label_visibility='collapsed', key='login_doc'
         )
         sel_id = doc_labels[sel_label]
-        doc    = DOCTORS[sel_id]
 
         st.markdown(
-            '<div style="font-size:14px;font-weight:600;color:#94A3B8;'
-            'margin:16px 0 6px;text-transform:uppercase;'
-            'letter-spacing:0.08em;">Password</div>',
+            '<div style="font-size:13px;font-weight:600;color:#64748B;'
+            'text-transform:uppercase;letter-spacing:0.08em;'
+            'margin:16px 0 6px;">Password</div>',
             unsafe_allow_html=True
         )
         pwd = st.text_input(
             'Password', type='password',
             placeholder='Enter your password',
-            label_visibility='collapsed',
-            key='login_pwd'
+            label_visibility='collapsed', key='login_pwd'
         )
 
         st.markdown('<br>', unsafe_allow_html=True)
         if st.button('Login →', use_container_width=True, type='primary'):
-            if pwd == doc['password']:
+            if pwd == DOCTORS[sel_id]['password']:
                 st.session_state.logged_in     = True
                 st.session_state.active_doctor = sel_id
                 st.rerun()
             else:
-                st.error('Incorrect password. Please try again.')
+                st.error('Incorrect password.')
 
         st.markdown(
-            '<div style="font-size:13px;color:#4A6080;text-align:center;'
-            'margin-top:16px;">Demo password: 1234 for all doctors</div>',
+            '<div style="font-size:12px;color:#4A6080;text-align:center;'
+            'margin-top:14px;">Demo password: 1234</div>',
             unsafe_allow_html=True
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════
-# MAIN DASHBOARD
+# DASHBOARD
 # ══════════════════════════════════════════════════════════════
 def render_dashboard():
     active_id = st.session_state.active_doctor
     active    = DOCTORS[active_id]
 
     # Top bar
-    col_logo, col_doc, col_logout = st.columns([1, 4, 1])
-    with col_logo:
+    c1,c2,c3 = st.columns([1,4,1])
+    with c1:
         st.markdown(
-            '<div style="padding:14px 0 0 28px;">'
-            '<div style="font-size:20px;font-weight:800;color:#F0F6FF;">🏥 MedAI</div>'
+            '<div style="padding:16px 0 0 28px;font-size:18px;'
+            'font-weight:800;color:#F0F6FF;">🏥 MedAI</div>',
+            unsafe_allow_html=True
+        )
+    with c2:
+        st.markdown(
+            '<div style="padding:12px 0;">'
+            '<span style="font-size:15px;font-weight:700;color:#F0F6FF;">'
+            + active['name'] + '</span>'
+            '<span style="font-size:13px;color:#7A90A8;margin-left:12px;">'
+            + active['dept'] + '  ·  ' + active['specialty'] + '</span>'
             '</div>',
             unsafe_allow_html=True
         )
-    with col_doc:
-        st.markdown(
-            '<div style="padding:12px 0;">'
-            '<div style="font-size:15px;font-weight:600;color:#F0F6FF;">'
-            + active['name'] +
-            '</div>'
-            '<div style="font-size:13px;color:#7A90A8;">'
-            + active['dept'] + '  ·  ' + active['specialty'] +
-            '</div></div>',
-            unsafe_allow_html=True
-        )
-    with col_logout:
+    with c3:
         st.markdown('<div style="padding:14px 28px 0 0;">', unsafe_allow_html=True)
-        if st.button('Logout', key='logout'):
-            st.session_state.logged_in     = False
-            st.session_state.active_doctor = None
-            st.session_state.selected_patient = None
+        if st.button('Logout', key='logout_btn'):
+            for k in ['logged_in','active_doctor','selected']:
+                st.session_state[k] = False if k=='logged_in' else None if k=='active_doctor' else {}
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown('<hr style="margin:0;">', unsafe_allow_html=True)
+    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
+
+    # ── DEPARTMENT ROUTING ────────────────────────────────────
+    # Each doctor sees ONLY their department tab + a summary of others
+    mtype     = active['mtype']
+    dept_icon = {'Lab Report':'🧪','CT Scan':'🧠',
+                 'Ultrasound':'🔬','Combined Assessment':'⚡'}.get(mtype,'📋')
+
     st.markdown(
-        '<hr style="border-color:#1E3250;margin:0 0 0 0;">',
+        '<div style="font-size:22px;font-weight:800;color:#F0F6FF;'
+        'letter-spacing:-0.5px;margin-bottom:6px;">'
+        + dept_icon + '  ' + active['dept'] + ' — Patient Reports</div>'
+        '<div style="font-size:15px;color:#7A90A8;margin-bottom:20px;">'
+        'Showing reports ordered by ' + active['name'] + '</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
+    # Get correct dataframe and columns for this doctor
+    df_map = {
+        'Lab Report':          (lab_df,  'patient_id',  'final_severity_label'),
+        'CT Scan':             (ct_df,   'patient_id',  'fusion_label'),
+        'Ultrasound':          (us_df,   'patient_id',  'fusion_label'),
+        'Combined Assessment': (fus_df,  'patient_id',  'fusion_label'),
+    }
+    df, id_col, sev_col = df_map.get(mtype, (None, None, None))
 
-    # 4 department tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
-        '🧪  Internal Medicine',
-        '🧠  Neurology',
-        '🔬  Obstetrics',
-        '⚡  General Medicine',
-    ])
+    if df is None:
+        st.warning('No data available for your department.')
+        return
 
-    dept_configs = [
-        (tab1, 'DR001', lab_df,  'Lab Report',          'patient_id',  'final_severity_label'),
-        (tab2, 'DR002', ct_df,   'CT Scan',              'patient_id',  'fusion_label'),
-        (tab3, 'DR003', us_df,   'Ultrasound',           'patient_id',  'fusion_label'),
-        (tab4, 'DR004', fus_df,  'Combined Assessment',  'patient_id',  'fusion_label'),
-    ]
-
-    for tab, doc_id, df, mtype, id_col, sev_col in dept_configs:
-        with tab:
-            if df is None:
-                st.warning('No data loaded for this department.')
-                continue
-            render_dept_tab(doc_id, df, mtype, id_col, sev_col)
-
+    render_dept(active_id, df, mtype, id_col, sev_col)
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
+def render_dept(doc_id, df, mtype, id_col, sev_col):
     doc = DOCTORS[doc_id]
 
-    # Stats row
+    # Stats
     sev_counts = df[sev_col].value_counts() if sev_col in df.columns else {}
     s1,s2,s3,s4 = st.columns(4)
     for col,(lbl,clr) in zip([s1,s2,s3,s4],[
         ('Severe','#FF3B3B'),('Moderate','#FF6B35'),
-        ('Mild','#FFB800'),('Normal','#00C48C')
+        ('Mild','#FFB800'),  ('Normal','#00C48C')
     ]):
         cnt = int(sev_counts.get(lbl, 0))
         with col:
@@ -400,7 +440,7 @@ def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
                 '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
                 'border-top:3px solid ' + clr + ';border-radius:10px;'
                 'padding:14px;text-align:center;margin-bottom:16px;">'
-                '<div style="font-size:28px;font-weight:800;color:' + clr + ';">'
+                '<div style="font-size:30px;font-weight:800;color:' + clr + ';">'
                 + str(cnt) + '</div>'
                 '<div style="font-size:13px;color:#7A90A8;margin-top:4px;">'
                 + lbl + '</div>'
@@ -408,7 +448,6 @@ def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
                 unsafe_allow_html=True
             )
 
-    # Layout
     left, right = st.columns([1, 2.5], gap='large')
 
     with left:
@@ -419,27 +458,21 @@ def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
             unsafe_allow_html=True
         )
         sev_filter = st.selectbox(
-            'Filter',
-            ['All','Severe','Moderate','Mild','Normal'],
-            key='filter_' + doc_id,
-            label_visibility='collapsed'
+            'Filter', ['All','Severe','Moderate','Mild','Normal'],
+            key='filter_' + doc_id, label_visibility='collapsed'
         )
         filt = df if sev_filter == 'All' \
                else df[df[sev_col] == sev_filter]
-
         sev_ord = {'Severe':0,'Moderate':1,'Mild':2,'Normal':3,'Unknown':4}
-        filt = filt.sort_values(
-            sev_col,
-            key=lambda x: x.map(sev_ord)
-        ) if sev_col in filt.columns else filt
+        if sev_col in filt.columns:
+            filt = filt.sort_values(sev_col, key=lambda x: x.map(sev_ord))
 
         for _, row in filt.iterrows():
             pid    = str(row[id_col])
             sev    = str(row.get(sev_col,'Unknown'))
-            clr    = SEV_COLOR.get(sev,'#8892A4')
-            is_sel = st.session_state.selected_patient == (doc_id, pid)
-            is_app = pid in st.session_state.approved
-            icon   = '✓ ' if is_app else ''
+            is_sel = st.session_state.selected.get(doc_id) == pid
+            dec    = st.session_state.decisions.get(pid,{}).get('status','')
+            icon   = {'APPROVED':'✓ ','REJECTED':'✗ '}.get(dec,'')
 
             if st.button(
                 icon + pid + '  ·  ' + sev,
@@ -447,12 +480,12 @@ def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
                 use_container_width=True,
                 type='primary' if is_sel else 'secondary'
             ):
-                st.session_state.selected_patient = (doc_id, pid)
+                st.session_state.selected[doc_id] = pid
                 st.rerun()
 
     with right:
-        sel = st.session_state.selected_patient
-        if not sel or sel[0] != doc_id:
+        sel_pid = st.session_state.selected.get(doc_id)
+        if not sel_pid:
             st.markdown(
                 '<div style="background:#112033;border:2px dashed #1E3250;'
                 'border-radius:14px;padding:80px;text-align:center;">'
@@ -464,28 +497,28 @@ def render_dept_tab(doc_id, df, mtype, id_col, sev_col):
             )
             return
 
-        sel_pid = sel[1]
-        match   = df[df[id_col] == sel_pid]
+        match = df[df[id_col] == sel_pid]
         if match.empty:
             return
-
         row = match.iloc[0].to_dict()
         sev = str(row.get(sev_col,'Unknown'))
         clr = SEV_COLOR.get(sev,'#8892A4')
         bg  = SEV_BG.get(sev,'rgba(136,146,164,0.1)')
 
-        render_patient_panel(row, sel_pid, sev, clr, bg, mtype, doc_id)
+        render_patient(row, sel_pid, sev, clr, bg, mtype, doc_id)
 
 
-def render_patient_panel(row, pid, sev, clr, bg, mtype, doc_id):
-    doc = DOCTORS[doc_id]
-
-    # Patient header
+def render_patient(row, pid, sev, clr, bg, mtype, doc_id):
+    doc     = DOCTORS[doc_id]
     urgency = {'Severe':'URGENT','Moderate':'SEMI-URGENT',
                'Mild':'ROUTINE','Normal':'ROUTINE'}.get(sev,'REVIEW')
     urg_clr = {'Severe':'#FF3B3B','Moderate':'#FF6B35',
                'Mild':'#FFB800','Normal':'#00C48C'}.get(sev,'#8892A4')
 
+    # Current decision
+    current_decision = st.session_state.decisions.get(pid,{}).get('status','')
+
+    # Patient header
     st.markdown(
         '<div style="background:#112033;border:1.5px solid #1E3250;'
         'border-radius:14px;padding:18px 22px;margin-bottom:18px;">'
@@ -510,354 +543,450 @@ def render_patient_panel(row, pid, sev, clr, bg, mtype, doc_id):
 
     # ── Test Findings ─────────────────────────────────────────
     st.markdown(
-        '<div style="font-size:13px;font-weight:700;color:#4A6080;'
+        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
         'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">'
         'Test Findings</div>',
         unsafe_allow_html=True
     )
 
     if mtype == 'Lab Report':
-        ckd = row.get('ckd_severity','Not tested')
-        dia = row.get('diabetes_severity_final','Not tested')
-        thy = row.get('thyroid_severity_final','Not tested')
-        disease = str(row.get('disease_type','')).lower()
-
-        c1,c2,c3 = st.columns(3)
-        for col,(lbl,val) in zip([c1,c2,c3],[
-            ('Kidney Function', ckd),
-            ('Blood Sugar', dia),
-            ('Thyroid Function', thy)
-        ]):
-            v = str(val) if val and str(val) not in \
-                ['None','nan','NaN','Unknown','Not tested'] else 'Not tested'
-            with col:
-                st.markdown(
-                    '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                    'border-radius:10px;padding:14px;margin-bottom:12px;">'
-                    '<div style="font-size:11px;font-weight:600;color:#4A6080;'
-                    'text-transform:uppercase;letter-spacing:0.06em;'
-                    'margin-bottom:6px;">' + lbl + '</div>'
-                    '<div style="font-size:16px;font-weight:700;color:#F0F6FF;">'
-                    + v + '</div>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-
-        # Lab reference ranges
-        st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-left:4px solid #4A9EFF;border-radius:10px;'
-            'padding:12px 18px;margin-bottom:14px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">'
-            'Reference Ranges</div>'
-            '<div style="font-size:13px;color:#7A90A8;line-height:1.8;">'
-            'HbA1c: Normal &lt;5.7%  ·  Pre-diabetic 5.7–6.4%  ·  Diabetic ≥6.5%<br>'
-            'eGFR: G1 ≥90  ·  G2 60–89  ·  G3 30–59  ·  G4 15–29  ·  G5 &lt;15<br>'
-            'TSH: Normal 0.4–4.0 mIU/L  ·  Free T4: 0.8–1.8 ng/dL'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
+        render_lab_findings(row, sev, clr)
 
     elif mtype == 'CT Scan':
-        cls  = row.get('ct_predicted_class', row.get('disease_type',''))
-        conf = row.get('ct_confidence', 0)
-        name = CT_NAMES.get(cls, cls)
-        desc = CT_DESC.get(cls,'')
-
-        st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-left:5px solid ' + clr + ';border-radius:10px;'
-            'padding:18px 22px;margin-bottom:14px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-            'CT Brain Imaging</div>'
-            '<div style="font-size:18px;font-weight:700;color:#F0F6FF;'
-            'margin-bottom:6px;">' + name + '</div>'
-            '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">'
-            + desc + '</div>'
-            '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
-            + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
-
-        # GradCAM
-        img = CT_IMAGE.get(cls,'')
-        if img and os.path.exists(img):
-            gc1, gc2 = st.columns(2)
-            with gc1:
-                st.image(img, caption='CT Scan', use_column_width=True)
-            with gc2:
-                st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
-            st.markdown(
-                '<div style="font-size:12px;color:#4A6080;margin-bottom:12px;">'
-                'Highlighted regions show where the AI model focused during classification.'
-                '</div>',
-                unsafe_allow_html=True
-            )
+        render_ct_findings(row, sev, clr)
 
     elif mtype == 'Ultrasound':
-        cls  = row.get('predicted_class', row.get('disease_type',''))
-        conf = row.get('confidence', 0)
-        name = US_NAMES.get(cls, cls)
-        desc = US_DESC.get(cls,'')
-
-        st.markdown(
-            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-            'border-left:5px solid ' + clr + ';border-radius:10px;'
-            'padding:18px 22px;margin-bottom:14px;">'
-            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-            'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
-            'Obstetric Ultrasound</div>'
-            '<div style="font-size:18px;font-weight:700;color:#F0F6FF;'
-            'margin-bottom:6px;">' + name + '</div>'
-            '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">'
-            + desc + '</div>'
-            '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
-            + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
-
-        img = US_IMAGE.get(cls,'')
-        if img and os.path.exists(img):
-            ug1, ug2 = st.columns(2)
-            with ug1:
-                st.image(img, caption='Ultrasound Scan', use_column_width=True)
-            with ug2:
-                st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
+        render_us_findings(row, sev, clr)
 
     elif mtype == 'Combined Assessment':
-        c1,c2,c3,c4 = st.columns(4)
-        SCORE_MAP = {0:'Normal',1:'Mild',2:'Moderate',3:'Severe'}
-        for col,(lbl,key) in zip([c1,c2,c3,c4],[
-            ('Lab','lab_score'),('CT','ct_score'),
-            ('Ultrasound','us_score'),('Fusion','fusion_score')
-        ]):
-            val = row.get(key)
-            try:
-                v = SCORE_MAP.get(int(float(val)),'—') \
-                    if val is not None and str(val) not in ['None','nan'] else '—'
-            except Exception:
-                v = '—'
-            vc = SEV_COLOR.get(v,'#4A6080')
-            with col:
-                st.markdown(
-                    '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                    'border-radius:10px;padding:14px;text-align:center;'
-                    'margin-bottom:12px;">'
-                    '<div style="font-size:11px;font-weight:600;color:#4A6080;'
-                    'text-transform:uppercase;letter-spacing:0.06em;'
-                    'margin-bottom:6px;">' + lbl + '</div>'
-                    '<div style="font-size:22px;font-weight:800;color:' + vc + ';">'
-                    + v + '</div>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
+        render_combined_findings(row)
 
-    # ── RAG Clinical Summary ──────────────────────────────────
+    # ── RAG Summary ───────────────────────────────────────────
     st.markdown(
-        '<div style="font-size:13px;font-weight:700;color:#4A6080;'
+        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
         'text-transform:uppercase;letter-spacing:0.1em;margin:18px 0 12px;">'
         'AI Clinical Summary</div>',
         unsafe_allow_html=True
     )
 
-    rag_key  = str(row.get('rag_class_key',''))
-    rag_raw  = rag_data.get(rag_key,{})
-    raw_text = rag_raw.get('raw_text','') if isinstance(rag_raw, dict) else str(rag_raw)
-    citations= rag_raw.get('citations',[]) if isinstance(rag_raw, dict) else []
+    # Get correct RAG key
+    if mtype == 'Combined Assessment':
+        rag_key = get_mm_rag_key(row, rag_data)
+    else:
+        rag_key = str(row.get('rag_class_key',''))
+
+    rag_raw   = rag_data.get(rag_key,{})
+    raw_text  = rag_raw.get('raw_text','') if isinstance(rag_raw, dict) else ''
+    citations = rag_raw.get('citations',[]) if isinstance(rag_raw, dict) else []
 
     if raw_text:
-        parsed = parse_rag_summary(raw_text)
-
-        # Clinical summary
-        if parsed['clinical_summary']:
-            st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #263A55;'
-                'border-left:5px solid #7C3AED;border-radius:12px;'
-                'padding:18px 22px;margin-bottom:12px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">'
-                'Clinical Overview</div>'
-                '<div style="font-size:15px;color:#E8EDF5;line-height:1.8;">'
-                + parsed['clinical_summary'] + '</div>'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-        # Key findings
-        if parsed['key_findings']:
-            findings_html = ''.join([
-                '<div style="display:flex;gap:10px;padding:8px 0;'
-                'border-bottom:1px solid #1E3250;">'
-                '<span style="color:#7C3AED;font-weight:700;flex-shrink:0;">•</span>'
-                '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
-                + f + '</span></div>'
-                for f in parsed['key_findings']
-            ])
-            st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:16px 20px;margin-bottom:12px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
-                'Key Findings</div>'
-                + findings_html + '</div>',
-                unsafe_allow_html=True
-            )
-
-        # Recommendations
-        if parsed['recommendations']:
-            rec_html = ''.join([
-                '<div style="display:flex;gap:12px;padding:10px 0;'
-                'border-bottom:1px solid #1E3250;">'
-                '<span style="background:#2563EB22;color:#4A9EFF;font-weight:700;'
-                'font-size:13px;padding:2px 8px;border-radius:6px;flex-shrink:0;">'
-                + str(i+1) + '</span>'
-                '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
-                + r + '</span></div>'
-                for i,r in enumerate(parsed['recommendations'])
-            ])
-            st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-left:5px solid #00C48C;border-radius:10px;'
-                'padding:16px 20px;margin-bottom:12px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
-                'Clinical Recommendations</div>'
-                + rec_html + '</div>',
-                unsafe_allow_html=True
-            )
-
-        # Follow-up + urgency
-        fu_col, ug_col = st.columns(2)
-        with fu_col:
-            if parsed['followup']:
-                st.markdown(
-                    '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                    'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
-                    '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                    'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-                    'Follow-up Plan</div>'
-                    '<div style="font-size:14px;color:#E8EDF5;font-weight:500;">'
-                    + parsed['followup'] + '</div>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-        with ug_col:
-            if parsed['urgency']:
-                uc = {'URGENT':'#FF3B3B','SEMI-URGENT':'#FF6B35',
-                      'ROUTINE':'#00C48C'}.get(parsed['urgency'].upper(),'#8892A4')
-                st.markdown(
-                    '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                    'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
-                    '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                    'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-                    'Urgency</div>'
-                    '<div style="font-size:16px;font-weight:800;color:' + uc + ';">'
-                    + parsed['urgency'] + '</div>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-
-        # Citations
-        if citations:
-            cite_html = '  ·  '.join(citations)
-            st.markdown(
-                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
-                'border-radius:10px;padding:12px 18px;margin-bottom:16px;">'
-                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
-                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
-                'Guideline References</div>'
-                '<div style="font-size:13px;color:#64748B;font-family:monospace;">'
-                + cite_html + '</div>'
-                '</div>',
-                unsafe_allow_html=True
-            )
+        parsed = parse_rag(raw_text)
+        render_rag_sections(parsed, citations)
     else:
-        st.info('RAG summary not available for this patient class.')
+        st.markdown(
+            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+            'border-radius:10px;padding:16px 20px;color:#64748B;">'
+            'RAG summary not available for this patient class.</div>',
+            unsafe_allow_html=True
+        )
 
-    # ── Doctor Approval ───────────────────────────────────────
+    # ── Decision section ──────────────────────────────────────
+    # Show decision section ONLY if not yet decided
     st.markdown(
-        '<div style="font-size:13px;font-weight:700;color:#4A6080;'
+        '<div style="font-size:12px;font-weight:700;color:#4A6080;'
         'text-transform:uppercase;letter-spacing:0.1em;margin:18px 0 10px;">'
-        'Doctor Review & Approval</div>',
+        'Doctor Review & Decision</div>',
         unsafe_allow_html=True
     )
 
-    notes = st.text_area(
-        'Clinical notes / prescription',
-        placeholder='Add prescription, clinical notes, or amendments...',
-        height=100,
-        key='notes_' + doc_id + '_' + pid,
-        label_visibility='collapsed'
-    )
-
-    # Patient message preview
-    msg = PATIENT_MSG.get(sev, PATIENT_MSG['Normal'])
-    if notes:
-        msg += '\nDoctor\'s note: ' + notes
-
-    with st.expander('📱  Preview Patient Message'):
+    if current_decision == 'APPROVED':
+        ap = st.session_state.decisions[pid]
         st.markdown(
-            '<div style="background:#0A1628;border:1.5px solid #1E3250;'
-            'border-radius:12px;padding:20px 24px;">'
-            '<div style="font-size:12px;font-weight:600;color:#00C48C;'
-            'margin-bottom:12px;letter-spacing:0.08em;">MESSAGE TO PATIENT</div>'
-            '<div style="font-size:14px;color:#C8D6E8;line-height:1.8;'
-            'white-space:pre-wrap;">' + msg + '</div>'
+            '<div style="background:rgba(0,196,140,0.1);'
+            'border:1.5px solid rgba(0,196,140,0.3);border-radius:12px;'
+            'padding:18px 22px;">'
+            '<div style="font-size:16px;font-weight:700;color:#00C48C;'
+            'margin-bottom:8px;">✅  Report Approved</div>'
+            '<div style="font-size:14px;color:#7A90A8;line-height:1.7;">'
+            'Approved by: <b style="color:#F0F6FF;">' + ap['doctor'] + '</b><br>'
+            'Time: ' + ap['time'] + '<br>'
+            'Patient message has been sent.</div>'
             '</div>',
             unsafe_allow_html=True
         )
 
-    st.markdown('<br>', unsafe_allow_html=True)
-    b1, b2, b3 = st.columns(3)
+        # Show message preview for reference
+        with st.expander('📱 View Patient Message Sent'):
+            st.markdown(
+                '<div style="background:#0A1628;border:1.5px solid #1E3250;'
+                'border-radius:10px;padding:16px 20px;font-size:14px;'
+                'color:#C8D6E8;white-space:pre-wrap;line-height:1.8;">'
+                + ap['message'] + '</div>',
+                unsafe_allow_html=True
+            )
 
-    with b1:
-        if st.button('✅  Approve & Send',
-                     key='approve_' + doc_id + '_' + pid,
-                     use_container_width=True,
-                     type='primary'):
-            st.session_state.approved[pid] = {
-                'notes':    notes,
-                'doctor':   DOCTORS[doc_id]['name'],
-                'severity': sev,
-                'time':     datetime.now().strftime('%Y-%m-%d %H:%M'),
-                'message':  msg,
-            }
-            st.success('✅  Report approved! Patient message sent.')
-            st.balloons()
-
-    with b2:
-        if st.button('✏️  Approve with Edits',
-                     key='edit_' + doc_id + '_' + pid,
-                     use_container_width=True):
-            st.session_state.approved[pid] = {
-                'notes':    notes,
-                'doctor':   DOCTORS[doc_id]['name'],
-                'severity': sev,
-                'time':     datetime.now().strftime('%Y-%m-%d %H:%M'),
-                'message':  msg,
-            }
-            st.info('Report approved with your amendments.')
-
-    with b3:
-        if st.button('❌  Reject',
-                     key='reject_' + doc_id + '_' + pid,
-                     use_container_width=True):
-            st.warning('Report rejected. Patient will be notified.')
-
-    if pid in st.session_state.approved:
-        ap = st.session_state.approved[pid]
+    elif current_decision == 'REJECTED':
         st.markdown(
-            '<div style="background:rgba(0,196,140,0.1);'
-            'border:1.5px solid rgba(0,196,140,0.3);border-radius:10px;'
-            'padding:14px 20px;margin-top:12px;">'
-            '<div style="font-size:15px;font-weight:700;color:#00C48C;">'
-            '✅  Approved by ' + ap['doctor'] + '  ·  ' + ap['time'] + '</div>'
-            '<div style="font-size:13px;color:#7A90A8;margin-top:4px;">'
-            'Report released and patient message sent successfully.</div>'
+            '<div style="background:rgba(255,59,59,0.1);'
+            'border:1.5px solid rgba(255,59,59,0.3);border-radius:12px;'
+            'padding:18px 22px;">'
+            '<div style="font-size:16px;font-weight:700;color:#FF3B3B;'
+            'margin-bottom:8px;">❌  Report Rejected</div>'
+            '<div style="font-size:14px;color:#7A90A8;">'
+            'This report has been rejected. Patient has NOT been notified.<br>'
+            'Please review and resubmit or request further tests.</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+        if st.button('↺  Reset Decision', key='reset_' + pid):
+            del st.session_state.decisions[pid]
+            st.rerun()
+
+    else:
+        # No decision yet — show input form
+        notes = st.text_area(
+            'Clinical notes / prescription',
+            placeholder='Add prescription, amendments, or clinical instructions...',
+            height=100,
+            key='notes_' + doc_id + '_' + pid,
+            label_visibility='collapsed'
+        )
+
+        # Patient message preview
+        pat_msg = PATIENT_MSG.get(sev, PATIENT_MSG['Normal'])
+        if notes:
+            pat_msg += '\n\nDoctor\'s additional instructions:\n' + notes
+
+        with st.expander('📱  Preview Patient Message'):
+            st.markdown(
+                '<div style="background:#0A1628;border:1.5px solid #1E3250;'
+                'border-radius:12px;padding:18px 22px;">'
+                '<div style="font-size:12px;font-weight:600;color:#00C48C;'
+                'margin-bottom:10px;letter-spacing:0.08em;">MESSAGE TO PATIENT</div>'
+                '<div style="font-size:14px;color:#C8D6E8;line-height:1.8;'
+                'white-space:pre-wrap;">' + pat_msg + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown('<br>', unsafe_allow_html=True)
+        b1,b2,b3 = st.columns(3)
+
+        with b1:
+            if st.button('✅  Approve & Send',
+                         key='app_' + doc_id + '_' + pid,
+                         use_container_width=True, type='primary'):
+                st.session_state.decisions[pid] = {
+                    'status':  'APPROVED',
+                    'doctor':  doc['name'],
+                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'notes':   notes,
+                    'message': pat_msg,
+                }
+                st.rerun()
+
+        with b2:
+            if st.button('✏️  Approve with Edits',
+                         key='edit_' + doc_id + '_' + pid,
+                         use_container_width=True):
+                st.session_state.decisions[pid] = {
+                    'status':  'APPROVED',
+                    'doctor':  doc['name'],
+                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'notes':   notes,
+                    'message': pat_msg,
+                }
+                st.rerun()
+
+        with b3:
+            if st.button('❌  Reject',
+                         key='rej_' + doc_id + '_' + pid,
+                         use_container_width=True):
+                st.session_state.decisions[pid] = {
+                    'status':  'REJECTED',
+                    'doctor':  doc['name'],
+                    'time':    datetime.now().strftime('%Y-%m-%d %H:%M'),
+                }
+                st.rerun()
+
+
+# ── Findings renderers ────────────────────────────────────────
+def render_lab_findings(row, sev, clr):
+    ckd = str(row.get('ckd_severity','Not tested'))
+    dia = str(row.get('diabetes_severity_final','Not tested'))
+    thy = str(row.get('thyroid_severity_final','Not tested'))
+    disease = str(row.get('disease_type','')).lower()
+
+    # Clean up None/nan
+    ckd = 'Not tested' if ckd in ['None','nan','NaN','Unknown'] else ckd
+    dia = 'Not tested' if dia in ['None','nan','NaN','Unknown'] else dia
+    thy = 'Not tested' if thy in ['None','nan','NaN','Unknown'] else thy
+
+    c1,c2,c3 = st.columns(3)
+    for col,(lbl,val) in zip([c1,c2,c3],[
+        ('Kidney Function (eGFR)', ckd),
+        ('Blood Sugar (HbA1c)',    dia),
+        ('Thyroid (TSH)',           thy)
+    ]):
+        v_clr = clr if val != 'Not tested' else '#4A6080'
+        with col:
+            st.markdown(
+                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+                'border-radius:10px;padding:16px;margin-bottom:12px;">'
+                '<div style="font-size:11px;font-weight:600;color:#4A6080;'
+                'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
+                + lbl + '</div>'
+                '<div style="font-size:17px;font-weight:700;color:' + v_clr + ';">'
+                + val + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+    # Patient-specific reference range based on disease type
+    if 'ckd' in disease or 'kidney' in disease:
+        ref_html = (
+            '<b style="color:#F0F6FF;">Patient Condition: Chronic Kidney Disease</b><br>'
+            'eGFR Stages: G1 ≥90 (Normal) · G2 60–89 (Mild) · '
+            'G3a 45–59 (Mild-Moderate) · G3b 30–44 (Moderate-Severe) · '
+            'G4 15–29 (Severe) · G5 &lt;15 (Kidney Failure)<br>'
+            'Target: Blood pressure &lt;130/80 mmHg · Protein restriction if proteinuria present<br>'
+            'Source: KDIGO 2022 Clinical Practice Guidelines'
+        )
+    elif 'diabetes' in disease:
+        ref_html = (
+            '<b style="color:#F0F6FF;">Patient Condition: Diabetes Mellitus</b><br>'
+            'HbA1c: Normal &lt;5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%<br>'
+            'Target HbA1c: &lt;7.0% (most adults) · &lt;8.0% (elderly/complex patients)<br>'
+            'Fasting Glucose: Normal &lt;100 mg/dL · Diabetic ≥126 mg/dL<br>'
+            'Source: ADA Standards of Medical Care in Diabetes 2024'
+        )
+    elif 'thyroid' in disease:
+        ref_html = (
+            '<b style="color:#F0F6FF;">Patient Condition: Thyroid Disorder</b><br>'
+            'TSH: Normal 0.4–4.0 mIU/L · Subclinical Hypothyroid 4.0–10.0 · Overt &gt;10.0<br>'
+            'Free T4: Normal 0.8–1.8 ng/dL · Low T4 = Hypothyroidism<br>'
+            'Treatment: Levothyroxine therapy if TSH &gt;10 mIU/L or symptomatic<br>'
+            'Source: ATA/AACE Guidelines for Thyroid Disease Management'
+        )
+    else:
+        ref_html = (
+            'HbA1c: Normal &lt;5.7% · Pre-diabetic 5.7–6.4% · Diabetic ≥6.5%<br>'
+            'eGFR: G1 ≥90 · G2 60–89 · G3 30–59 · G4 15–29 · G5 &lt;15<br>'
+            'TSH: Normal 0.4–4.0 mIU/L · Free T4: 0.8–1.8 ng/dL'
+        )
+
+    st.markdown(
+        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+        'border-left:4px solid #4A9EFF;border-radius:10px;'
+        'padding:14px 18px;margin-bottom:14px;">'
+        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
+        'Patient Reference Ranges & Guidelines</div>'
+        '<div style="font-size:13px;color:#7A90A8;line-height:1.9;">'
+        + ref_html + '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+
+def render_ct_findings(row, sev, clr):
+    cls  = row.get('ct_predicted_class', row.get('disease_type',''))
+    conf = row.get('ct_confidence', 0)
+    name = CT_NAMES.get(cls, cls)
+    desc = CT_DESC.get(cls,'')
+
+    st.markdown(
+        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+        'border-left:5px solid ' + clr + ';border-radius:10px;'
+        'padding:18px 22px;margin-bottom:14px;">'
+        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
+        'CT Brain Imaging</div>'
+        '<div style="font-size:18px;font-weight:700;color:#F0F6FF;margin-bottom:6px;">'
+        + name + '</div>'
+        '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">' + desc + '</div>'
+        '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
+        + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
+        '</div></div>',
+        unsafe_allow_html=True
+    )
+    img = CT_IMAGE.get(str(cls),'')
+    if img and os.path.exists(img):
+        gc1,gc2 = st.columns(2)
+        with gc1:
+            st.image(img, caption='CT Scan', use_column_width=True)
+        with gc2:
+            st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
+        st.markdown(
+            '<div style="font-size:12px;color:#4A6080;margin-bottom:12px;">'
+            'Highlighted regions indicate areas of diagnostic significance '
+            'identified by the AI model.</div>',
+            unsafe_allow_html=True
+        )
+
+
+def render_us_findings(row, sev, clr):
+    cls  = row.get('predicted_class', row.get('disease_type',''))
+    conf = row.get('confidence', 0)
+    name = US_NAMES.get(cls, cls)
+    desc = US_DESC.get(cls,'')
+
+    st.markdown(
+        '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+        'border-left:5px solid ' + clr + ';border-radius:10px;'
+        'padding:18px 22px;margin-bottom:14px;">'
+        '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+        'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">'
+        'Obstetric Ultrasound</div>'
+        '<div style="font-size:18px;font-weight:700;color:#F0F6FF;margin-bottom:6px;">'
+        + name + '</div>'
+        '<div style="font-size:14px;color:#7A90A8;margin-bottom:8px;">' + desc + '</div>'
+        '<div style="font-size:14px;color:' + clr + ';font-weight:600;">'
+        + sev + '  ·  AI Confidence: ' + str(round(float(conf)*100,1)) + '%'
+        '</div></div>',
+        unsafe_allow_html=True
+    )
+    img = US_IMAGE.get(str(cls),'')
+    if img and os.path.exists(img):
+        ug1,ug2 = st.columns(2)
+        with ug1:
+            st.image(img, caption='Ultrasound Scan', use_column_width=True)
+        with ug2:
+            st.image(img, caption='Grad-CAM Heatmap', use_column_width=True)
+
+
+def render_combined_findings(row):
+    c1,c2,c3,c4 = st.columns(4)
+    for col,(lbl,key) in zip([c1,c2,c3,c4],[
+        ('Lab','lab_score'),('CT','ct_score'),
+        ('Ultrasound','us_score'),('Fusion','fusion_score')
+    ]):
+        val = row.get(key)
+        try:
+            v = SCORE_MAP.get(int(float(val)),'—') \
+                if val is not None and str(val) not in ['None','nan'] else '—'
+        except Exception:
+            v = '—'
+        vc = SEV_COLOR.get(v,'#4A6080')
+        with col:
+            st.markdown(
+                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+                'border-radius:10px;padding:14px;text-align:center;margin-bottom:12px;">'
+                '<div style="font-size:11px;font-weight:600;color:#4A6080;'
+                'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">'
+                + lbl + '</div>'
+                '<div style="font-size:22px;font-weight:800;color:' + vc + ';">'
+                + v + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+    # Show CT and US details for combined patients
+    ct_cls = row.get('ct_predicted_class','')
+    us_cls = row.get('us_predicted_class', row.get('predicted_class',''))
+    if ct_cls:
+        st.markdown(
+            '<div style="font-size:13px;color:#7A90A8;margin-bottom:6px;">'
+            '🧠 CT: <b style="color:#F0F6FF;">' + CT_NAMES.get(ct_cls,ct_cls) + '</b>'
+            '  ·  🔬 US: <b style="color:#F0F6FF;">' + US_NAMES.get(us_cls,us_cls) + '</b>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+def render_rag_sections(parsed, citations):
+    if parsed['clinical_summary']:
+        st.markdown(
+            '<div style="background:#0D1B2E;border:1.5px solid #263A55;'
+            'border-left:5px solid #7C3AED;border-radius:12px;'
+            'padding:18px 22px;margin-bottom:12px;">'
+            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">'
+            'Clinical Overview</div>'
+            '<div style="font-size:15px;color:#E8EDF5;line-height:1.8;">'
+            + parsed['clinical_summary'] + '</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    if parsed['key_findings']:
+        fh = ''.join([
+            '<div style="display:flex;gap:10px;padding:8px 0;'
+            'border-bottom:1px solid #1E3250;">'
+            '<span style="color:#7C3AED;font-weight:700;flex-shrink:0;">•</span>'
+            '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
+            + f + '</span></div>'
+            for f in parsed['key_findings']
+        ])
+        st.markdown(
+            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+            'border-radius:10px;padding:16px 20px;margin-bottom:12px;">'
+            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
+            'Key Findings</div>' + fh + '</div>',
+            unsafe_allow_html=True
+        )
+
+    if parsed['recommendations']:
+        rh = ''.join([
+            '<div style="display:flex;gap:12px;padding:10px 0;'
+            'border-bottom:1px solid #1E3250;">'
+            '<span style="background:#2563EB22;color:#4A9EFF;font-weight:700;'
+            'font-size:13px;padding:2px 8px;border-radius:6px;flex-shrink:0;">'
+            + str(i+1) + '</span>'
+            '<span style="font-size:14px;color:#C8D6E8;line-height:1.6;">'
+            + r + '</span></div>'
+            for i,r in enumerate(parsed['recommendations'])
+        ])
+        st.markdown(
+            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+            'border-left:5px solid #00C48C;border-radius:10px;'
+            'padding:16px 20px;margin-bottom:12px;">'
+            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">'
+            'Clinical Recommendations</div>' + rh + '</div>',
+            unsafe_allow_html=True
+        )
+
+    fu_col,ug_col = st.columns(2)
+    with fu_col:
+        if parsed['followup']:
+            st.markdown(
+                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+                'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
+                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
+                'Follow-up Plan</div>'
+                '<div style="font-size:14px;color:#E8EDF5;font-weight:500;">'
+                + parsed['followup'] + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+    with ug_col:
+        if parsed['urgency']:
+            uc = {'URGENT':'#FF3B3B','SEMI-URGENT':'#FF6B35',
+                  'ROUTINE':'#00C48C'}.get(parsed['urgency'].upper(),'#8892A4')
+            st.markdown(
+                '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+                'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
+                '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+                'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
+                'Urgency</div>'
+                '<div style="font-size:18px;font-weight:800;color:' + uc + ';">'
+                + parsed['urgency'] + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+    if citations:
+        st.markdown(
+            '<div style="background:#0D1B2E;border:1.5px solid #1E3250;'
+            'border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
+            '<div style="font-size:12px;font-weight:600;color:#4A6080;'
+            'text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">'
+            'Guideline References</div>'
+            '<div style="font-size:13px;color:#64748B;font-family:monospace;">'
+            + '  ·  '.join(citations) + '</div>'
             '</div>',
             unsafe_allow_html=True
         )
