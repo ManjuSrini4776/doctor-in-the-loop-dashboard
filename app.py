@@ -92,8 +92,8 @@ DOCTORS = {
 
 
 # ── DATA LOADING ──────────────────────────────────────────────
-@st.cache_data(show_spinner=False)
-def load_all(version=2):  # bump version to force cache refresh
+@st.cache_data(show_spinner=False, ttl=1)
+def load_all(version=3):  # bump version to force cache refresh
     def find(name):
         for p in [f'data/{name}', name]:
             if os.path.exists(p): return p
@@ -126,7 +126,7 @@ def load_all(version=2):  # bump version to force cache refresh
         with open(p) as f: rag=json.load(f)
     return lab,ct,us,fus,rag
 
-lab_df,ct_df,us_df,fus_df,rag_data = load_all(version=2)
+lab_df,ct_df,us_df,fus_df,rag_data = load_all(version=3)
 
 
 # ── SESSION STATE ─────────────────────────────────────────────
@@ -818,34 +818,47 @@ def render_lab(row,sev,clr):
     if 'ckd' in disease or 'kidney' in disease:
         if egfr is not None:
             st_='Normal' if egfr>=60 else 'Borderline' if egfr>=30 else 'Abnormal'
-            stage='G1' if egfr>=90 else 'G2' if egfr>=60 else 'G3a' if egfr>=45 else 'G3b' if egfr>=30 else 'G4' if egfr>=15 else 'G5'
-            rows.append(('eGFR',fmt(egfr,'mL/min'),'≥90:G1(Normal) · 60–89:G2(Normal) · 45–59:G3a · 30–44:G3b · <30:G4-G5',st_))
-            rows.append(('KDIGO Stage',stage+' — '+ckd,'G1–G2=Normal · G3=Moderate · G4–G5=Severe','Normal' if egfr>=60 else 'Borderline' if egfr>=45 else 'Abnormal'))
+            stage='G1(≥90)' if egfr>=90 else 'G2(60-89)' if egfr>=60 else 'G3a(45-59)' if egfr>=45 else 'G3b(30-44)' if egfr>=30 else 'G4(15-29)' if egfr>=15 else 'G5(<15)'
+            rows.append(('eGFR',fmt(egfr,'mL/min'),'≥90:G1(Normal) · 60-89:G2(Normal) · 45-59:G3a · 30-44:G3b · <30:G4-G5',st_))
+            rows.append(('KDIGO Stage',stage+' — '+ckd,'G1-G2=Normal · G3=Moderate · G4-G5=Severe','Normal' if egfr>=60 else 'Borderline' if egfr>=45 else 'Abnormal'))
+        else:
+            # No eGFR — show CKD severity from clinical diagnosis
+            ckd_st='Normal' if 'G1' in ckd or 'G2' in ckd else 'Borderline' if 'G3' in ckd else 'Abnormal' if ckd not in ['Not tested',''] else 'N/A'
+            rows.append(('CKD Stage',ckd if ckd not in ['Not tested',''] else 'Not recorded','G1:>=90 · G2:60-89 · G3a:45-59 · G3b:30-44 · G4:15-29 · G5:<15',ckd_st))
+            rows.append(('eGFR','Not measured','eGFR not available — severity from clinical diagnosis','N/A'))
         rows.append(('Clinical Severity',sev,'KDIGO 2022: based on eGFR + albuminuria','Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal'))
         rows.append(('BP Target','—','<130/80 mmHg · ACE inhibitor if proteinuria','N/A'))
         src='KDIGO 2022 Clinical Practice Guideline for CKD'
 
     elif 'diabetes' in disease:
+        dia_st='Normal' if dia=='Normal' else 'Borderline' if dia=='Mild' else 'Abnormal' if dia=='Severe' else 'N/A'
         if glucose is not None:
             gs='Normal' if glucose<100 else 'Borderline' if glucose<126 else 'Abnormal'
-            rows.append(('Glucose',fmt(glucose,'mg/dL'),'Normal:<100 · Pre-diabetic:100–125 · Diabetic:≥126',gs))
-        rows.append(('Diabetes Status',dia,'Normal:<100 · Mild:126–180 · Severe:>180 mg/dL','Normal' if dia=='Normal' else 'Borderline' if dia=='Mild' else 'Abnormal' if dia=='Severe' else 'N/A'))
-        rows.append(('HbA1c Target','—','Target:<7.0% (most) · <8.0% (elderly)','N/A'))
-        rows.append(('Monitoring','—','Daily glucose · HbA1c every 3 months','N/A'))
+            rows.append(('Glucose (Fasting)',fmt(glucose,'mg/dL'),'Normal:<100 · Pre-diabetic:100-125 · Diabetic:>=126',gs))
+        else:
+            rows.append(('Glucose','Not measured this visit','Normal:<100 · Pre-diabetic:100-125 · Diabetic:>=126','N/A'))
+        rows.append(('Diabetes Severity',dia,'Normal · Mild:borderline control · Severe:poor control',dia_st))
+        rows.append(('HbA1c Target','—','<7.0% (most patients) · <8.0% (elderly/complex)','N/A'))
+        rows.append(('Monitoring','—','Self-monitor glucose daily · HbA1c every 3 months','N/A'))
         src='ADA Standards of Medical Care in Diabetes 2024'
 
     elif 'thyroid' in disease:
+        thy_st='Normal' if thy in ['Normal','Mild'] else 'Abnormal' if thy=='Severe' else 'N/A'
         if tsh is not None:
             ts='Normal' if 0.4<=tsh<=4.0 else 'Borderline' if tsh<=10 else 'Abnormal'
-            interp='Euthyroid' if 0.4<=tsh<=4.0 else 'Subclinical Hypothyroid' if tsh<=10 else 'Overt Hypothyroid'
-            rows.append(('TSH',fmt(tsh,'mIU/L'),'Normal:0.4–4.0 · Subclinical:4.1–10.0 · Overt:>10.0',ts))
-            rows.append(('TSH Interpretation',interp,'Subclinical=TSH↑ T4 normal · Overt=TSH↑↑ T4 low',ts))
+            interp='Euthyroid (Normal)' if 0.4<=tsh<=4.0 else 'Subclinical Hypothyroid' if tsh<=10 else 'Overt Hypothyroid'
+            rows.append(('TSH Level',fmt(tsh,'mIU/L'),'Normal:0.4-4.0 · Subclinical:4.1-10.0 · Overt Hypothyroid:>10.0',ts))
+            rows.append(('TSH Interpretation',interp,'Subclinical=TSH high but T4 still normal · Overt=TSH very high + T4 low',ts))
+        else:
+            rows.append(('TSH Level','Not measured','Normal:0.4-4.0 mIU/L · Subclinical:4.1-10.0 · Overt:>10.0','N/A'))
         if free_t4 is not None:
             t4s='Normal' if 0.8<=free_t4<=1.8 else 'Abnormal'
-            rows.append(('Free T4',fmt(free_t4,'ng/dL'),'Normal:0.8–1.8 ng/dL · Low=Hypothyroid',t4s))
-        rows.append(('Thyroid Status',thy,'Normal:TSH+T4 normal · Mild:Subclinical · Severe:Overt','Normal' if thy in ['Normal','Mild'] else 'Abnormal' if thy=='Severe' else 'N/A'))
-        rows.append(('Treatment','—','Levothyroxine if TSH>10 or symptomatic at 4–10','N/A'))
-        src='ATA/AACE Guidelines for Hypothyroidism 2023'
+            rows.append(('Free T4',fmt(free_t4,'ng/dL'),'Normal:0.8-1.8 ng/dL · Low T4=Hypothyroid',t4s))
+        else:
+            rows.append(('Free T4','Not measured','Normal:0.8-1.8 ng/dL','N/A'))
+        rows.append(('Thyroid Status',thy,'Normal · Mild=Subclinical Hypothyroid · Severe=Overt Hypothyroid',thy_st))
+        rows.append(('Treatment Threshold','—','Levothyroxine if TSH>10 mIU/L or symptomatic at TSH 4-10','N/A'))
+        src='ATA/AACE Clinical Practice Guidelines for Hypothyroidism 2023'
     else:
         src='WHO / Standard Clinical Guidelines'
 
