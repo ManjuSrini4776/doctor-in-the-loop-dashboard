@@ -397,10 +397,10 @@ def render_patient(p, pid, doc_id):
     # RAG
     st.markdown('<div style="font-size:12px;font-weight:700;color:#4A9EFF;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;">AI Clinical Summary</div>',unsafe_allow_html=True)
     # ── RAG (FIXED) ─────────────────────────────────────────────
-if mtype=='Combined Assessment':
+    if mtype=='Combined Assessment':
     parsed = get_mm_rag(p)
     cites = parsed.pop('citations', [])
-else:
+    else:
     # 🔥 FIX: Use patient_id instead of rag_class_key
     pid = p.get('patient_id')
 
