@@ -1,0 +1,13 @@
+case_id,patient_id,us_patient_id,department,doctor_id,doctor_name,modality_type,disease_type,predicted_class,confidence,us_score,us_severity_label,fusion_label,_sev,_mtype,_id,rag_class_key
+US-1591,US-1591,1591,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal abdomen,Fetal abdomen,0.9987213,0,Normal,Normal,Normal,Ultrasound,US-1591,us_abdomen
+US-705,US-705,705,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal abdomen,Fetal abdomen,0.99938595,0,Normal,Normal,Normal,Ultrasound,US-705,us_abdomen
+US-1324,US-1324,1324,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal femur,Fetal femur,0.999984,1,Mild,Normal,Normal,Ultrasound,US-1324,us_femur
+US-1656,US-1656,1656,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal femur,Fetal femur,0.99950147,1,Mild,Normal,Normal,Ultrasound,US-1656,us_femur
+US-1212,US-1212,1212,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal femur,Fetal femur,0.9993149,1,Mild,Normal,Normal,Ultrasound,US-1212,us_femur
+US-985,US-985,985,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal thorax,Fetal thorax,0.9980736,2,Moderate,Mild,Mild,Ultrasound,US-985,us_thorax
+US-713,US-713,713,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal thorax,Fetal thorax,0.9998271,2,Moderate,Mild,Mild,Ultrasound,US-713,us_thorax
+US-1718,US-1718,1718,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal brain,Fetal brain,0.9999217,3,Severe,Mild,Mild,Ultrasound,US-1718,us_brain
+US-1787,US-1787,1787,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal brain,Fetal brain,0.9999366,3,Severe,Mild,Mild,Ultrasound,US-1787,us_brain
+US-1628,US-1628,1628,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal brain,Fetal brain,0.9971738,3,Severe,Severe,Severe,Ultrasound,US-1628,us_brain
+US-979,US-979,979,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal brain,Fetal brain,0.9999653,3,Severe,Severe,Severe,Ultrasound,US-979,us_brain
+US-863,US-863,863,Obstetrics,DR003,Dr. Kavitha Rajan,Ultrasound,Fetal brain,Fetal brain,0.99998665,3,Severe,Severe,Severe,Ultrasound,US-863,us_brain

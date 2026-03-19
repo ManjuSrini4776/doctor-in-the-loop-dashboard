@@ -1,0 +1,13 @@
+case_id,patient_id,image_id,department,doctor_id,doctor_name,modality_type,disease_type,ct_predicted_class,ct_confidence,ct_score,ct_severity_label,fusion_label,_sev,_mtype,_id,rag_class_key
+CT-Te-no_0250.jpg,CT-Te-no_0250.jpg,Te-no_0250.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,notumor,notumor,0.9958,0,Normal,Normal,Normal,CT Scan,CT-Te-no_0250.jpg,ct_notumor
+CT-Te-me_0082.jpg,CT-Te-me_0082.jpg,Te-me_0082.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,notumor,notumor,0.6366,0,Normal,Normal,Normal,CT Scan,CT-Te-me_0082.jpg,ct_notumor
+CT-Te-no_0287.jpg,CT-Te-no_0287.jpg,Te-no_0287.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,notumor,notumor,0.9901,0,Normal,Normal,Normal,CT Scan,CT-Te-no_0287.jpg,ct_notumor
+CT-Te-pi_0276.jpg,CT-Te-pi_0276.jpg,Te-pi_0276.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,pituitary,pituitary,0.7531,1,Mild,Mild,Mild,CT Scan,CT-Te-pi_0276.jpg,ct_pituitary
+CT-Te-me_0161.jpg,CT-Te-me_0161.jpg,Te-me_0161.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,pituitary,pituitary,0.7826,1,Mild,Mild,Mild,CT Scan,CT-Te-me_0161.jpg,ct_pituitary
+CT-Te-pi_0039.jpg,CT-Te-pi_0039.jpg,Te-pi_0039.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,pituitary,pituitary,0.8896,1,Mild,Mild,Mild,CT Scan,CT-Te-pi_0039.jpg,ct_pituitary
+CT-Te-me_0147.jpg,CT-Te-me_0147.jpg,Te-me_0147.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,meningioma,meningioma,0.9789,2,Moderate,Moderate,Moderate,CT Scan,CT-Te-me_0147.jpg,ct_meningioma
+CT-Te-me_0259.jpg,CT-Te-me_0259.jpg,Te-me_0259.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,meningioma,meningioma,0.877,2,Moderate,Moderate,Moderate,CT Scan,CT-Te-me_0259.jpg,ct_meningioma
+CT-Te-gl_0250.jpg,CT-Te-gl_0250.jpg,Te-gl_0250.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,meningioma,meningioma,0.4247,2,Moderate,Moderate,Moderate,CT Scan,CT-Te-gl_0250.jpg,ct_meningioma
+CT-Te-gl_0034.jpg,CT-Te-gl_0034.jpg,Te-gl_0034.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,glioma,glioma,0.9897,3,Severe,Severe,Severe,CT Scan,CT-Te-gl_0034.jpg,ct_glioma
+CT-Te-gl_0151.jpg,CT-Te-gl_0151.jpg,Te-gl_0151.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,glioma,glioma,0.9926,3,Severe,Severe,Severe,CT Scan,CT-Te-gl_0151.jpg,ct_glioma
+CT-Te-gl_0209.jpg,CT-Te-gl_0209.jpg,Te-gl_0209.jpg,Neurology,DR002,Dr. Arjun Mehta,CT Scan,glioma,glioma,0.8712,3,Severe,Severe,Severe,CT Scan,CT-Te-gl_0209.jpg,ct_glioma

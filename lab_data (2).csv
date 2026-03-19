@@ -1,0 +1,21 @@
+case_id,patient_id,hadm_id,department,doctor_id,doctor_name,modality_type,disease_type,final_severity_label,lab_score,fusion_label,_sev,_mtype,_id,ckd_severity,diabetes_severity_final,thyroid_severity_final,rag_class_key
+LAB-25230964,LAB-25230964,25230964,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Normal,0,Normal,Normal,Lab Report,LAB-25230964,G2 (Mild),Not tested,Not tested,lab_ckd_normal
+LAB-24648816,LAB-24648816,24648816,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Normal,0,Normal,Normal,Lab Report,LAB-24648816,G1 (Normal/High),Normal,Not tested,lab_ckd_normal
+LAB-20971146,LAB-20971146,20971146,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Normal,0,Normal,Normal,Lab Report,LAB-20971146,Not tested,Normal,Not tested,lab_diabetes_normal
+LAB-28407846,LAB-28407846,28407846,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Normal,0,Normal,Normal,Lab Report,LAB-28407846,Not tested,Normal,Not tested,lab_diabetes_normal
+LAB-20622227,LAB-20622227,20622227,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Thyroid,Normal,0,Normal,Normal,Lab Report,LAB-20622227,Not tested,Not tested,Normal,lab_thyroid_normal
+LAB-29175528,LAB-29175528,29175528,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Normal,0,Normal,Normal,Lab Report,LAB-29175528,G2 (Mild),Not tested,Not tested,lab_ckd_normal
+LAB-29823215,LAB-29823215,29823215,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Normal,0,Normal,Normal,Lab Report,LAB-29823215,G2 (Mild),Not tested,Not tested,lab_ckd_normal
+LAB-26425489,LAB-26425489,26425489,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Normal,0,Normal,Normal,Lab Report,LAB-26425489,Not tested,Normal,Not tested,lab_diabetes_normal
+LAB-24205521,LAB-24205521,24205521,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Normal,0,Normal,Normal,Lab Report,LAB-24205521,Not tested,Normal,Not tested,lab_diabetes_normal
+LAB-29484239,LAB-29484239,29484239,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Thyroid,Normal,0,Normal,Normal,Lab Report,LAB-29484239,Not tested,Not tested,Normal,lab_thyroid_normal
+LAB-22923882,LAB-22923882,22923882,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Mild,1,Mild,Mild,Lab Report,LAB-22923882,G2 (Mild),Prediabetes,Not tested,lab_ckd_mild
+LAB-23083793,LAB-23083793,23083793,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Mild,1,Mild,Mild,Lab Report,LAB-23083793,G3a (Mild-Moderate),Not tested,Not tested,lab_ckd_mild
+LAB-21178783,LAB-21178783,21178783,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Mild,1,Mild,Mild,Lab Report,LAB-21178783,Not tested,Mild,Not tested,lab_diabetes_mild
+LAB-25148846,LAB-25148846,25148846,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Mild,1,Mild,Mild,Lab Report,LAB-25148846,Not tested,Mild,Not tested,lab_diabetes_mild
+LAB-22887799,LAB-22887799,22887799,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Thyroid,Mild,1,Mild,Mild,Lab Report,LAB-22887799,Not tested,Not tested,Mild Hypothyroid,lab_thyroid_mild
+LAB-27121682,LAB-27121682,27121682,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Severe,3,Severe,Severe,Lab Report,LAB-27121682,G4 (Severe),Normal,Not tested,lab_ckd_severe
+LAB-26175055,LAB-26175055,26175055,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,CKD,Severe,3,Severe,Severe,Lab Report,LAB-26175055,G4 (Severe),Mild,Not tested,lab_ckd_severe
+LAB-29019686,LAB-29019686,29019686,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Severe,3,Severe,Severe,Lab Report,LAB-29019686,G3b (Moderate-Severe),Severe,Not tested,lab_diabetes_severe
+LAB-27956077,LAB-27956077,27956077,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Diabetes,Severe,3,Severe,Severe,Lab Report,LAB-27956077,Not tested,Severe,Not tested,lab_diabetes_severe
+LAB-23885186,LAB-23885186,23885186,Internal Medicine,DR001,Dr. Priya Sharma,Lab Report,Thyroid,Severe,3,Severe,Severe,Lab Report,LAB-23885186,G4 (Severe),Moderate,Normal,lab_thyroid_severe
