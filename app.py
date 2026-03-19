@@ -98,14 +98,27 @@ def load_all():
         for p in [f'data/{name}', name]:
             if os.path.exists(p): return p
         return None
+
+    def load_csv(name):
+        p = find(name)
+        if not p: return None
+        df = pd.read_csv(p)
+        # Convert numeric NaN columns to Python-native — avoids numpy NaN issues
+        for col in ['egfr','hba1c','glucose','tsh','free_t4',
+                    'ct_confidence','confidence','lab_score',
+                    'ct_score','us_score','fusion_score']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        return df
+
     lab=ct=us=fus=None; rag={}
-    p=find('lab_data.csv')
-    if p:
-        lab=pd.read_csv(p)
+    lab=load_csv('lab_data.csv')
+    if lab is not None:
         lab['final_severity_label']=lab['final_severity_label'].replace('Stable','Normal')
-    p=find('ct_data.csv');   ct  = pd.read_csv(p) if p else None
-    p=find('us_data.csv');   us  = pd.read_csv(p) if p else None
-    p=find('fusion_data.csv');fus= pd.read_csv(p) if p else None
+    ct =load_csv('ct_data.csv')
+    us =load_csv('us_data.csv')
+    fus=load_csv('fusion_data.csv')
+
     p=find('rag_summaries.json')
     if p:
         with open(p) as f: rag=json.load(f)
@@ -123,10 +136,17 @@ for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{}}
 def get_num(row, key):
     v = row.get(key)
     if v is None: return None
+    # Handle numpy NaN, pandas NA, string 'nan'
+    try:
+        if pd.isna(v): return None
+    except (TypeError, ValueError):
+        pass
     try:
         f = float(v)
-        return None if f!=f else f
-    except: return None
+        import math
+        return None if (math.isnan(f) or math.isinf(f)) else f
+    except (TypeError, ValueError):
+        return None
 
 def fmt(v, unit=''):
     if v is None: return '—'
@@ -273,8 +293,11 @@ def get_patient_message(sev, mtype, row):
         v=row.get(key)
         if v is None: return None
         try:
-            f=float(v); return None if f!=f else f
-        except: return None
+            import math
+            f=float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else f
+        except (TypeError, ValueError):
+            return None
 
     if mtype=='Lab Report':
         disease=str(row.get('disease_type','')).lower()
