@@ -92,8 +92,7 @@ DOCTORS = {
 
 
 # ── DATA LOADING ──────────────────────────────────────────────
-@st.cache_data(show_spinner=False, ttl=1)
-def load_all(version=3):  # bump version to force cache refresh
+def load_all():
     def find(name):
         for p in [f'data/{name}', name]:
             if os.path.exists(p): return p
@@ -126,7 +125,7 @@ def load_all(version=3):  # bump version to force cache refresh
         with open(p) as f: rag=json.load(f)
     return lab,ct,us,fus,rag
 
-lab_df,ct_df,us_df,fus_df,rag_data = load_all(version=3)
+lab_df,ct_df,us_df,fus_df,rag_data = load_all()
 
 
 # ── SESSION STATE ─────────────────────────────────────────────
@@ -800,9 +799,29 @@ def render_lab(row,sev,clr):
             elif f=='diabetes_severity_final': dia='Not tested'
             else: thy='Not tested'
 
-    egfr=get_num(row,'egfr'); glucose=get_num(row,'glucose')
-    tsh=get_num(row,'tsh');   free_t4=get_num(row,'free_t4')
+    egfr=get_num(row,'egfr')
+    glucose=get_num(row,'glucose')
+    tsh=get_num(row,'tsh')
+    free_t4=get_num(row,'free_t4')
     disease=str(row.get('disease_type','')).lower()
+
+    # DEBUG — show raw values so we can verify
+    with st.expander('🔧 Debug: Raw values from CSV', expanded=False):
+        st.write({
+            'disease_type': row.get('disease_type'),
+            'egfr_raw':     row.get('egfr'),
+            'egfr_parsed':  egfr,
+            'glucose_raw':  row.get('glucose'),
+            'glucose_parsed': glucose,
+            'tsh_raw':      row.get('tsh'),
+            'tsh_parsed':   tsh,
+            'free_t4_raw':  row.get('free_t4'),
+            'free_t4_parsed': free_t4,
+            'disease_lower': disease,
+            'ckd_in_disease': 'ckd' in disease,
+            'diabetes_in_disease': 'diabetes' in disease,
+            'thyroid_in_disease': 'thyroid' in disease,
+        })
 
     c1,c2,c3=st.columns(3)
     for col,(lbl,val) in zip([c1,c2,c3],[
