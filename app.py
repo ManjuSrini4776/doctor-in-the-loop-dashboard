@@ -593,7 +593,17 @@ def render_dept(doc_id,df,mtype,id_col,sev_col):
 
         match=df[df[id_col]==sel_pid]
         if match.empty: return
+        # Get the actual dataframe index for direct numeric access
+        df_idx = match.index[0]
         row=match.iloc[0].to_dict()
+        # Override numeric columns directly from df to avoid serialization NaN issues
+        for num_col in ['egfr','hba1c','glucose','tsh','free_t4',
+                        'ct_confidence','confidence','lab_score',
+                        'ct_score','us_score','fusion_score',
+                        'lab_hadm_id']:
+            if num_col in df.columns:
+                val = df.at[df_idx, num_col]
+                row[num_col] = None if pd.isna(val) else val
         sev=str(row.get(sev_col,'Unknown'))
         clr=SEV_COLOR.get(sev,'#6B7A99')
         bg =SEV_BG.get(sev,'rgba(107,122,153,0.1)')
@@ -804,24 +814,6 @@ def render_lab(row,sev,clr):
     tsh=get_num(row,'tsh')
     free_t4=get_num(row,'free_t4')
     disease=str(row.get('disease_type','')).lower()
-
-    # DEBUG — show raw values so we can verify
-    with st.expander('🔧 Debug: Raw values from CSV', expanded=False):
-        st.write({
-            'disease_type': row.get('disease_type'),
-            'egfr_raw':     row.get('egfr'),
-            'egfr_parsed':  egfr,
-            'glucose_raw':  row.get('glucose'),
-            'glucose_parsed': glucose,
-            'tsh_raw':      row.get('tsh'),
-            'tsh_parsed':   tsh,
-            'free_t4_raw':  row.get('free_t4'),
-            'free_t4_parsed': free_t4,
-            'disease_lower': disease,
-            'ckd_in_disease': 'ckd' in disease,
-            'diabetes_in_disease': 'diabetes' in disease,
-            'thyroid_in_disease': 'thyroid' in disease,
-        })
 
     c1,c2,c3=st.columns(3)
     for col,(lbl,val) in zip([c1,c2,c3],[
