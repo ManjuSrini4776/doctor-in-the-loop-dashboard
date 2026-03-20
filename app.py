@@ -559,7 +559,7 @@ def render_patient(p, pid, doc_id):
     elif mtype=='Combined Assessment': render_combined(p,sev,clr)
 
     # ── AI Clinical Summary ────────────────────────────────────
-    st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;font-weight:800;font-size:13px;">🤖 AI Clinical Summary</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;font-weight:800;font-size:13px;">📋 Guideline-Based Clinical Insights</div>', unsafe_allow_html=True)
     if mtype == 'Combined Assessment':
         parsed = get_mm_rag(p)
         cites = parsed.pop('citations', [])
@@ -925,18 +925,19 @@ def render_lab(p,sev,clr):
             ckd_st='Normal' if 'G1' in ckd or 'G2' in ckd else 'Borderline' if 'G3' in ckd else 'Abnormal' if ckd!='Not tested' else 'N/A'
             rows.append(ref_row('CKD Stage',ckd,'G1:≥90 · G2:60-89 · G3a:45-59 · G3b:30-44 · G4:15-29 · G5:<15',ckd_st))
             rows.append(ref_row('eGFR','Not measured','eGFR not available','N/A'))
-        rows.append(ref_row('Clinical Severity',sev,'KDIGO 2022: based on eGFR + albuminuria + symptoms','Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal'))
+        ckd_sev_st='Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal'
+        rows.append(ref_row('Clinical Severity (AI)',sev,'KDIGO 2022: based on eGFR + albuminuria + symptoms',ckd_sev_st))
         rows.append(ref_row('BP Target','—','<130/80 mmHg · ACE inhibitor if proteinuria','N/A'))
         src='KDIGO 2022 Clinical Practice Guideline for CKD'
     elif 'diabetes' in disease:
-        # Map diabetes severity to badge — includes Moderate
-        dia_st='Normal' if dia=='Normal' else 'Borderline' if dia in ['Mild','Moderate'] else 'Abnormal' if dia=='Severe' else ('Borderline' if dia not in ['Not tested','N/A',''] else 'N/A')
+        # Use _sev (model ground truth) for badge — matches header
+        dia_st='Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal' if sev in ['Moderate','Severe'] else 'N/A'
         if glucose is not None:
             gs='Normal' if glucose<100 else 'Borderline' if glucose<126 else 'Abnormal'
             rows.append(ref_row('Glucose (Fasting)',fmt(glucose,'mg/dL'),'Normal:<100 · Pre-diabetic:100-125 · Diabetic:≥126',gs))
         else:
             rows.append(ref_row('Glucose','Not measured','Normal:<100 · Pre-diabetic:100-125 · Diabetic:≥126','N/A'))
-        rows.append(ref_row('Diabetes Severity',dia,'Normal · Mild:borderline · Severe:poor control',dia_st))
+        rows.append(ref_row('Diabetes Severity (AI)',sev,'Normal · Mild:pre-diabetic · Moderate/Severe:poor control',dia_st))
         rows.append(ref_row('HbA1c Target','—','<7.0% (most) · <8.0% (elderly)','N/A'))
         src='ADA Standards of Medical Care in Diabetes 2024'
     elif 'thyroid' in disease:
@@ -953,7 +954,8 @@ def render_lab(p,sev,clr):
             rows.append(ref_row('Free T4',fmt(free_t4,'ng/dL'),'Normal:0.8-1.8 ng/dL · Low=Hypothyroid',t4s))
         else:
             rows.append(ref_row('Free T4','Not measured','Normal:0.8-1.8 ng/dL','N/A'))
-        rows.append(ref_row('Thyroid Status',thy,'Normal · Mild=Subclinical · Severe=Overt',thy_st))
+        thy_model_st='Normal' if sev=='Normal' else 'Borderline' if sev=='Mild' else 'Abnormal'
+        rows.append(ref_row('Thyroid Status (AI)',sev,'Normal · Mild=Subclinical · Severe=Overt Hypothyroid',thy_model_st))
         src='ATA/AACE Guidelines for Hypothyroidism 2023'
     else:
         src='WHO / Standard Clinical Guidelines'
@@ -1080,6 +1082,19 @@ def render_rag(parsed, citations):
             '</div>',
             unsafe_allow_html=True)
         return
+
+    # ── Truncation warning — if only summary exists, sections were cut ──
+    has_full = bool(parsed.get('key_findings') or parsed.get('recommendations'))
+    if parsed.get('clinical_summary') and not has_full:
+        st.markdown(
+            '<div style="background:#FFF7ED;border:2px solid #FDBA74;border-left:4px solid #F59E0B;'
+            'border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
+            '<div style="font-size:13px;color:#92400E;font-weight:700;">⚠️ Partial Summary — Sections Missing</div>'
+            '<div style="font-size:12px;color:#78350F;margin-top:4px;line-height:1.6;">'
+            'Only the Clinical Summary section was generated — Key Findings and Recommendations were cut off by token limit.<br>'
+            'Fix: Re-run NB09 with <b>max_tokens=800</b> and regenerate <code>rag_summaries.json</code>.'
+            '</div></div>',
+            unsafe_allow_html=True)
 
     # ── 1. CLINICAL SUMMARY ──────────────────────────────────
     if parsed.get('clinical_summary'):
