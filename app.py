@@ -726,11 +726,13 @@ def render_trend_chart(pid):
         f'{t_icon} {t_label}</span>'
         f'<span style="background:#EFF6FF;border:1px solid #93C5FD;color:#1D4ED8;'
         f'font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;">'
-        f'🔄 {rate}</span>'
+        f'🏥 {v_count} hospital visits</span>'
         f'<span style="background:#F8FAFF;border:1px solid #BFDBFE;color:#64748B;'
         f'font-size:12px;padding:4px 12px;border-radius:20px;">'
         f'{v_count} total visits</span>'
-        f'</div></div>',
+        f'</div></div>'
+        f'<div style="font-size:11px;color:#94A3B8;font-style:italic;margin-top:4px;">'
+        f'Historical data from MIMIC-IV clinical database · Dates are de-identified</div>',
         unsafe_allow_html=True)
 
     # Build timeline bars
@@ -759,12 +761,20 @@ def render_trend_chart(pid):
         tooltip = f"{v['date'][:7]}: {sev}"
         if v.get('egfr'):    tooltip += f" | eGFR {v['egfr']}"
         if v.get('glucose'): tooltip += f" | Gluc {v['glucose']}"
+        if v.get('los_hours'): tooltip += f" | LOS {v['los_hours']}h"
+
+        # Current visit gets a star marker above it
+        star_html = (
+            f'<div style="font-size:9px;text-align:center;color:#1D4ED8;font-weight:800;">★</div>'
+            if is_cur else '<div style="height:14px;"></div>'
+        )
 
         timeline_html += (
-            f'<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:8px;max-width:28px;">'
+            f'<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:8px;max-width:28px;">'
+            f'{star_html}'
             f'<div title="{tooltip}" style="width:100%;height:{bar_h}px;background:{bar_clr};'
             f'border-radius:4px 4px 0 0;border:{border};opacity:{opacity};'
-            f'{"box-shadow:0 0 8px " + clr + "66;" if is_cur else ""}">'
+            f'{"box-shadow:0 0 10px " + clr + "88;" if is_cur else ""}">'
             f'</div>'
             f'<div style="font-size:8px;color:#94A3B8;text-align:center;'
             f'{"font-weight:800;color:#1D4ED8;" if is_cur else ""}">'
