@@ -8,25 +8,28 @@ st.set_page_config(page_title="MedAI — Doctor Dashboard", page_icon="🏥", la
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-html,body,[class*="css"]{font-family:'Inter',sans-serif!important;background:#050B18!important;color:#E8EDF5!important;}
-.stApp{background:#050B18!important;}
+html,body,[class*="css"]{font-family:'Inter',sans-serif!important;background:#EEF4FF!important;color:#1E293B!important;}
+.stApp{background:#EEF4FF!important;}
 #MainMenu,footer,header{visibility:hidden;}
 .block-container{padding:0!important;max-width:100%!important;}
-.stTextInput>div>div>input{background:#0D1A2E!important;color:#FFFFFF!important;border:2px solid #2563EB!important;border-radius:10px!important;font-size:16px!important;padding:10px 16px!important;}
-.stSelectbox>div>div{background:#0D1A2E!important;color:#FFFFFF!important;border:2px solid #2563EB!important;border-radius:10px!important;font-size:15px!important;}
-.stTextArea textarea{background:#0D1A2E!important;color:#FFFFFF!important;border:2px solid #2563EB!important;border-radius:10px!important;font-size:14px!important;}
+.stTextInput>div>div>input{background:#FFFFFF!important;color:#1E293B!important;border:2px solid #93C5FD!important;border-radius:10px!important;font-size:16px!important;padding:10px 16px!important;box-shadow:0 1px 4px rgba(37,99,235,0.08)!important;}
+.stSelectbox>div>div{background:#FFFFFF!important;color:#1E293B!important;border:2px solid #93C5FD!important;border-radius:10px!important;font-size:15px!important;}
+.stTextArea textarea{background:#FFFFFF!important;color:#1E293B!important;border:2px solid #93C5FD!important;border-radius:10px!important;font-size:14px!important;}
 .stButton>button{font-family:'Inter',sans-serif!important;font-weight:700!important;font-size:15px!important;border-radius:10px!important;padding:11px 22px!important;transition:all 0.2s!important;}
-.stButton>button[kind="primary"]{background:linear-gradient(135deg,#2563EB,#7C3AED)!important;border:none!important;color:white!important;box-shadow:0 4px 20px rgba(37,99,235,0.5)!important;}
-.stButton>button[kind="primary"]:hover{transform:translateY(-1px)!important;box-shadow:0 6px 25px rgba(37,99,235,0.7)!important;}
-.stButton>button[kind="secondary"]{background:#0D1A2E!important;border:2px solid #2563EB!important;color:#60A5FA!important;}
-.stButton>button[kind="secondary"]:hover{background:#1E3A5F!important;color:#FFFFFF!important;}
-.stTabs [data-baseweb="tab-list"]{background:#080F1C!important;border-bottom:2px solid #2563EB!important;padding:0 8px!important;}
-.stTabs [data-baseweb="tab"]{font-size:15px!important;font-weight:600!important;color:#60A5FA!important;padding:14px 22px!important;}
-.stTabs [aria-selected="true"]{color:#FFFFFF!important;border-bottom:3px solid #7C3AED!important;background:transparent!important;}
-.stExpander{background:#0D1A2E!important;border:2px solid #2563EB!important;border-radius:12px!important;}
-.stExpander summary{color:#60A5FA!important;font-weight:700!important;}
-hr{border-color:#2563EB!important;}
-div[data-testid="stSelectbox"] label{color:#60A5FA!important;font-weight:700!important;}
+.stButton>button[kind="primary"]{background:linear-gradient(135deg,#2563EB,#7C3AED)!important;border:none!important;color:white!important;box-shadow:0 4px 16px rgba(37,99,235,0.35)!important;}
+.stButton>button[kind="primary"]:hover{transform:translateY(-1px)!important;box-shadow:0 6px 22px rgba(37,99,235,0.5)!important;}
+.stButton>button[kind="secondary"]{background:#FFFFFF!important;border:2px solid #93C5FD!important;color:#2563EB!important;}
+.stButton>button[kind="secondary"]:hover{background:#EFF6FF!important;border-color:#2563EB!important;color:#1D4ED8!important;}
+.stTabs [data-baseweb="tab-list"]{background:#DBEAFE!important;border-bottom:2px solid #93C5FD!important;padding:0 8px!important;border-radius:12px 12px 0 0!important;}
+.stTabs [data-baseweb="tab"]{font-size:15px!important;font-weight:600!important;color:#3B82F6!important;padding:14px 22px!important;}
+.stTabs [aria-selected="true"]{color:#1D4ED8!important;border-bottom:3px solid #7C3AED!important;background:transparent!important;font-weight:800!important;}
+.stExpander{background:#FFFFFF!important;border:2px solid #BFDBFE!important;border-radius:12px!important;box-shadow:0 1px 6px rgba(37,99,235,0.08)!important;}
+.stExpander summary{color:#2563EB!important;font-weight:700!important;}
+hr{border-color:#BFDBFE!important;}
+div[data-testid="stSelectbox"] label{color:#2563EB!important;font-weight:700!important;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#EEF4FF;}
+::-webkit-scrollbar-thumb{background:#93C5FD;border-radius:6px;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -205,10 +208,10 @@ def ref_row(param, pat_val, guide, status):
     pv_clr={'Normal':'#00E5A0','Abnormal':'#FF3B5C','Borderline':'#FFD000','N/A':'#6B7A99'}.get(status,'#6B7A99')
     return (
         '<div style="display:grid;grid-template-columns:1fr 1.2fr 2fr 1fr;'
-        'gap:0;padding:10px 0;border-bottom:1px solid #1E3A5F;align-items:center;">'
-        f'<div style="font-size:13px;font-weight:600;color:#FFFFFF;">{param}</div>'
+        'gap:0;padding:10px 0;border-bottom:1px solid #BFDBFE;align-items:center;">'
+        f'<div style="font-size:13px;font-weight:600;color:#0F172A;">{param}</div>'
         f'<div style="font-size:13px;font-weight:700;color:{pv_clr};">{pat_val}</div>'
-        f'<div style="font-size:12px;color:#94A3B8;line-height:1.5;">{guide}</div>'
+        f'<div style="font-size:12px;color:#475569;line-height:1.5;">{guide}</div>'
         f'<div>{sev_badge(status)}</div>'
         '</div>'
     )
@@ -222,10 +225,10 @@ def ref_table(rows, source):
         +'</div>'
     )
     return (
-        '<div style="background:#0D1A2E;border:2px solid #2563EB;'
+        '<div style="background:#FFFFFF;border:2px solid #93C5FD;'
         'border-left:4px solid #60A5FA;border-radius:14px;padding:16px 20px;margin-bottom:14px;">'
         +header+''.join(rows)+
-        f'<div style="font-size:11px;color:#4A6080;margin-top:10px;font-style:italic;">Source: {source}</div>'
+        f'<div style="font-size:11px;color:#64748B;margin-top:10px;font-style:italic;">Source: {source}</div>'
         '</div>'
     )
 
@@ -347,15 +350,15 @@ def render_login():
     st.markdown(f"""
     <style>
     .stApp {{
-        background: linear-gradient(135deg, #050B18 0%, #0D1A2E 50%, #050B18 100%) !important;
+        background: linear-gradient(135deg, #EEF4FF 0%, #DBEAFE 50%, #EEF4FF 100%) !important;
     }}
     </style>
     <div style="position:relative;width:100%;height:220px;overflow:hidden;border-radius:0 0 24px 24px;margin-bottom:0;">
         <img src="{HERO_IMG_LOGIN}" style="width:100%;height:100%;object-fit:cover;opacity:0.25;"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent,#050B18);"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(238,244,255,0.85));"></div>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
             <div style="font-size:52px;margin-bottom:10px;filter:drop-shadow(0 0 20px rgba(37,99,235,0.8));">🏥</div>
-            <div style="font-size:36px;font-weight:800;color:#FFFFFF;letter-spacing:-1px;text-shadow:0 2px 20px rgba(37,99,235,0.8);">MedAI Clinical System</div>
+            <div style="font-size:36px;font-weight:800;color:#0F172A;letter-spacing:-1px;text-shadow:0 2px 20px rgba(37,99,235,0.8);">MedAI Clinical System</div>
             <div style="font-size:15px;color:#60A5FA;margin-top:6px;font-weight:500;">AI-Powered · Doctor-in-the-Loop · Medical Intelligence</div>
         </div>
     </div>
@@ -364,10 +367,10 @@ def render_login():
     _,col,_=st.columns([1,1.8,1])
     with col:
         st.markdown("""
-        <div style="background:linear-gradient(135deg,#0D1A2E,#0A1525);border:2px solid #2563EB;border-radius:20px;padding:36px;box-shadow:0 20px 60px rgba(37,99,235,0.3);margin-top:24px;">
+        <div style="background:linear-gradient(135deg,#FFFFFF,#F0F7FF);border:2px solid #93C5FD;border-radius:20px;padding:36px;box-shadow:0 20px 60px rgba(37,99,235,0.3);margin-top:24px;">
             <div style="text-align:center;margin-bottom:28px;">
                 <div style="font-size:14px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.15em;">Secure Doctor Portal</div>
-                <div style="font-size:13px;color:#4A6080;margin-top:4px;">Please sign in to access patient reports</div>
+                <div style="font-size:13px;color:#64748B;margin-top:4px;">Please sign in to access patient reports</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -387,8 +390,8 @@ def render_login():
 
         st.markdown("""
             <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid #1E3A5F;">
-                <div style="font-size:12px;color:#2A3A50;">Demo password: <span style="color:#60A5FA;font-weight:700;">1234</span></div>
-                <div style="font-size:11px;color:#1E3A5F;margin-top:6px;">🔒 All sessions are encrypted and logged</div>
+                <div style="font-size:12px;color:#475569;">Demo password: <span style="color:#60A5FA;font-weight:700;">1234</span></div>
+                <div style="font-size:11px;color:#93C5FD;margin-top:6px;">🔒 All sessions are encrypted and logged</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -396,9 +399,9 @@ def render_login():
         # Feature badges below login
         st.markdown("""
         <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;">
-            <span style="background:rgba(37,99,235,0.15);border:1px solid #2563EB;color:#60A5FA;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">🧠 AI Diagnostics</span>
+            <span style="background:rgba(37,99,235,0.08);border:1px solid #93C5FD;color:#1D4ED8;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">🧠 AI Diagnostics</span>
             <span style="background:rgba(124,58,237,0.15);border:1px solid #7C3AED;color:#C084FC;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">🔬 Lab Analysis</span>
-            <span style="background:rgba(0,229,160,0.12);border:1px solid #00E5A0;color:#00E5A0;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">✅ Doctor Review</span>
+            <span style="background:rgba(0,229,160,0.12);border:1px solid #00E5A0;color:#059669;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">✅ Doctor Review</span>
             <span style="background:rgba(255,122,53,0.12);border:1px solid #FF7A35;color:#FF7A35;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">📱 Patient Alerts</span>
         </div>
         """, unsafe_allow_html=True)
@@ -412,20 +415,20 @@ def render_dashboard():
 
     # ── Top navigation bar ────────────────────────────────────
     st.markdown(
-        f'<div style="background:linear-gradient(90deg,#080F1C,#0D1A2E);border-bottom:2px solid #2563EB;'
+        f'<div style="background:linear-gradient(90deg,#1E3A8A,#2563EB);border-bottom:2px solid #1D4ED8;'
         f'padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;">'
         f'<div style="display:flex;align-items:center;gap:14px;">'
         f'<div style="background:linear-gradient(135deg,#2563EB,#7C3AED);width:42px;height:42px;'
         f'border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;'
         f'box-shadow:0 4px 15px rgba(37,99,235,0.5);">🏥</div>'
-        f'<div><div style="font-size:20px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;">MedAI</div>'
-        f'<div style="font-size:10px;color:#4A6080;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
+        f'<div><div style="font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-0.5px;">MedAI</div>'
+        f'<div style="font-size:10px;color:#64748B;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
         f'<div style="display:flex;align-items:center;gap:16px;">'
         f'<div style="background:rgba(37,99,235,0.15);border:1px solid #2563EB;border-radius:10px;padding:8px 16px;">'
         f'<div style="font-size:14px;font-weight:700;color:#FFFFFF;">{active["name"]}</div>'
-        f'<div style="font-size:11px;color:#60A5FA;">{active["dept"]}  ·  {active["specialty"]}</div></div>'
+        f'<div style="font-size:11px;color:#BFDBFE;">{active["dept"]}  ·  {active["specialty"]}</div></div>'
         f'<div style="background:rgba(0,229,160,0.15);border:2px solid rgba(0,229,160,0.5);'
-        f'color:#00E5A0;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;">● Online</div>'
+        f'color:#059669;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;">● Online</div>'
         f'</div></div>',unsafe_allow_html=True)
 
     # Logout button row
@@ -450,7 +453,7 @@ def render_dashboard():
         <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 32px;gap:20px;">
             <div style="font-size:52px;filter:drop-shadow(0 0 16px rgba(96,165,250,0.7));">{icon}</div>
             <div>
-                <div style="font-size:28px;font-weight:800;color:#FFFFFF;text-shadow:0 2px 12px rgba(0,0,0,0.8);letter-spacing:-0.5px;">{active["dept"]} — Patient Reports</div>
+                <div style="font-size:28px;font-weight:800;color:#0F172A;text-shadow:0 2px 12px rgba(0,0,0,0.8);letter-spacing:-0.5px;">{active["dept"]} — Patient Reports</div>
                 <div style="font-size:14px;color:#93C5FD;margin-top:5px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.6);">Assigned to {active["name"]}  ·  {active["specialty"]}</div>
             </div>
         </div>
@@ -502,10 +505,10 @@ def render_dashboard():
         sel_pid=st.session_state.selected.get(active_id)
         if not sel_pid or sel_pid not in my_patients:
             st.markdown(f"""
-            <div style="background:linear-gradient(135deg,#0A1525,#0D1A2E);border:2px dashed #2563EB;border-radius:16px;padding:60px;text-align:center;">
+            <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:2px dashed #93C5FD;border-radius:16px;padding:60px;text-align:center;">
                 <div style="font-size:50px;margin-bottom:16px;">👈</div>
-                <div style="font-size:18px;color:#60A5FA;font-weight:600;">Select a Patient</div>
-                <div style="font-size:14px;color:#4A6080;margin-top:8px;">Choose a patient from the queue to view their report</div>
+                <div style="font-size:18px;color:#2563EB;font-weight:600;">Select a Patient</div>
+                <div style="font-size:14px;color:#64748B;margin-top:8px;">Choose a patient from the queue to view their report</div>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -528,8 +531,8 @@ def render_patient(p, pid, doc_id):
         f'<div style="background:{grad};border:2px solid {clr}55;border-radius:16px;padding:20px 24px;margin-bottom:20px;">'
         f'<div style="display:flex;justify-content:space-between;align-items:center;">'
         f'<div><div style="font-size:11px;font-weight:700;color:{clr};letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">Patient ID</div>'
-        f'<div style="font-size:26px;font-weight:800;color:#FFFFFF;font-family:monospace;">{pid}</div>'
-        f'<div style="font-size:13px;color:#94A3B8;margin-top:6px;">{mtype}  ·  {doc["name"]}</div></div>'
+        f'<div style="font-size:26px;font-weight:800;color:#0F172A;font-family:monospace;">{pid}</div>'
+        f'<div style="font-size:13px;color:#475569;margin-top:6px;">{mtype}  ·  {doc["name"]}</div></div>'
         f'<div style="background:{bg};border:2px solid {urg_clr}66;border-radius:14px;padding:14px 24px;text-align:center;">'
         f'<div style="font-size:13px;font-weight:700;color:{urg_clr};margin-bottom:6px;">{urg}</div>'
         f'<div style="font-size:22px;font-weight:800;color:{clr};">{sev}</div>'
@@ -572,16 +575,21 @@ def render_patient(p, pid, doc_id):
 
         if mtype == 'Lab Report':
             if 'ckd' in disease or 'kidney' in disease:
+                # Only reject if it's clearly a WRONG disease summary
+                # (tumor/fetal content, or explicitly says "diabetes is the cause")
                 bad = ['tumor','tumour','glioma','meningioma','pituitary','fetal','ultrasound',
                        'diabetes is not a contributing','diabetes is not the primary',
-                       'no indications of glucose','no indication of glucose']
+                       'no indications of glucose in the urine',
+                       'no indication of glucose in the urine']
                 if any(w in sl for w in bad): mismatch = True
             elif 'diabetes' in disease:
-                bad = ['tumor','tumour','glioma','meningioma','fetal','kidney disease','ckd',
-                       'renal failure','glomerular filtration']
+                # Reject if clearly a kidney/tumor/fetal summary
+                bad = ['tumor','tumour','glioma','meningioma','fetal',
+                       'end-stage renal disease','chronic kidney disease stage',
+                       'glomerular filtration rate of']
                 if any(w in sl for w in bad): mismatch = True
             elif 'thyroid' in disease:
-                bad = ['tumor','tumour','glioma','fetal','kidney','ckd','glucose','diabetes']
+                bad = ['tumor','tumour','glioma','fetal','glioblastoma']
                 if any(w in sl for w in bad): mismatch = True
 
         elif mtype == 'CT Scan':
@@ -619,11 +627,11 @@ def render_patient(p, pid, doc_id):
         st.markdown(
             f'<div style="background:linear-gradient(135deg,rgba(0,229,160,0.15),rgba(0,229,160,0.05));'
             f'border:2px solid rgba(0,229,160,0.5);border-radius:14px;padding:20px 24px;margin-bottom:16px;">'
-            f'<div style="font-size:16px;font-weight:800;color:#00E5A0;margin-bottom:10px;">✅ Report Approved & Released to Patient</div>'
+            f'<div style="font-size:16px;font-weight:800;color:#059669;margin-bottom:10px;">✅ Report Approved & Released to Patient</div>'
             f'<div style="display:flex;gap:24px;flex-wrap:wrap;">'
-            f'<div style="font-size:13px;color:#94A3B8;">👨‍⚕️ Approved by: <b style="color:#FFFFFF;">{ap["doctor"]}</b></div>'
-            f'<div style="font-size:13px;color:#94A3B8;">🕐 Time: <b style="color:#FFFFFF;">{ap["time"]}</b></div>'
-            f'<div style="font-size:13px;color:#00E5A0;font-weight:600;">📱 Patient message sent successfully</div>'
+            f'<div style="font-size:13px;color:#475569;">👨‍⚕️ Approved by: <b style="color:#0F172A;">{ap["doctor"]}</b></div>'
+            f'<div style="font-size:13px;color:#475569;">🕐 Time: <b style="color:#0F172A;">{ap["time"]}</b></div>'
+            f'<div style="font-size:13px;color:#059669;font-weight:600;">📱 Patient message sent successfully</div>'
             f'</div></div>',unsafe_allow_html=True)
 
         # Show doctor's additional notes if any
@@ -631,18 +639,18 @@ def render_patient(p, pid, doc_id):
             st.markdown(
                 f'<div style="background:rgba(96,165,250,0.1);border:2px solid rgba(96,165,250,0.4);border-left:4px solid #60A5FA;border-radius:12px;padding:16px 20px;margin-bottom:16px;">'
                 f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📝 Doctor\'s Prescription / Notes Added</div>'
-                f'<div style="font-size:14px;color:#FFFFFF;line-height:1.7;white-space:pre-wrap;">{ap["notes"]}</div>'
+                f'<div style="font-size:14px;color:#0F172A;line-height:1.7;white-space:pre-wrap;">{ap["notes"]}</div>'
                 f'</div>', unsafe_allow_html=True)
 
         with st.expander('📱 View Patient Message Sent'):
-            st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:20px;font-size:14px;color:#E8EDF5;white-space:pre-wrap;line-height:1.8;">{ap["message"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:20px;font-size:14px;color:#1E293B;white-space:pre-wrap;line-height:1.8;">{ap["message"]}</div>', unsafe_allow_html=True)
 
         # ── REVOKE APPROVAL ───────────────────────────────────
         st.markdown("""
         <div style="background:linear-gradient(135deg,rgba(255,122,53,0.1),rgba(255,59,92,0.05));
         border:2px solid rgba(255,122,53,0.4);border-radius:14px;padding:18px 22px;margin-top:16px;">
             <div style="font-size:14px;font-weight:800;color:#FF7A35;margin-bottom:6px;">⚠️ Revoke Approval</div>
-            <div style="font-size:13px;color:#94A3B8;margin-bottom:12px;">
+            <div style="font-size:13px;color:#475569;margin-bottom:12px;">
                 If this approval was made in error, you can revoke it. The patient will be notified that the report
                 is under further review and the original message will be retracted.
             </div>
@@ -678,10 +686,10 @@ def render_patient(p, pid, doc_id):
             f'<div style="background:linear-gradient(135deg,rgba(255,122,53,0.15),rgba(255,122,53,0.05));'
             f'border:2px solid rgba(255,122,53,0.5);border-radius:14px;padding:20px 24px;margin-bottom:16px;">'
             f'<div style="font-size:16px;font-weight:800;color:#FF7A35;margin-bottom:10px;">🔄 Approval Revoked — Under Review</div>'
-            f'<div style="font-size:13px;color:#94A3B8;margin-bottom:10px;">Revoked by: <b style="color:#FFFFFF;">{rv["doctor"]}</b>  ·  Time: <b style="color:#FFFFFF;">{rv["time"]}</b></div>'
+            f'<div style="font-size:13px;color:#475569;margin-bottom:10px;">Revoked by: <b style="color:#0F172A;">{rv["doctor"]}</b>  ·  Time: <b style="color:#0F172A;">{rv["time"]}</b></div>'
             f'<div style="background:rgba(255,122,53,0.1);border-left:4px solid #FF7A35;border-radius:8px;padding:10px 14px;margin-bottom:10px;">'
             f'<div style="font-size:12px;font-weight:700;color:#FF7A35;margin-bottom:4px;">REASON FOR REVOCATION</div>'
-            f'<div style="font-size:14px;color:#FFFFFF;">{rv.get("revoke_reason","Not stated")}</div></div>'
+            f'<div style="font-size:14px;color:#0F172A;">{rv.get("revoke_reason","Not stated")}</div></div>'
             f'<div style="font-size:13px;color:#FFD000;font-weight:600;">📱 Patient has been notified that their report is under further review.</div>'
             f'</div>',unsafe_allow_html=True)
 
@@ -694,7 +702,7 @@ def render_patient(p, pid, doc_id):
             f"We apologise for any inconvenience.\n\nRegards,\nMedAI Clinical System"
         )
         with st.expander('📱 View Revocation Message Sent to Patient'):
-            st.markdown(f'<div style="background:#0D1A2E;border:2px solid #FF7A35;border-radius:12px;padding:20px;font-size:14px;color:#E8EDF5;white-space:pre-wrap;line-height:1.8;">{revoked_patient_msg}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#FFFFFF;border:2px solid #FF7A35;border-radius:12px;padding:20px;font-size:14px;color:#1E293B;white-space:pre-wrap;line-height:1.8;">{revoked_patient_msg}</div>', unsafe_allow_html=True)
 
         st.markdown('<div style="font-size:13px;font-weight:600;color:#60A5FA;margin:16px 0 8px;">🔁 Re-review this patient and issue a new decision:</div>', unsafe_allow_html=True)
         if st.button('↺ Re-open for Review', key='reopen_'+pid, use_container_width=False):
@@ -710,10 +718,10 @@ def render_patient(p, pid, doc_id):
             f'<div style="background:linear-gradient(135deg,rgba(255,59,92,0.15),rgba(255,59,92,0.05));'
             f'border:2px solid rgba(255,59,92,0.5);border-radius:14px;padding:20px 24px;margin-bottom:16px;">'
             f'<div style="font-size:16px;font-weight:800;color:#FF3B5C;margin-bottom:10px;">❌ Report Rejected</div>'
-            f'<div style="font-size:13px;color:#94A3B8;margin-bottom:10px;">Rejected by: <b style="color:#FFFFFF;">{rj.get("doctor","")}</b>  ·  Time: <b style="color:#FFFFFF;">{rj.get("time","")}</b></div>'
+            f'<div style="font-size:13px;color:#475569;margin-bottom:10px;">Rejected by: <b style="color:#0F172A;">{rj.get("doctor","")}</b>  ·  Time: <b style="color:#0F172A;">{rj.get("time","")}</b></div>'
             + (f'<div style="background:rgba(255,59,92,0.1);border-left:4px solid #FF3B5C;border-radius:8px;padding:10px 14px;margin-bottom:12px;">'
                f'<div style="font-size:12px;font-weight:700;color:#FF3B5C;margin-bottom:4px;">REJECTION REASON</div>'
-               f'<div style="font-size:14px;color:#FFFFFF;">{rj.get("reject_reason","Not stated")}</div></div>'
+               f'<div style="font-size:14px;color:#0F172A;">{rj.get("reject_reason","Not stated")}</div></div>'
                if rj.get("reject_reason") else '') +
             f'</div>',unsafe_allow_html=True)
 
@@ -725,19 +733,19 @@ def render_patient(p, pid, doc_id):
             <div style="display:flex;flex-direction:column;gap:10px;">
                 <div style="display:flex;align-items:flex-start;gap:12px;">
                     <span style="background:rgba(255,59,92,0.2);color:#FF3B5C;font-weight:800;font-size:14px;padding:4px 10px;border-radius:8px;flex-shrink:0;">1</span>
-                    <span style="font-size:13px;color:#E8EDF5;line-height:1.6;">The patient has <b style="color:#FF3B5C;">NOT been notified</b> — no message has been sent. Their portal will show "Report Under Review".</span>
+                    <span style="font-size:13px;color:#1E293B;line-height:1.6;">The patient has <b style="color:#FF3B5C;">NOT been notified</b> — no message has been sent. Their portal will show "Report Under Review".</span>
                 </div>
                 <div style="display:flex;align-items:flex-start;gap:12px;">
                     <span style="background:rgba(255,122,53,0.2);color:#FF7A35;font-weight:800;font-size:14px;padding:4px 10px;border-radius:8px;flex-shrink:0;">2</span>
-                    <span style="font-size:13px;color:#E8EDF5;line-height:1.6;">The AI report is flagged for <b style="color:#FF7A35;">re-analysis</b>. Updated results will be queued for your review.</span>
+                    <span style="font-size:13px;color:#1E293B;line-height:1.6;">The AI report is flagged for <b style="color:#FF7A35;">re-analysis</b>. Updated results will be queued for your review.</span>
                 </div>
                 <div style="display:flex;align-items:flex-start;gap:12px;">
                     <span style="background:rgba(255,208,0,0.2);color:#FFD000;font-weight:800;font-size:14px;padding:4px 10px;border-radius:8px;flex-shrink:0;">3</span>
-                    <span style="font-size:13px;color:#E8EDF5;line-height:1.6;">You can <b style="color:#FFD000;">reset and re-review</b> the current report, or request the patient resubmit samples/scans.</span>
+                    <span style="font-size:13px;color:#1E293B;line-height:1.6;">You can <b style="color:#FFD000;">reset and re-review</b> the current report, or request the patient resubmit samples/scans.</span>
                 </div>
                 <div style="display:flex;align-items:flex-start;gap:12px;">
-                    <span style="background:rgba(0,229,160,0.2);color:#00E5A0;font-weight:800;font-size:14px;padding:4px 10px;border-radius:8px;flex-shrink:0;">4</span>
-                    <span style="font-size:13px;color:#E8EDF5;line-height:1.6;">Once you are satisfied with the updated report, <b style="color:#00E5A0;">approve and release</b> to notify the patient.</span>
+                    <span style="background:rgba(0,229,160,0.2);color:#059669;font-weight:800;font-size:14px;padding:4px 10px;border-radius:8px;flex-shrink:0;">4</span>
+                    <span style="font-size:13px;color:#1E293B;line-height:1.6;">Once you are satisfied with the updated report, <b style="color:#059669;">approve and release</b> to notify the patient.</span>
                 </div>
             </div>
         </div>
@@ -757,7 +765,7 @@ def render_patient(p, pid, doc_id):
             st.markdown("""
             <div style="background:rgba(192,132,252,0.1);border:2px solid rgba(192,132,252,0.4);border-radius:12px;padding:16px 20px;margin-top:12px;">
                 <div style="font-size:13px;font-weight:700;color:#C084FC;margin-bottom:8px;">📱 Resubmission Request Sent to Patient:</div>
-                <div style="font-size:13px;color:#E8EDF5;line-height:1.7;">
+                <div style="font-size:13px;color:#1E293B;line-height:1.7;">
                     "Dear Patient, your recent report could not be approved at this time. Your doctor has requested that you resubmit your test samples / attend for a repeat scan at your earliest convenience. Please contact the clinic to schedule your appointment. — MedAI Clinical System"
                 </div>
             </div>
@@ -769,9 +777,9 @@ def render_patient(p, pid, doc_id):
     else:
         st.markdown("""
         <div style="background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(124,58,237,0.05));
-        border:2px solid #2563EB;border-radius:14px;padding:20px 24px;margin-bottom:16px;">
+        border:2px solid #93C5FD;border-radius:14px;padding:20px 24px;margin-bottom:16px;">
             <div style="font-size:14px;font-weight:800;color:#60A5FA;margin-bottom:4px;">📝 Doctor's Prescription & Additional Notes</div>
-            <div style="font-size:13px;color:#4A6080;margin-bottom:12px;">Add prescriptions, amendments, follow-up instructions, or referrals. These will be included in the patient's message.</div>
+            <div style="font-size:13px;color:#64748B;margin-bottom:12px;">Add prescriptions, amendments, follow-up instructions, or referrals. These will be included in the patient's message.</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -797,9 +805,9 @@ def render_patient(p, pid, doc_id):
 
         with st.expander('📱 Preview Patient Message'):
             st.markdown(
-                f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:18px 22px;">'
-                f'<div style="font-size:12px;font-weight:700;color:#00E5A0;margin-bottom:10px;letter-spacing:0.08em;">📨 MESSAGE TO PATIENT</div>'
-                f'<div style="font-size:14px;color:#E8EDF5;line-height:1.8;white-space:pre-wrap;">{pat_msg}</div></div>',
+                f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:18px 22px;">'
+                f'<div style="font-size:12px;font-weight:700;color:#059669;margin-bottom:10px;letter-spacing:0.08em;">📨 MESSAGE TO PATIENT</div>'
+                f'<div style="font-size:14px;color:#1E293B;line-height:1.8;white-space:pre-wrap;">{pat_msg}</div></div>',
                 unsafe_allow_html=True)
 
         st.markdown('<br>', unsafe_allow_html=True)
@@ -872,7 +880,7 @@ def render_lab(p,sev,clr):
             bg = 'background:rgba(255,208,0,0.06);'
         else:
             vc = '#2A3A50'; border = '2px solid #1E3A5F'
-            bg = 'background:#0D1A2E;'
+            bg = 'background:#FFFFFF;'
         with col:
             st.markdown(
                 f'<div style="{bg}border:{border};border-radius:12px;padding:16px;margin-bottom:12px;">'
@@ -935,14 +943,13 @@ def render_ct(p,sev,clr):
     # Note: CT patient IDs are derived from image filenames (e.g. CT-Te-no_0134.jpg-957)
     # The eGFR or lab values sometimes appear in RAG context docs — they are NOT this patient's values
     st.markdown(
-        f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+        f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
         f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">CT Brain Imaging</div>'
-        f'<div style="font-size:20px;font-weight:800;color:#FFFFFF;margin-bottom:6px;">{name}</div>'
-        f'<div style="font-size:14px;color:#94A3B8;margin-bottom:10px;">{desc}</div>'
+        f'<div style="font-size:20px;font-weight:800;color:#0F172A;margin-bottom:6px;">{name}</div>'
+        f'<div style="font-size:14px;color:#475569;margin-bottom:10px;">{desc}</div>'
         f'<div style="display:flex;gap:16px;align-items:center;">'
         f'<span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
-        f'<span style="color:#94A3B8;font-size:13px;">AI Confidence: <b style="color:#FFFFFF;">{round(conf*100,1)}%</b></span>'
-        f'<span style="background:rgba(124,58,237,0.15);border:1px solid #7C3AED44;color:#A78BFA;font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;">Imaging only — no lab values</span>'
+        f'<span style="color:#475569;font-size:13px;">AI Confidence: <b style="color:#0F172A;">{round(conf*100,1)}%</b></span>'
         f'</div></div>',
         unsafe_allow_html=True)
 
@@ -956,8 +963,8 @@ def render_ct(p,sev,clr):
             st.markdown('<div style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
             if t[1] and os.path.exists(t[1]): st.image(t[1],use_column_width=True)
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#94A3B8;">'
-            '🔍 <b style="color:#FFFFFF;">Grad-CAM:</b> Warm colours (red/yellow) = high AI attention regions indicating the tumour location used for classification.</div>',
+            '<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#475569;">'
+            '🔍 <b style="color:#0F172A;">Grad-CAM:</b> Warm colours (red/yellow) = high AI attention regions indicating the tumour location used for classification.</div>',
             unsafe_allow_html=True)
     else:
         st.markdown(
@@ -970,17 +977,17 @@ def render_ct(p,sev,clr):
 def render_us(p,sev,clr):
     cls=p.get('predicted_class',''); conf=n(p.get('confidence')) or 0
     name=US_NAMES.get(cls,cls); desc=US_DESC.get(cls,'')
-    st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
-                f'<div style="font-size:11px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Obstetric Ultrasound</div>'
-                f'<div style="font-size:20px;font-weight:800;color:#FFFFFF;margin-bottom:6px;">{name}</div>'
-                f'<div style="font-size:14px;color:#94A3B8;margin-bottom:10px;">{desc}</div>'
+    st.markdown(f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+                f'<div style="font-size:11px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Obstetric Ultrasound</div>'
+                f'<div style="font-size:20px;font-weight:800;color:#0F172A;margin-bottom:6px;">{name}</div>'
+                f'<div style="font-size:14px;color:#475569;margin-bottom:10px;">{desc}</div>'
                 f'<div style="display:flex;gap:16px;"><span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
-                f'<span style="color:#94A3B8;font-size:13px;">AI Confidence: <b style="color:#FFFFFF;">{round(conf*100,1)}%</b></span></div></div>',unsafe_allow_html=True)
+                f'<span style="color:#475569;font-size:13px;">AI Confidence: <b style="color:#0F172A;">{round(conf*100,1)}%</b></span></div></div>',unsafe_allow_html=True)
     t=US_IMAGE.get(str(cls),('',''))
     if t[0] and os.path.exists(t[0]):
         ug1,ug2=st.columns(2)
         with ug1:
-            st.markdown('<div style="font-size:11px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original Ultrasound</div>',unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Original Ultrasound</div>',unsafe_allow_html=True)
             st.image(t[0],use_column_width=True)
         with ug2:
             st.markdown('<div style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
@@ -999,9 +1006,9 @@ def render_combined(p,sev,clr):
     ct_cls=p.get('ct_predicted_class',''); us_cls=p.get('us_predicted_class','')
     if ct_cls or us_cls:
         parts=[]
-        if ct_cls: parts.append('🧠 CT: <b style="color:#FFFFFF;">'+CT_NAMES.get(ct_cls,ct_cls)+'</b>')
-        if us_cls: parts.append('🔬 US: <b style="color:#FFFFFF;">'+US_NAMES.get(us_cls,us_cls)+'</b>')
-        st.markdown('<div style="font-size:13px;color:#94A3B8;margin-bottom:14px;">'+'  ·  '.join(parts)+'</div>',unsafe_allow_html=True)
+        if ct_cls: parts.append('🧠 CT: <b style="color:#0F172A;">'+CT_NAMES.get(ct_cls,ct_cls)+'</b>')
+        if us_cls: parts.append('🔬 US: <b style="color:#0F172A;">'+US_NAMES.get(us_cls,us_cls)+'</b>')
+        st.markdown('<div style="font-size:13px;color:#475569;margin-bottom:14px;">'+'  ·  '.join(parts)+'</div>',unsafe_allow_html=True)
 
     rows=[]
     egfr=n(p.get('egfr')); glucose=n(p.get('glucose')); tsh=n(p.get('tsh')); free_t4=n(p.get('free_t4'))
@@ -1039,9 +1046,9 @@ def render_rag(parsed, citations):
         parsed.get('urgency'),
     ]):
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px dashed #2563EB;border-radius:12px;padding:20px 24px;">'
+            '<div style="background:#FFFFFF;border:2px dashed #2563EB;border-radius:12px;padding:20px 24px;">'
             '<div style="font-size:14px;color:#60A5FA;font-weight:600;">⚠️ RAG summary not available for this patient.</div>'
-            '<div style="font-size:13px;color:#4A6080;margin-top:6px;">Ensure <code>rag_summaries.json</code> contains an entry for this patient ID '
+            '<div style="font-size:13px;color:#64748B;margin-top:6px;">Ensure <code>rag_summaries.json</code> contains an entry for this patient ID '
             'and that the GPT output includes CLINICAL SUMMARY / KEY FINDINGS / RECOMMENDATIONS / FOLLOW-UP / URGENCY sections.</div>'
             '</div>',
             unsafe_allow_html=True)
@@ -1050,27 +1057,27 @@ def render_rag(parsed, citations):
     # ── 1. CLINICAL SUMMARY ──────────────────────────────────
     if parsed.get('clinical_summary'):
         st.markdown(
-            '<div style="background:linear-gradient(135deg,#130A2E,#0D1B2E);border:2px solid #3B1FA8;'
+            '<div style="background:linear-gradient(135deg,#130A2E,#0D1B2E);border:2px solid #C4B5FD;'
             'border-left:5px solid #7C3AED;border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
             '<span style="font-size:16px;">🧬</span>'
             '<span style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.1em;">Clinical Summary</span>'
             '</div>'
-            f'<div style="font-size:15px;color:#E8EDF5;line-height:1.9;">{parsed["clinical_summary"]}</div>'
+            f'<div style="font-size:15px;color:#1E293B;line-height:1.9;">{parsed["clinical_summary"]}</div>'
             '</div>',
             unsafe_allow_html=True)
 
     # ── 2. KEY FINDINGS ──────────────────────────────────────
     if parsed.get('key_findings'):
         rows_html = ''.join([
-            f'<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #1E3A5F;align-items:flex-start;">'
+            f'<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #BFDBFE;align-items:flex-start;">'
             f'<span style="background:rgba(192,132,252,0.2);color:#C084FC;font-weight:800;font-size:13px;'
             f'padding:2px 9px;border-radius:6px;flex-shrink:0;margin-top:1px;">F{i+1}</span>'
-            f'<span style="font-size:14px;color:#E8EDF5;line-height:1.65;">{f}</span></div>'
+            f'<span style="font-size:14px;color:#1E293B;line-height:1.65;">{f}</span></div>'
             for i, f in enumerate(parsed['key_findings'])
         ])
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px solid #7C3AED;border-radius:14px;'
+            '<div style="background:#FFFFFF;border:2px solid #7C3AED;border-radius:14px;'
             'padding:16px 20px;margin-bottom:14px;">'
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
             '<span style="font-size:16px;">🔍</span>'
@@ -1085,9 +1092,9 @@ def render_rag(parsed, citations):
     if parsed.get('recommendations'):
         recs_html = ''.join([
             f'<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid rgba(0,229,160,0.15);align-items:flex-start;">'
-            f'<span style="background:linear-gradient(135deg,#059669,#00E5A0);color:#FFFFFF;font-weight:800;'
+            f'<span style="background:linear-gradient(135deg,#059669,#00E5A0);color:#0F172A;font-weight:800;'
             f'font-size:13px;padding:3px 10px;border-radius:8px;flex-shrink:0;min-width:28px;text-align:center;">{i+1}</span>'
-            f'<span style="font-size:14px;color:#E8EDF5;line-height:1.65;">{r}</span></div>'
+            f'<span style="font-size:14px;color:#1E293B;line-height:1.65;">{r}</span></div>'
             for i, r in enumerate(parsed['recommendations'])
         ])
         st.markdown(
@@ -1096,8 +1103,8 @@ def render_rag(parsed, citations):
             'padding:16px 20px;margin-bottom:14px;">'
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
             '<span style="font-size:16px;">💊</span>'
-            '<span style="font-size:11px;font-weight:700;color:#00E5A0;text-transform:uppercase;letter-spacing:0.1em;">Clinical Recommendations</span>'
-            f'<span style="background:rgba(0,229,160,0.2);color:#00E5A0;font-size:11px;font-weight:700;'
+            '<span style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.1em;">Clinical Recommendations</span>'
+            f'<span style="background:rgba(0,229,160,0.2);color:#059669;font-size:11px;font-weight:700;'
             f'padding:2px 10px;border-radius:10px;">{len(parsed["recommendations"])} actions</span>'
             '</div>'
             f'{recs_html}</div>',
@@ -1107,7 +1114,7 @@ def render_rag(parsed, citations):
         st.markdown(
             '<div style="background:rgba(0,229,160,0.04);border:2px dashed rgba(0,229,160,0.25);'
             'border-radius:12px;padding:12px 18px;margin-bottom:14px;">'
-            '<span style="font-size:13px;color:#4A6080;">💊 <b style="color:#00E5A0;">Recommendations</b> — '
+            '<span style="font-size:13px;color:#64748B;">💊 <b style="color:#059669;">Recommendations</b> — '
             'Not generated for this entry. Check GPT prompt includes a RECOMMENDATIONS: section.</span>'
             '</div>',
             unsafe_allow_html=True)
@@ -1118,18 +1125,18 @@ def render_rag(parsed, citations):
         fu = parsed.get('followup','')
         if fu:
             st.markdown(
-                '<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
                 '<span style="font-size:15px;">📅</span>'
                 '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Follow-up Plan</span>'
                 '</div>'
-                f'<div style="font-size:14px;color:#FFFFFF;font-weight:600;line-height:1.7;">{fu}</div>'
+                f'<div style="font-size:14px;color:#0F172A;font-weight:600;line-height:1.7;">{fu}</div>'
                 '</div>',
                 unsafe_allow_html=True)
         else:
             st.markdown(
-                '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
-                '<div style="font-size:13px;color:#4A6080;">📅 Follow-up not specified in summary.</div>'
+                '<div style="background:#FFFFFF;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="font-size:13px;color:#64748B;">📅 Follow-up not specified in summary.</div>'
                 '</div>',
                 unsafe_allow_html=True)
 
@@ -1150,8 +1157,8 @@ def render_rag(parsed, citations):
                 unsafe_allow_html=True)
         else:
             st.markdown(
-                '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
-                '<div style="font-size:13px;color:#4A6080;">⚠️ Urgency not specified.</div>'
+                '<div style="background:#FFFFFF;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="font-size:13px;color:#64748B;">⚠️ Urgency not specified.</div>'
                 '</div>',
                 unsafe_allow_html=True)
 
@@ -1180,20 +1187,20 @@ def render_rag(parsed, citations):
             for c in unique_cites
         ])
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:4px solid #60A5FA;border-radius:12px;'
+            '<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:4px solid #60A5FA;border-radius:12px;'
             'padding:14px 20px;margin-bottom:14px;">'
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
             '<span style="font-size:15px;">📚</span>'
             '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Guideline References Used</span>'
             '</div>'
             f'<div style="line-height:2;">{cite_pills}</div>'
-            '<div style="font-size:11px;color:#4A6080;margin-top:8px;font-style:italic;">These guidelines were used as the knowledge base for this AI-generated clinical summary.</div>'
+            '<div style="font-size:11px;color:#64748B;margin-top:8px;font-style:italic;">These guidelines were used as the knowledge base for this AI-generated clinical summary.</div>'
             '</div>',
             unsafe_allow_html=True)
     else:
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
-            '<div style="font-size:13px;color:#4A6080;">📚 No guideline citations available for this summary.</div>'
+            '<div style="background:#FFFFFF;border:2px dashed #1E3A5F;border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
+            '<div style="font-size:13px;color:#64748B;">📚 No guideline citations available for this summary.</div>'
             '</div>',
             unsafe_allow_html=True)
 
