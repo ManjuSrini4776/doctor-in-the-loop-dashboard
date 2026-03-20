@@ -91,8 +91,21 @@ RAG_DATA     = load_rag()
 logger.info(f"STARTUP  | Patients loaded={len(ALL_PATIENTS)} | RAG entries={len(RAG_DATA)}")
 
 # ── SESSION STATE ─────────────────────────────────────────────
-for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{},'reject_resubmit':{}}.items():
+for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{},'reject_resubmit':{},'activity_log':[]}.items():
     if k not in st.session_state: st.session_state[k]=v
+
+def add_log(action, details, level='INFO'):
+    """Add entry to session activity log and Python logger."""
+    entry = {
+        'time':    datetime.now().strftime('%H:%M:%S'),
+        'date':    datetime.now().strftime('%Y-%m-%d'),
+        'action':  action,
+        'details': details,
+        'level':   level,
+    }
+    st.session_state.activity_log.append(entry)
+    # Also log to Python logger
+    logger.info(f"{action:10} | {details}")
 
 # ── HELPERS ───────────────────────────────────────────────────
 def n(v):
@@ -394,7 +407,7 @@ def render_login():
         if st.button('🔓  Sign In →',use_container_width=True,type='primary'):
             if pwd==DOCTORS[sel_id]['password']:
                 st.session_state.logged_in=True; st.session_state.active_doctor=sel_id
-                logger.info(f"LOGIN  | Doctor={DOCTORS[sel_id]['name']} | ID={sel_id}")
+                add_log("LOGIN", f"Doctor: {DOCTORS[sel_id]['name']} ({sel_id})")
                 st.rerun()
             else:
                 st.error('❌ Incorrect password. Please try again.')
@@ -416,6 +429,104 @@ def render_login():
             <span style="background:rgba(255,122,53,0.12);border:1px solid #FF7A35;color:#EA580C;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;">📱 Patient Alerts</span>
         </div>
         """, unsafe_allow_html=True)
+
+
+# ── ACTIVITY LOG ──────────────────────────────────────────────
+def render_activity_log():
+    logs = st.session_state.get('activity_log', [])
+
+    # Header + clear button
+    col_h, col_btn = st.columns([4,1])
+    with col_h:
+        st.markdown('<div style="font-size:14px;font-weight:700;color:#1D4ED8;margin-bottom:12px;">System Activity Log — Current Session</div>', unsafe_allow_html=True)
+    with col_btn:
+        if st.button('🗑️ Clear Log', key='clear_log'):
+            st.session_state.activity_log = []
+            st.rerun()
+
+    if not logs:
+        st.markdown(
+            '<div style="background:#F8FAFF;border:2px dashed #BFDBFE;border-radius:12px;padding:24px;text-align:center;">'
+            '<div style="font-size:14px;color:#64748B;">No activity recorded yet.</div>'
+            '<div style="font-size:13px;color:#94A3B8;margin-top:4px;">Actions like login, patient views, approvals and rejections will appear here.</div>'
+            '</div>', unsafe_allow_html=True)
+        return
+
+    # Stats row
+    from collections import Counter
+    action_counts = Counter(l['action'] for l in logs)
+    s1,s2,s3,s4,s5 = st.columns(5)
+    stat_items = [
+        (s1, 'Total',    len(logs),                         '#2563EB'),
+        (s2, 'Views',    action_counts.get('VIEW',0),       '#7C3AED'),
+        (s3, 'Approved', action_counts.get('APPROVED',0),   '#059669'),
+        (s4, 'Rejected', action_counts.get('REJECTED',0),   '#DC2626'),
+        (s5, 'Revoked',  action_counts.get('REVOKED',0),    '#EA580C'),
+    ]
+    for col, lbl, val, clr in stat_items:
+        with col:
+            st.markdown(
+                f'<div style="background:#FFFFFF;border:2px solid {clr}44;border-top:3px solid {clr};'
+                f'border-radius:10px;padding:10px;text-align:center;margin-bottom:12px;">'
+                f'<div style="font-size:22px;font-weight:800;color:{clr};">{val}</div>'
+                f'<div style="font-size:11px;color:#64748B;font-weight:600;text-transform:uppercase;">{lbl}</div>'
+                f'</div>', unsafe_allow_html=True)
+
+    # Log entries — most recent first
+    level_colors = {
+        'INFO':    ('#2563EB', '#EFF6FF', '🔵'),
+        'SUCCESS': ('#059669', '#F0FDF4', '✅'),
+        'WARNING': ('#D97706', '#FFF7ED', '⚠️'),
+        'ERROR':   ('#DC2626', '#FFF1F2', '❌'),
+    }
+
+    st.markdown('<div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Recent Activity (newest first)</div>', unsafe_allow_html=True)
+
+    rows_html = ''
+    for entry in reversed(logs[-100:]):  # show last 100
+        lvl   = entry.get('level', 'INFO')
+        clr, bg, icon = level_colors.get(lvl, ('#2563EB','#EFF6FF','🔵'))
+        action  = entry.get('action','')
+        details = entry.get('details','')
+        time_s  = entry.get('time','')
+        date_s  = entry.get('date','')
+
+        action_colors = {
+            'LOGIN':    '#059669',
+            'LOGOUT':   '#64748B',
+            'VIEW':     '#2563EB',
+            'APPROVED': '#059669',
+            'REJECTED': '#DC2626',
+            'REVOKED':  '#EA580C',
+        }
+        ac = action_colors.get(action, '#2563EB')
+
+        rows_html += (
+            f'<div style="display:grid;grid-template-columns:80px 90px 1fr;gap:12px;'
+            f'padding:10px 16px;border-bottom:1px solid #F1F5F9;align-items:center;background:{bg}08;">'
+            f'<div style="font-size:12px;color:#94A3B8;font-family:monospace;">{time_s}</div>'
+            f'<div style="background:{ac}18;color:{ac};font-size:11px;font-weight:700;'
+            f'padding:3px 10px;border-radius:20px;text-align:center;">{action}</div>'
+            f'<div style="font-size:13px;color:#334155;">{details}</div>'
+            f'</div>'
+        )
+
+    st.markdown(
+        f'<div style="background:#FFFFFF;border:2px solid #BFDBFE;border-radius:12px;overflow:hidden;">'
+        f'<div style="display:grid;grid-template-columns:80px 90px 1fr;gap:12px;'
+        f'padding:8px 16px;background:#DBEAFE;border-bottom:2px solid #93C5FD;">'
+        f'<div style="font-size:11px;font-weight:700;color:#1D4ED8;">TIME</div>'
+        f'<div style="font-size:11px;font-weight:700;color:#1D4ED8;">ACTION</div>'
+        f'<div style="font-size:11px;font-weight:700;color:#1D4ED8;">DETAILS</div>'
+        f'</div>{rows_html}</div>',
+        unsafe_allow_html=True)
+
+    # Export as text
+    if st.button('📥 Export Log as Text', key='export_log'):
+        log_text = f"MedAI Activity Log — {logs[0]['date'] if logs else 'N/A'}\n{'='*60}\n"
+        for e in logs:
+            log_text += f"[{e['date']} {e['time']}] {e['action']:10} | {e['details']}\n"
+        st.download_button('⬇️ Download log.txt', log_text, 'medai_activity_log.txt', 'text/plain')
 
 
 # ── DASHBOARD ─────────────────────────────────────────────────
@@ -447,7 +558,7 @@ def render_dashboard():
     with logout_col:
         st.markdown('<div style="padding:8px 28px 0 0;">', unsafe_allow_html=True)
         if st.button('🚪 Logout', key='logout_btn'):
-            logger.info(f"LOGOUT | Doctor={DOCTORS.get(st.session_state.active_doctor,{}).get('name','')}")
+            add_log("LOGOUT", f"Doctor: {DOCTORS.get(st.session_state.active_doctor,{}).get('name','')}")
             st.session_state.logged_in=False; st.session_state.active_doctor=None; st.session_state.selected={}; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -496,6 +607,15 @@ def render_dashboard():
                         f'</div>', unsafe_allow_html=True)
 
     # ── Patient queue + detail ────────────────────────────────
+    # ── Dashboard Tabs: Patients | Activity Log ─────────────────
+    tab1, tab2 = st.tabs(["👥  Patient Queue", "📋  Activity Log"])
+
+    with tab2:
+        render_activity_log()
+
+    with tab1:
+        pass  # content below uses tab1 context implicitly via columns
+
     left,right=st.columns([1,2.5],gap='large')
     with left:
         st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">👥 Patient Queue</div>', unsafe_allow_html=True)
@@ -511,7 +631,7 @@ def render_dashboard():
             icon_map={'APPROVED':'✅ ','REJECTED':'❌ ','REVOKED':'🔄 '}
             icon_pre=icon_map.get(dec,'')
             if st.button(icon_pre+pid+'  ·  '+sev,key='p_'+active_id+'_'+pid,use_container_width=True,type='primary' if is_sel else 'secondary'):
-                logger.info(f"VIEW     | Patient={pid} | Doctor={active_id} | Severity={p.get('_sev')} | Disease={p.get('disease_type')}")
+                add_log("VIEW", f"Patient {pid} | {p.get('disease_type','')} | Severity: {p.get('_sev','')}")
                 st.session_state.selected[active_id]=pid; st.rerun()
 
     with right:
@@ -560,23 +680,24 @@ def render_patient(p, pid, doc_id):
 
     # ── AI Clinical Summary ────────────────────────────────────
     st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 14px;font-weight:800;font-size:13px;">📋 Guideline-Based Clinical Insights</div>', unsafe_allow_html=True)
-    if mtype == 'Combined Assessment':
+    # ── Smart RAG lookup for ALL modality types including Combined ──
+    # Try pid first (NB09 generates per-patient summaries keyed by pid)
+    # Fall back to rag_class_key, then get_mm_rag for combined patients
+    raw = RAG_DATA.get(pid, '')
+    if not raw:
+        rag_key = p.get('rag_class_key', '')
+        raw = RAG_DATA.get(rag_key, '')
+
+    if raw:
+        parsed = parse_rag(raw)
+        cites  = raw.get('citations', []) if isinstance(raw, dict) else []
+    elif mtype == 'Combined Assessment':
+        # Last resort for MM patients — build from class keys
         parsed = get_mm_rag(p)
-        cites = parsed.pop('citations', [])
+        cites  = parsed.pop('citations', [])
     else:
-        # ── Smart RAG lookup: try pid first, then rag_class_key ──
-        raw = RAG_DATA.get(pid, '')
-        if not raw:
-            rag_key = p.get('rag_class_key', '')
-            raw = RAG_DATA.get(rag_key, '')
-
-        parsed = parse_rag(raw) if raw else {}
-
-        # Extract citations if raw is a dict (class-key style JSON)
-        if isinstance(raw, dict):
-            cites = raw.get('citations', [])
-        else:
-            cites = []
+        parsed = {}
+        cites  = []
 
         # ── Disease-context guard ─────────────────────────────
         # Prevents showing a CKD summary to a diabetes patient, or a
@@ -682,7 +803,7 @@ def render_patient(p, pid, doc_id):
                         'revoke_reason': revoke_reason.strip(),
                         'original_message': ap.get('message','')
                     }
-                    logger.info(f"REVOKED  | Patient={pid} | Doctor={doc['name']} | Reason={revoke_reason.strip()[:60]}")
+                    add_log("REVOKED", f"Patient {pid} | Reason: {revoke_reason.strip()[:50]} | By: {doc['name']}", "WARNING")
                     st.rerun()
                 else:
                     st.warning('⚠️ Please provide a reason for revoking the approval.')
@@ -831,7 +952,7 @@ def render_patient(p, pid, doc_id):
                     'message': pat_msg,
                     'notes': notes.strip()
                 }
-                logger.info(f"APPROVED | Patient={pid} | Doctor={doc['name']} | Severity={p.get('_sev')} | Disease={p.get('disease_type')}")
+                add_log("APPROVED", f"Patient {pid} | {p.get('disease_type')} | {p.get('_sev')} | By: {doc['name']}", "SUCCESS")
                 st.rerun()
         with b2:
             if st.button('✏️ Approve with Edits', key='edit_'+doc_id+'_'+pid, use_container_width=True):
@@ -851,7 +972,7 @@ def render_patient(p, pid, doc_id):
                     'time': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'reject_reason': reject_reason.strip()
                 }
-                logger.info(f"REJECTED | Patient={pid} | Doctor={doc['name']} | Reason={reject_reason.strip()[:60]}")
+                add_log("REJECTED", f"Patient {pid} | Reason: {reject_reason.strip()[:50]} | By: {doc['name']}", "WARNING")
                 st.rerun()
 
 
