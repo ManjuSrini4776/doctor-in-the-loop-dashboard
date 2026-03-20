@@ -104,21 +104,101 @@ def sev_badge(status):
     return f'<span style="background:{cfg[1]};color:{cfg[0]};font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">{cfg[2]}</span>'
 
 def parse_rag(raw):
-    s={'clinical_summary':'','key_findings':[],'recommendations':[],'followup':'','urgency':''}
-    cur=None
-    for line in raw.split('\n'):
-        line=line.strip()
-        if not line: continue
-        lu=line.upper()
-        if 'CLINICAL SUMMARY' in lu: cur='s'
-        elif 'KEY FINDINGS' in lu: cur='f'
-        elif 'RECOMMENDATION' in lu: cur='r'
-        elif 'FOLLOW' in lu and 'PLAN' in lu: cur='fu'
-        elif lu.startswith('URGENCY'): s['urgency']=line.split(':')[-1].strip(); cur=None
-        elif cur=='s' and not lu.startswith('CLINICAL'): s['clinical_summary']+=line+' '
-        elif cur=='f' and line.startswith('•'): s['key_findings'].append(line[1:].strip())
-        elif cur=='r' and line.startswith('•'): s['recommendations'].append(line[1:].strip())
-        elif cur=='fu' and not lu.startswith('FOLLOW'): s['followup']+=line+' '
+    """
+    Robust parser for GPT-4o-mini RAG output.
+    Handles multiple bullet styles: •  -  *  1.  1)
+    Handles section headers with or without trailing colon.
+    Handles FOLLOW-UP / FOLLOW UP / FOLLOW-UP PLAN variants.
+    Works whether raw is a plain string or a dict with 'raw_text'.
+    """
+    if isinstance(raw, dict):
+        raw = raw.get('raw_text', '') or ''
+    if not raw or raw == 'Summary unavailable':
+        return {'clinical_summary':'','key_findings':[],'recommendations':[],'followup':'','urgency':''}
+
+    import re
+    s = {'clinical_summary':'','key_findings':[],'recommendations':[],'followup':'','urgency':''}
+
+    # Section header detection — order matters (most specific first)
+    SECTION_RE = [
+        (re.compile(r'CLINICAL\s+SUMMARY',        re.I), 'summary'),
+        (re.compile(r'KEY\s+FINDINGS?',            re.I), 'findings'),
+        (re.compile(r'RECOMMENDATIONS?',           re.I), 'recommendations'),
+        (re.compile(r'FOLLOW[\s\-]*UP(\s+PLAN)?',  re.I), 'followup'),
+        (re.compile(r'URGENCY',                    re.I), 'urgency'),
+    ]
+
+    # Bullet prefix — strip •, -, *, digits+dot, digits+paren
+    BULLET_RE = re.compile(r'^[\•\-\*]\s*|^\d+[\.\)]\s*')
+
+    cur = None
+    lines = raw.split('\n')
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Check if this line is a section header
+        matched_section = None
+        for pattern, section_name in SECTION_RE:
+            if pattern.search(stripped):
+                # Make sure it's actually a header line (short, ends with colon or IS just the keyword)
+                clean_line = re.sub(r'[:\*\_\#]+', '', stripped).strip()
+                if len(clean_line) < 60:          # headers are short
+                    matched_section = section_name
+                    # Inline urgency: "URGENCY: ROUTINE"
+                    if section_name == 'urgency':
+                        after_colon = stripped.split(':', 1)[-1].strip()
+                        if after_colon and after_colon.upper() != stripped.upper():
+                            s['urgency'] = after_colon
+                            cur = None
+                        else:
+                            cur = 'urgency'
+                    else:
+                        cur = section_name
+                    break
+
+        if matched_section:
+            continue  # header line consumed, move to next line
+
+        # Content lines — route to current section
+        if cur == 'summary':
+            s['clinical_summary'] += stripped + ' '
+
+        elif cur == 'findings':
+            clean = BULLET_RE.sub('', stripped).strip()
+            if clean:
+                s['key_findings'].append(clean)
+
+        elif cur == 'recommendations':
+            clean = BULLET_RE.sub('', stripped).strip()
+            if clean:
+                s['recommendations'].append(clean)
+
+        elif cur == 'followup':
+            clean = BULLET_RE.sub('', stripped).strip()
+            if clean:
+                s['followup'] += clean + ' '
+
+        elif cur == 'urgency':
+            clean = BULLET_RE.sub('', stripped).strip()
+            if clean and not s['urgency']:
+                s['urgency'] = clean
+
+    # Tidy up
+    s['clinical_summary'] = s['clinical_summary'].strip()
+    s['followup']         = s['followup'].strip()
+
+    # Normalise urgency to one of the known tokens
+    urg_raw = s['urgency'].upper()
+    if 'URGENT' in urg_raw and 'SEMI' not in urg_raw:
+        s['urgency'] = 'URGENT'
+    elif 'SEMI' in urg_raw or 'MODERATE' in urg_raw:
+        s['urgency'] = 'SEMI-URGENT'
+    elif 'ROUTINE' in urg_raw or 'NORMAL' in urg_raw or 'MILD' in urg_raw:
+        s['urgency'] = 'ROUTINE'
+
     return s
 
 def ref_row(param, pat_val, guide, status):
@@ -849,34 +929,151 @@ def render_combined(p,sev,clr):
         st.markdown(ref_table(rows,'KDIGO 2022 · ADA 2024 · ATA/AACE 2023'),unsafe_allow_html=True)
 
 
-def render_rag(parsed,citations):
-    if not parsed or not parsed.get('clinical_summary'):
-        st.markdown('<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:10px;padding:14px 18px;color:#60A5FA;">RAG summary not available for this patient class.</div>',unsafe_allow_html=True)
+def render_rag(parsed, citations):
+    """Render all 5 RAG sections with rich clinical UI for the doctor."""
+
+    if not parsed or not any([
+        parsed.get('clinical_summary'),
+        parsed.get('key_findings'),
+        parsed.get('recommendations'),
+        parsed.get('followup'),
+        parsed.get('urgency'),
+    ]):
+        st.markdown(
+            '<div style="background:#0D1A2E;border:2px dashed #2563EB;border-radius:12px;padding:20px 24px;">'
+            '<div style="font-size:14px;color:#60A5FA;font-weight:600;">⚠️ RAG summary not available for this patient.</div>'
+            '<div style="font-size:13px;color:#4A6080;margin-top:6px;">Ensure <code>rag_summaries.json</code> contains an entry for this patient ID '
+            'and that the GPT output includes CLINICAL SUMMARY / KEY FINDINGS / RECOMMENDATIONS / FOLLOW-UP / URGENCY sections.</div>'
+            '</div>',
+            unsafe_allow_html=True)
         return
 
-    st.markdown(f'<div style="background:linear-gradient(135deg,#130A2E,#0D1B2E);border:2px solid #3B1FA8;border-left:5px solid #7C3AED;border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
-                f'<div style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Clinical Overview</div>'
-                f'<div style="font-size:15px;color:#E8EDF5;line-height:1.85;">{parsed["clinical_summary"]}</div></div>',unsafe_allow_html=True)
+    # ── 1. CLINICAL SUMMARY ──────────────────────────────────
+    if parsed.get('clinical_summary'):
+        st.markdown(
+            '<div style="background:linear-gradient(135deg,#130A2E,#0D1B2E);border:2px solid #3B1FA8;'
+            'border-left:5px solid #7C3AED;border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+            '<span style="font-size:16px;">🧬</span>'
+            '<span style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.1em;">Clinical Summary</span>'
+            '</div>'
+            f'<div style="font-size:15px;color:#E8EDF5;line-height:1.9;">{parsed["clinical_summary"]}</div>'
+            '</div>',
+            unsafe_allow_html=True)
 
+    # ── 2. KEY FINDINGS ──────────────────────────────────────
     if parsed.get('key_findings'):
-        fh=''.join([f'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1E3A5F;"><span style="color:#C084FC;font-weight:700;font-size:16px;flex-shrink:0;">•</span><span style="font-size:14px;color:#E8EDF5;line-height:1.6;">{f}</span></div>' for f in parsed['key_findings']])
-        st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:16px 20px;margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Key Findings</div>{fh}</div>',unsafe_allow_html=True)
+        rows_html = ''.join([
+            f'<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #1E3A5F;align-items:flex-start;">'
+            f'<span style="background:rgba(192,132,252,0.2);color:#C084FC;font-weight:800;font-size:13px;'
+            f'padding:2px 9px;border-radius:6px;flex-shrink:0;margin-top:1px;">F{i+1}</span>'
+            f'<span style="font-size:14px;color:#E8EDF5;line-height:1.65;">{f}</span></div>'
+            for i, f in enumerate(parsed['key_findings'])
+        ])
+        st.markdown(
+            '<div style="background:#0D1A2E;border:2px solid #7C3AED;border-radius:14px;'
+            'padding:16px 20px;margin-bottom:14px;">'
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+            '<span style="font-size:16px;">🔍</span>'
+            '<span style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.1em;">Key Findings</span>'
+            f'<span style="background:rgba(192,132,252,0.2);color:#C084FC;font-size:11px;font-weight:700;'
+            f'padding:2px 10px;border-radius:10px;">{len(parsed["key_findings"])} items</span>'
+            '</div>'
+            f'{rows_html}</div>',
+            unsafe_allow_html=True)
 
+    # ── 3. CLINICAL RECOMMENDATIONS ─────────────────────────
     if parsed.get('recommendations'):
-        rh=''.join([f'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1E3A5F;"><span style="background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;font-weight:800;font-size:13px;padding:3px 10px;border-radius:8px;flex-shrink:0;min-width:28px;text-align:center;">{i+1}</span><span style="font-size:14px;color:#E8EDF5;line-height:1.6;">{r}</span></div>' for i,r in enumerate(parsed['recommendations'])])
-        st.markdown(f'<div style="background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(0,229,160,0.02));border:2px solid rgba(0,229,160,0.3);border-left:5px solid #00E5A0;border-radius:14px;padding:16px 20px;margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:#00E5A0;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Clinical Recommendations</div>{rh}</div>',unsafe_allow_html=True)
+        recs_html = ''.join([
+            f'<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid rgba(0,229,160,0.15);align-items:flex-start;">'
+            f'<span style="background:linear-gradient(135deg,#059669,#00E5A0);color:#FFFFFF;font-weight:800;'
+            f'font-size:13px;padding:3px 10px;border-radius:8px;flex-shrink:0;min-width:28px;text-align:center;">{i+1}</span>'
+            f'<span style="font-size:14px;color:#E8EDF5;line-height:1.65;">{r}</span></div>'
+            for i, r in enumerate(parsed['recommendations'])
+        ])
+        st.markdown(
+            '<div style="background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(0,229,160,0.02));'
+            'border:2px solid rgba(0,229,160,0.4);border-left:5px solid #00E5A0;border-radius:14px;'
+            'padding:16px 20px;margin-bottom:14px;">'
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+            '<span style="font-size:16px;">💊</span>'
+            '<span style="font-size:11px;font-weight:700;color:#00E5A0;text-transform:uppercase;letter-spacing:0.1em;">Clinical Recommendations</span>'
+            f'<span style="background:rgba(0,229,160,0.2);color:#00E5A0;font-size:11px;font-weight:700;'
+            f'padding:2px 10px;border-radius:10px;">{len(parsed["recommendations"])} actions</span>'
+            '</div>'
+            f'{recs_html}</div>',
+            unsafe_allow_html=True)
+    else:
+        # Show a placeholder so the doctor knows the field exists but was empty
+        st.markdown(
+            '<div style="background:rgba(0,229,160,0.04);border:2px dashed rgba(0,229,160,0.25);'
+            'border-radius:12px;padding:12px 18px;margin-bottom:14px;">'
+            '<span style="font-size:13px;color:#4A6080;">💊 <b style="color:#00E5A0;">Recommendations</b> — '
+            'Not generated for this entry. Check GPT prompt includes a RECOMMENDATIONS: section.</span>'
+            '</div>',
+            unsafe_allow_html=True)
 
-    fu_col,ug_col=st.columns(2)
+    # ── 4. FOLLOW-UP + URGENCY side-by-side ─────────────────
+    fu_col, ug_col = st.columns(2)
     with fu_col:
-        if parsed.get('followup'):
-            st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:14px 18px;margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Follow-up Plan</div><div style="font-size:14px;color:#FFFFFF;font-weight:600;">{parsed["followup"]}</div></div>',unsafe_allow_html=True)
-    with ug_col:
-        if parsed.get('urgency'):
-            uc={'URGENT':'#FF3B5C','SEMI-URGENT':'#FF7A35','ROUTINE':'#00E5A0'}.get(parsed['urgency'].upper(),'#6B7A99')
-            st.markdown(f'<div style="background:{SEV_BG.get({"URGENT":"Severe","SEMI-URGENT":"Moderate","ROUTINE":"Normal"}.get(parsed["urgency"].upper(),"Unknown"),"")};border:2px solid {uc}55;border-radius:12px;padding:14px 18px;margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:{uc};text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Urgency</div><div style="font-size:20px;font-weight:800;color:{uc};">{parsed["urgency"]}</div></div>',unsafe_allow_html=True)
+        fu = parsed.get('followup','')
+        if fu:
+            st.markdown(
+                '<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+                '<span style="font-size:15px;">📅</span>'
+                '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Follow-up Plan</span>'
+                '</div>'
+                f'<div style="font-size:14px;color:#FFFFFF;font-weight:600;line-height:1.7;">{fu}</div>'
+                '</div>',
+                unsafe_allow_html=True)
+        else:
+            st.markdown(
+                '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="font-size:13px;color:#4A6080;">📅 Follow-up not specified in summary.</div>'
+                '</div>',
+                unsafe_allow_html=True)
 
+    with ug_col:
+        urg = parsed.get('urgency','')
+        if urg:
+            uc = {'URGENT':'#FF3B5C','SEMI-URGENT':'#FF7A35','ROUTINE':'#00E5A0'}.get(urg.upper(),'#6B7A99')
+            urg_icon = {'URGENT':'🚨','SEMI-URGENT':'⚠️','ROUTINE':'✅'}.get(urg.upper(),'📋')
+            urg_sev_key = {'URGENT':'Severe','SEMI-URGENT':'Moderate','ROUTINE':'Normal'}.get(urg.upper(),'Unknown')
+            st.markdown(
+                f'<div style="background:{SEV_BG.get(urg_sev_key,"")};border:2px solid {uc}55;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+                f'<span style="font-size:15px;">{urg_icon}</span>'
+                f'<span style="font-size:11px;font-weight:700;color:{uc};text-transform:uppercase;letter-spacing:0.08em;">Clinical Urgency</span>'
+                f'</div>'
+                f'<div style="font-size:22px;font-weight:800;color:{uc};">{urg.upper()}</div>'
+                f'</div>',
+                unsafe_allow_html=True)
+        else:
+            st.markdown(
+                '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:12px;padding:16px 18px;margin-bottom:12px;">'
+                '<div style="font-size:13px;color:#4A6080;">⚠️ Urgency not specified.</div>'
+                '</div>',
+                unsafe_allow_html=True)
+
+    # ── 5. GUIDELINE CITATIONS ───────────────────────────────
     if citations:
-        st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:10px;padding:12px 18px;margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Guideline References</div><div style="font-size:13px;color:#94A3B8;font-family:monospace;">{"  ·  ".join(list(dict.fromkeys(citations)))}</div></div>',unsafe_allow_html=True)
+        unique_cites = list(dict.fromkeys(citations))
+        cite_html = '  ·  '.join([
+            f'<span style="background:rgba(96,165,250,0.1);color:#60A5FA;padding:3px 10px;'
+            f'border-radius:6px;font-size:12px;">{c}</span>'
+            for c in unique_cites
+        ])
+        st.markdown(
+            '<div style="background:#0D1A2E;border:2px solid #1E3A5F;border-radius:10px;'
+            'padding:12px 18px;margin-bottom:14px;">'
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+            '<span style="font-size:14px;">📚</span>'
+            '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Guideline References</span>'
+            '</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:8px;">{cite_html}</div>'
+            '</div>',
+            unsafe_allow_html=True)
 
 
 # ── ENTRY POINT ───────────────────────────────────────────────
