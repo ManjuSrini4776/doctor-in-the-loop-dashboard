@@ -801,36 +801,49 @@ def render_trend_chart(pid):
 
     st.markdown(timeline_html + scale_html + '</div>', unsafe_allow_html=True)
 
-    # Key metrics row — show first vs current severity
+    # Key metrics row — always use first and LAST visits
     if len(scored) >= 2:
-        first = scored[0]; curr = [v for v in visits if v.get('is_current')]
-        curr  = curr[0] if curr else scored[-1]
-        fc    = sev_colors.get(first['severity'],'#94A3B8')
-        cc    = sev_colors.get(curr['severity'],'#94A3B8')
+        first = scored[0]
+        last  = scored[-1]   # always most recent
+        fc = sev_colors.get(first['severity'],'#94A3B8')
+        lc = sev_colors.get(last['severity'],'#94A3B8')
 
-        m1,m2,m3 = st.columns(3)
+        # Trend arrow
+        arr = {'worsening':'↑ Getting worse','improving':'↓ Getting better','stable':'→ Stable'}
+        arr_clr = {'worsening':'#DC2626','improving':'#059669','stable':'#2563EB'}
+        arr_txt = arr.get(trend_dir,'→ Stable')
+        arr_c   = arr_clr.get(trend_dir,'#2563EB')
+
+        m1,m2,m3,m4 = st.columns(4)
         with m1:
             st.markdown(
-                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
-                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">First Visit</div>'
-                f'<div style="font-size:16px;font-weight:800;color:{fc};">{first["severity"]}</div>'
-                f'<div style="font-size:10px;color:#94A3B8;">{first["date"][:7]}</div>'
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:12px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">🏁 First Visit</div>'
+                f'<div style="font-size:18px;font-weight:800;color:{fc};">{first["severity"]}</div>'
+                f'<div style="font-size:11px;color:#94A3B8;margin-top:2px;">{first["date"][:7]}</div>'
                 f'</div>', unsafe_allow_html=True)
         with m2:
             st.markdown(
-                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
-                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Current</div>'
-                f'<div style="font-size:16px;font-weight:800;color:{cc};">{curr["severity"]}</div>'
-                f'<div style="font-size:10px;color:#94A3B8;">{curr["date"][:7]}</div>'
+                f'<div style="background:#F8FAFF;border:2px solid {lc}44;border-radius:10px;padding:12px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">★ Latest Visit</div>'
+                f'<div style="font-size:18px;font-weight:800;color:{lc};">{last["severity"]}</div>'
+                f'<div style="font-size:11px;color:#94A3B8;margin-top:2px;">{last["date"][:7]}</div>'
                 f'</div>', unsafe_allow_html=True)
         with m3:
+            st.markdown(
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:12px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">📊 Overall Trend</div>'
+                f'<div style="font-size:14px;font-weight:800;color:{arr_c};">{arr_txt}</div>'
+                f'<div style="font-size:11px;color:#94A3B8;margin-top:2px;">over {v_count} visits</div>'
+                f'</div>', unsafe_allow_html=True)
+        with m4:
             avg_los = [v['los_hours'] for v in visits if v.get('los_hours')]
             avg_los_val = f"{sum(avg_los)/len(avg_los):.1f}h" if avg_los else "N/A"
             st.markdown(
-                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
-                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Avg Stay</div>'
-                f'<div style="font-size:16px;font-weight:800;color:#2563EB;">{avg_los_val}</div>'
-                f'<div style="font-size:10px;color:#94A3B8;">per admission</div>'
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:12px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">🏥 Avg Stay</div>'
+                f'<div style="font-size:18px;font-weight:800;color:#2563EB;">{avg_los_val}</div>'
+                f'<div style="font-size:11px;color:#94A3B8;margin-top:2px;">per admission</div>'
                 f'</div>', unsafe_allow_html=True)
 
 
