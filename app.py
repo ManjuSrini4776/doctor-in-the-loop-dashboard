@@ -443,14 +443,15 @@ def render_dashboard():
     icons={'Lab Report':'🧪','CT Scan':'🧠','Ultrasound':'🔬','Combined Assessment':'⚡'}
     icon = icons.get(mtype,'📋')
     st.markdown(f"""
-    <div style="position:relative;width:100%;height:140px;overflow:hidden;border-radius:16px;margin-bottom:20px;">
-        <img src="{dept_img}" style="width:100%;height:100%;object-fit:cover;opacity:0.2;"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(90deg,#0D1A2E,transparent 60%,#0D1A2E);"></div>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 28px;gap:18px;">
-            <div style="font-size:48px;filter:drop-shadow(0 0 12px rgba(255,255,255,0.3));">{icon}</div>
+    <div style="position:relative;width:100%;height:160px;overflow:hidden;border-radius:16px;margin-bottom:20px;
+         box-shadow:0 4px 24px rgba(37,99,235,0.25);">
+        <img src="{dept_img}" style="width:100%;height:100%;object-fit:cover;opacity:0.55;"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,26,46,0.92) 0%,rgba(13,26,46,0.55) 50%,rgba(13,26,46,0.75) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 32px;gap:20px;">
+            <div style="font-size:52px;filter:drop-shadow(0 0 16px rgba(96,165,250,0.7));">{icon}</div>
             <div>
-                <div style="font-size:26px;font-weight:800;color:#FFFFFF;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{active["dept"]} — Patient Reports</div>
-                <div style="font-size:14px;color:#60A5FA;margin-top:4px;font-weight:500;">Assigned to {active["name"]}  ·  {active["specialty"]}</div>
+                <div style="font-size:28px;font-weight:800;color:#FFFFFF;text-shadow:0 2px 12px rgba(0,0,0,0.8);letter-spacing:-0.5px;">{active["dept"]} — Patient Reports</div>
+                <div style="font-size:14px;color:#93C5FD;margin-top:5px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.6);">Assigned to {active["name"]}  ·  {active["specialty"]}</div>
             </div>
         </div>
     </div>
@@ -547,9 +548,64 @@ def render_patient(p, pid, doc_id):
         parsed = get_mm_rag(p)
         cites = parsed.pop('citations', [])
     else:
-        raw = RAG_DATA.get(pid, "")
+        # ── Smart RAG lookup: try pid first, then rag_class_key ──
+        raw = RAG_DATA.get(pid, '')
+        if not raw:
+            rag_key = p.get('rag_class_key', '')
+            raw = RAG_DATA.get(rag_key, '')
+
         parsed = parse_rag(raw) if raw else {}
-        cites = []
+
+        # Extract citations if raw is a dict (class-key style JSON)
+        if isinstance(raw, dict):
+            cites = raw.get('citations', [])
+        else:
+            cites = []
+
+        # ── Disease-context guard ─────────────────────────────
+        # Prevents showing a CKD summary to a diabetes patient, or a
+        # meningioma summary to a glioma patient, etc.
+        disease = str(p.get('disease_type', '')).lower()
+        ct_cls  = str(p.get('ct_predicted_class', '')).lower()
+        sl      = parsed.get('clinical_summary', '').lower()
+        mismatch = False
+
+        if mtype == 'Lab Report':
+            if 'ckd' in disease or 'kidney' in disease:
+                bad = ['tumor','tumour','glioma','meningioma','pituitary','fetal','ultrasound',
+                       'diabetes is not a contributing','diabetes is not the primary',
+                       'no indications of glucose','no indication of glucose']
+                if any(w in sl for w in bad): mismatch = True
+            elif 'diabetes' in disease:
+                bad = ['tumor','tumour','glioma','meningioma','fetal','kidney disease','ckd',
+                       'renal failure','glomerular filtration']
+                if any(w in sl for w in bad): mismatch = True
+            elif 'thyroid' in disease:
+                bad = ['tumor','tumour','glioma','fetal','kidney','ckd','glucose','diabetes']
+                if any(w in sl for w in bad): mismatch = True
+
+        elif mtype == 'CT Scan':
+            # CT patients must never show lab / fetal content
+            if any(w in sl for w in ['egfr','gfr','creatinine','glucose level','thyroid','tsh level','fetal','gestational']):
+                mismatch = True
+            # Check wrong tumour type
+            tumour_bad = {
+                'glioma':     ['meningioma','pituitary adenoma','no tumor detected','no tumour detected'],
+                'meningioma': ['glioma','pituitary adenoma','no tumor detected','no tumour detected'],
+                'pituitary':  ['glioma','meningioma','no tumor detected','no tumour detected'],
+                'notumor':    ['glioma has been identified','meningioma has been identified',
+                               'pituitary adenoma has been identified'],
+            }
+            for phrase in tumour_bad.get(ct_cls, []):
+                if phrase in sl: mismatch = True; break
+
+        elif mtype == 'Ultrasound':
+            if any(w in sl for w in ['tumor','tumour','glioma','egfr','gfr','glucose level','thyroid','tsh level']):
+                mismatch = True
+
+        if mismatch:
+            parsed = {}   # Will show helpful placeholder
+
     render_rag(parsed, cites)
 
     # ── Doctor Decision Section ────────────────────────────────
@@ -790,14 +846,39 @@ def render_lab(p,sev,clr):
     free_t4 = n(p.get('free_t4'))
     disease = str(p.get('disease_type','')).lower()
 
+    # ── Clean "Not tested" variants ───────────────────────────
+    def clean_val(v):
+        return v if v and str(v) not in ['Not tested','None','nan','Unknown','not tested',''] else 'Not tested'
+
+    ckd = clean_val(ckd); dia = clean_val(dia); thy = clean_val(thy)
+
+    # ── Top 3 summary cards — only show relevant disease card bright ──
     c1,c2,c3=st.columns(3)
-    for col,(lbl,val) in zip([c1,c2,c3],[('Kidney Function',ckd),('Blood Sugar',dia),('Thyroid Function',thy)]):
-        v=val if val and val not in ['Not tested','None','nan','Unknown'] else 'Not tested'
-        vc=clr if v!='Not tested' else '#2A3A50'
+    cards = [
+        (c1, 'Kidney Function',    ckd,  'ckd' in disease or 'kidney' in disease),
+        (c2, 'Blood Sugar',        dia,  'diabetes' in disease),
+        (c3, 'Thyroid Function',   thy,  'thyroid' in disease),
+    ]
+    for col, lbl, val, is_active in cards:
+        v = val if val != 'Not tested' else 'Not tested'
+        # Active disease card: use severity colour. Inactive: dim grey.
+        if is_active and v != 'Not tested':
+            vc = clr
+            border = f'2px solid {clr}88'
+            bg = f'background:rgba({",".join(str(int(clr.lstrip("#")[i:i+2],16)) for i in (0,2,4))},0.08);'
+        elif is_active and v == 'Not tested':
+            # Disease is active but value not available — show amber warning
+            vc = '#FFD000'; border = '2px solid #FFD00088'
+            bg = 'background:rgba(255,208,0,0.06);'
+        else:
+            vc = '#2A3A50'; border = '2px solid #1E3A5F'
+            bg = 'background:#0D1A2E;'
         with col:
-            st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-radius:12px;padding:16px;margin-bottom:12px;">'
-                        f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">{lbl}</div>'
-                        f'<div style="font-size:17px;font-weight:700;color:{vc};">{v}</div></div>',unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="{bg}border:{border};border-radius:12px;padding:16px;margin-bottom:12px;">'
+                f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">{lbl}</div>'
+                f'<div style="font-size:17px;font-weight:700;color:{vc};">{v}</div></div>',
+                unsafe_allow_html=True)
 
     rows=[]
     if 'ckd' in disease or 'kidney' in disease:
@@ -850,12 +931,21 @@ def render_lab(p,sev,clr):
 def render_ct(p,sev,clr):
     cls=p.get('ct_predicted_class',''); conf=n(p.get('ct_confidence')) or 0
     name=CT_NAMES.get(cls,cls); desc=CT_DESC.get(cls,'')
-    st.markdown(f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
-                f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">CT Brain Imaging</div>'
-                f'<div style="font-size:20px;font-weight:800;color:#FFFFFF;margin-bottom:6px;">{name}</div>'
-                f'<div style="font-size:14px;color:#94A3B8;margin-bottom:10px;">{desc}</div>'
-                f'<div style="display:flex;gap:16px;"><span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
-                f'<span style="color:#94A3B8;font-size:13px;">AI Confidence: <b style="color:#FFFFFF;">{round(conf*100,1)}%</b></span></div></div>',unsafe_allow_html=True)
+
+    # Note: CT patient IDs are derived from image filenames (e.g. CT-Te-no_0134.jpg-957)
+    # The eGFR or lab values sometimes appear in RAG context docs — they are NOT this patient's values
+    st.markdown(
+        f'<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:5px solid {clr};border-radius:14px;padding:20px 24px;margin-bottom:14px;">'
+        f'<div style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">CT Brain Imaging</div>'
+        f'<div style="font-size:20px;font-weight:800;color:#FFFFFF;margin-bottom:6px;">{name}</div>'
+        f'<div style="font-size:14px;color:#94A3B8;margin-bottom:10px;">{desc}</div>'
+        f'<div style="display:flex;gap:16px;align-items:center;">'
+        f'<span style="background:{SEV_BG.get(sev,"")};border:2px solid {clr}55;color:{clr};font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;">{sev}</span>'
+        f'<span style="color:#94A3B8;font-size:13px;">AI Confidence: <b style="color:#FFFFFF;">{round(conf*100,1)}%</b></span>'
+        f'<span style="background:rgba(124,58,237,0.15);border:1px solid #7C3AED44;color:#A78BFA;font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;">Imaging only — no lab values</span>'
+        f'</div></div>',
+        unsafe_allow_html=True)
+
     t=CT_IMAGE.get(str(cls),('',''))
     if t[0] and os.path.exists(t[0]):
         gc1,gc2=st.columns(2)
@@ -865,7 +955,16 @@ def render_ct(p,sev,clr):
         with gc2:
             st.markdown('<div style="font-size:11px;font-weight:700;color:#C084FC;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Grad-CAM Heatmap</div>',unsafe_allow_html=True)
             if t[1] and os.path.exists(t[1]): st.image(t[1],use_column_width=True)
-        st.markdown('<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#94A3B8;">🔍 <b style="color:#FFFFFF;">Grad-CAM:</b> Warm colours (red/yellow) = high AI attention regions.</div>',unsafe_allow_html=True)
+        st.markdown(
+            '<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:4px solid #7C3AED;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#94A3B8;">'
+            '🔍 <b style="color:#FFFFFF;">Grad-CAM:</b> Warm colours (red/yellow) = high AI attention regions indicating the tumour location used for classification.</div>',
+            unsafe_allow_html=True)
+    else:
+        st.markdown(
+            '<div style="background:rgba(37,99,235,0.06);border:2px dashed #2563EB;border-radius:12px;padding:16px 20px;margin-bottom:12px;">'
+            f'<div style="font-size:13px;color:#60A5FA;">📂 Scan images not found locally. Expected at: <code>images/ct_{cls}_original.jpg</code></div>'
+            '</div>',
+            unsafe_allow_html=True)
 
 
 def render_us(p,sev,clr):
@@ -1057,21 +1156,44 @@ def render_rag(parsed, citations):
                 unsafe_allow_html=True)
 
     # ── 5. GUIDELINE CITATIONS ───────────────────────────────
+    # Auto-fallback citations by modality/disease if RAG didn't provide any
+    if not citations:
+        if parsed.get('clinical_summary',''):
+            summary_lower = parsed['clinical_summary'].lower()
+            if any(w in summary_lower for w in ['kidney','egfr','ckd','renal']):
+                citations = ['KDIGO 2022 CKD Guidelines','NICE CG182 CKD (2021)']
+            elif any(w in summary_lower for w in ['glucose','diabetes','hba1c','metformin']):
+                citations = ['ADA Standards of Care in Diabetes 2024','NICE NG28 Type 2 Diabetes (2022)']
+            elif any(w in summary_lower for w in ['thyroid','tsh','levothyroxine','hypothyroid']):
+                citations = ['ATA/AACE Hypothyroidism Guidelines 2023','ETA Guidelines on Subclinical Hypothyroidism']
+            elif any(w in summary_lower for w in ['glioma','meningioma','pituitary','brain tumor','brain tumour','notumor']):
+                citations = ['WHO CNS Tumour Classification 2021','EANO Guidelines for Brain Tumours 2021','NCCN CNS Cancers Guidelines v2.2024']
+            elif any(w in summary_lower for w in ['fetal','ultrasound','obstetric','gestation']):
+                citations = ['ISUOG Practice Guidelines Fetal Ultrasound 2021','NICE NG201 Antenatal Care (2021)']
+
     if citations:
         unique_cites = list(dict.fromkeys(citations))
-        cite_html = '  ·  '.join([
-            f'<span style="background:rgba(96,165,250,0.1);color:#60A5FA;padding:3px 10px;'
-            f'border-radius:6px;font-size:12px;">{c}</span>'
+        cite_pills = ''.join([
+            f'<span style="display:inline-block;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.4);'
+            f'color:#93C5FD;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin:3px 4px 3px 0;">'
+            f'📖 {c}</span>'
             for c in unique_cites
         ])
         st.markdown(
-            '<div style="background:#0D1A2E;border:2px solid #1E3A5F;border-radius:10px;'
-            'padding:12px 18px;margin-bottom:14px;">'
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-            '<span style="font-size:14px;">📚</span>'
-            '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Guideline References</span>'
+            '<div style="background:#0D1A2E;border:2px solid #2563EB;border-left:4px solid #60A5FA;border-radius:12px;'
+            'padding:14px 20px;margin-bottom:14px;">'
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+            '<span style="font-size:15px;">📚</span>'
+            '<span style="font-size:11px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;">Guideline References Used</span>'
             '</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:8px;">{cite_html}</div>'
+            f'<div style="line-height:2;">{cite_pills}</div>'
+            '<div style="font-size:11px;color:#4A6080;margin-top:8px;font-style:italic;">These guidelines were used as the knowledge base for this AI-generated clinical summary.</div>'
+            '</div>',
+            unsafe_allow_html=True)
+    else:
+        st.markdown(
+            '<div style="background:#0D1A2E;border:2px dashed #1E3A5F;border-radius:10px;padding:12px 18px;margin-bottom:14px;">'
+            '<div style="font-size:13px;color:#4A6080;">📚 No guideline citations available for this summary.</div>'
             '</div>',
             unsafe_allow_html=True)
 
