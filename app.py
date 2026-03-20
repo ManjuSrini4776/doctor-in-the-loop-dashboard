@@ -61,12 +61,12 @@ DOCTORS   = {
 
 # ── PROFESSIONAL HERO IMAGES (Unsplash free-use URLs) ────────
 HERO_IMG        = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&q=95"  # doctor + technology
-HERO_IMG_LOGIN  = "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=1600&q=100&fit=crop"   # medical lab
+HERO_IMG_LOGIN  = "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1600&h=500&q=95&fit=crop&crop=center"   # medical lab
 DEPT_IMGS = {
-    'Lab Report':          "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1600&q=100&fit=crop",
-    'CT Scan':             "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1600&q=100&fit=crop",
-    'Ultrasound':          "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600&q=100&fit=crop",
-    'Combined Assessment': "https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=1600&q=100&fit=crop",
+    'Lab Report':          "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1600&h=400&q=95&fit=crop&crop=center",
+    'CT Scan':             "https://images.unsplash.com/photo-1516069677018-378515003435?w=1600&h=400&q=95&fit=crop&crop=center",
+    'Ultrasound':          "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=1600&h=400&q=95&fit=crop&crop=center",
+    'Combined Assessment': "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1600&h=400&q=95&fit=crop&crop=center",
 }
 
 # ── LOAD DATA ─────────────────────────────────────────────────
@@ -214,6 +214,27 @@ def parse_rag(raw):
     # Tidy up
     s['clinical_summary'] = s['clinical_summary'].strip()
     s['followup']         = s['followup'].strip()
+
+    # ── Extract urgency if it was embedded inside follow-up text ──
+    # GPT sometimes writes: "...in 4 weeks. URGENCY: SEMI-URGENT — due to..."
+    if not s['urgency'] and s['followup']:
+        import re as _re
+        urg_match = _re.search(r'URGENCY\s*:\s*(URGENT|SEMI[\s\-]*URGENT|ROUTINE)', s['followup'], _re.I)
+        if urg_match:
+            s['urgency'] = urg_match.group(1).strip()
+            # Remove the urgency part from follow-up text
+            s['followup'] = s['followup'][:urg_match.start()].strip()
+            # Clean trailing punctuation
+            s['followup'] = s['followup'].rstrip(' |.—-').strip()
+
+    # Also check if urgency is embedded in recommendations or summary
+    if not s['urgency']:
+        for field in ['clinical_summary'] + s['recommendations'] + s['key_findings']:
+            import re as _re
+            m = _re.search(r'URGENCY\s*:\s*(URGENT|SEMI[\s\-]*URGENT|ROUTINE)', str(field), _re.I)
+            if m:
+                s['urgency'] = m.group(1).strip()
+                break
 
     # Normalise urgency to one of the known tokens
     urg_raw = s['urgency'].upper()
@@ -569,15 +590,21 @@ def render_dashboard():
     icons={'Lab Report':'🧪','CT Scan':'🧠','Ultrasound':'🔬','Combined Assessment':'⚡'}
     icon = icons.get(mtype,'📋')
     st.markdown(f"""
-    <div style="position:relative;width:100%;height:180px;overflow:hidden;border-radius:16px;margin-bottom:20px;
-         box-shadow:0 4px 24px rgba(37,99,235,0.25);">
-        <img src="{dept_img}" style="width:100%;height:100%;object-fit:cover;opacity:0.7;filter:brightness(0.85) contrast(1.1);"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,20,40,0.95) 0%,rgba(10,20,40,0.6) 50%,rgba(10,20,40,0.85) 100%);"></div>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 32px;gap:20px;">
-            <div style="font-size:52px;filter:drop-shadow(0 0 16px rgba(96,165,250,0.7));">{icon}</div>
+    <div style="position:relative;width:100%;height:190px;overflow:hidden;border-radius:20px;margin-bottom:20px;
+         box-shadow:0 8px 32px rgba(37,99,235,0.2);">
+        <img src="{dept_img}" style="width:100%;height:100%;object-fit:cover;object-position:center;
+             opacity:0.75;filter:brightness(0.7) contrast(1.15) saturate(1.1);"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,
+             rgba(15,23,42,0.97) 0%,rgba(15,23,42,0.75) 40%,rgba(15,23,42,0.5) 70%,rgba(15,23,42,0.8) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 36px;gap:22px;">
+            <div style="font-size:56px;filter:drop-shadow(0 0 20px rgba(255,255,255,0.4));line-height:1;">{icon}</div>
             <div>
-                <div style="font-size:28px;font-weight:800;color:#0F172A;text-shadow:0 2px 12px rgba(0,0,0,0.8);letter-spacing:-0.5px;">{active["dept"]} — Patient Reports</div>
-                <div style="font-size:14px;color:#FFFFFF;margin-top:5px;font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,0.8);">Assigned to {active["name"]}  ·  {active["specialty"]}</div>
+                <div style="font-size:11px;font-weight:700;color:#93C5FD;text-transform:uppercase;
+                     letter-spacing:0.15em;margin-bottom:6px;">{active["specialty"]}</div>
+                <div style="font-size:30px;font-weight:800;color:#FFFFFF;
+                     text-shadow:0 2px 20px rgba(0,0,0,0.8);letter-spacing:-0.5px;line-height:1.1;">{active["dept"]} — Patient Reports</div>
+                <div style="font-size:14px;color:#BFDBFE;margin-top:6px;font-weight:500;">
+                     Assigned to {active["name"]}</div>
             </div>
         </div>
     </div>
@@ -1330,16 +1357,22 @@ def render_rag(parsed, citations):
     if not citations:
         if parsed.get('clinical_summary',''):
             summary_lower = parsed['clinical_summary'].lower()
-            if any(w in summary_lower for w in ['kidney','egfr','ckd','renal']):
-                citations = ['KDIGO 2022 CKD Guidelines','NICE CG182 CKD (2021)']
-            elif any(w in summary_lower for w in ['glucose','diabetes','hba1c','metformin']):
-                citations = ['ADA Standards of Care in Diabetes 2024','NICE NG28 Type 2 Diabetes (2022)']
-            elif any(w in summary_lower for w in ['thyroid','tsh','levothyroxine','hypothyroid']):
-                citations = ['ATA/AACE Hypothyroidism Guidelines 2023','ETA Guidelines on Subclinical Hypothyroidism']
-            elif any(w in summary_lower for w in ['glioma','meningioma','pituitary','brain tumor','brain tumour','notumor']):
-                citations = ['WHO CNS Tumour Classification 2021','EANO Guidelines for Brain Tumours 2021','NCCN CNS Cancers Guidelines v2.2024']
-            elif any(w in summary_lower for w in ['fetal','ultrasound','obstetric','gestation']):
-                citations = ['ISUOG Practice Guidelines Fetal Ultrasound 2021','NICE NG201 Antenatal Care (2021)']
+            # Build citations covering ALL diseases mentioned in summary
+            citations = []
+            if any(w in summary_lower for w in ['kidney','egfr','ckd','renal','nephro']):
+                citations += ['KDIGO 2022 CKD Guidelines','NICE CG182 CKD (2021)']
+            if any(w in summary_lower for w in ['glucose','diabetes','hba1c','metformin','glyca','glycem']):
+                citations += ['ADA Standards of Care in Diabetes 2024','NICE NG28 Type 2 Diabetes (2022)']
+            if any(w in summary_lower for w in ['thyroid','tsh','levothyroxine','hypothyroid']):
+                citations += ['ATA/AACE Hypothyroidism Guidelines 2023']
+            if any(w in summary_lower for w in ['glioma','meningioma','pituitary','brain tumor','brain tumour']):
+                citations += ['WHO CNS Tumour Classification 2021','EANO Brain Tumour Guidelines 2021']
+            if any(w in summary_lower for w in ['no tumor','no tumour','normal brain','no abnormal']):
+                citations += ['ACR Neuroimaging Guidelines 2023']
+            if any(w in summary_lower for w in ['fetal','obstetric','gestation','antenatal']):
+                citations += ['ISUOG Fetal Ultrasound Guidelines 2021','NICE NG201 Antenatal Care (2021)']
+            # Remove duplicates
+            citations = list(dict.fromkeys(citations))
 
     if citations:
         unique_cites = list(dict.fromkeys(citations))
