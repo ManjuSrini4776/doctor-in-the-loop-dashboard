@@ -86,9 +86,18 @@ def load_rag():
                 return json.load(f)
     return {}
 
+@st.cache_data
+def load_trends():
+    for p in ['data/patient_trends.json','patient_trends.json']:
+        if os.path.exists(p):
+            with open(p) as f:
+                return json.load(f)
+    return {}
+
 ALL_PATIENTS = load_patients()
 RAG_DATA     = load_rag()
-logger.info(f"STARTUP  | Patients loaded={len(ALL_PATIENTS)} | RAG entries={len(RAG_DATA)}")
+TREND_DATA   = load_trends()
+logger.info(f"STARTUP  | Patients loaded={len(ALL_PATIENTS)} | RAG entries={len(RAG_DATA)} | Trends={len(TREND_DATA)}")
 
 # ── SESSION STATE ─────────────────────────────────────────────
 for k,v in {'logged_in':False,'active_doctor':None,'selected':{},'decisions':{},'reject_resubmit':{},'activity_log':[]}.items():
@@ -565,7 +574,7 @@ def render_dashboard():
         f'border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;'
         f'box-shadow:0 4px 15px rgba(37,99,235,0.5);">🏥</div>'
         f'<div><div style="font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-0.5px;">MedAI</div>'
-        f'<div style="font-size:10px;color:#0F172A;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
+        f'<div style="font-size:10px;color:#334155;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
         f'<div style="display:flex;align-items:center;gap:16px;">'
         f'<div style="background:rgba(37,99,235,0.15);border:1px solid #2563EB;border-radius:10px;padding:8px 16px;">'
         f'<div style="font-size:14px;font-weight:700;color:#FFFFFF;">{active["name"]}</div>'
@@ -677,6 +686,144 @@ def render_dashboard():
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+# ── PATIENT TREND CHART ───────────────────────────────────────
+def render_trend_chart(pid):
+    """Show patient severity trend from MIMIC revisit history."""
+    trend = TREND_DATA.get(pid)
+    if not trend or not trend.get('has_history'):
+        return  # No history — don't show anything
+
+    visits    = trend['visits']
+    v_count   = trend['visit_count']
+    trend_dir = trend.get('trend_dir','stable')
+    rate      = trend.get('revisit_label','')
+    disease   = trend.get('disease','')
+
+    # Trend direction styling
+    trend_cfg = {
+        'worsening': ('🔴', '#DC2626', '#FFF1F2', 'Worsening'),
+        'improving':  ('🟢', '#059669', '#F0FDF4', 'Improving'),
+        'stable':     ('🔵', '#2563EB', '#EFF6FF', 'Stable'),
+    }
+    t_icon, t_color, t_bg, t_label = trend_cfg.get(trend_dir, ('🔵','#2563EB','#EFF6FF','Stable'))
+
+    sev_colors = {'Normal':'#059669','Mild':'#D97706','Moderate':'#EA580C',
+                  'Severe':'#DC2626','Unknown':'#94A3B8'}
+    sev_scores = {'Normal':0,'Mild':1,'Moderate':2,'Severe':3,'Unknown':None}
+
+    # Header
+    st.markdown(
+        f'<div style="background:#FFFFFF;border:2px solid #BFDBFE;border-radius:14px;'
+        f'padding:16px 20px;margin-bottom:16px;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+        f'<div style="display:flex;align-items:center;gap:10px;">'
+        f'<span style="font-size:16px;">📈</span>'
+        f'<span style="font-size:13px;font-weight:800;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.08em;">Patient Revisit History</span>'
+        f'</div>'
+        f'<div style="display:flex;gap:10px;align-items:center;">'
+        f'<span style="background:{t_bg};border:1px solid {t_color}44;color:{t_color};'
+        f'font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">'
+        f'{t_icon} {t_label}</span>'
+        f'<span style="background:#EFF6FF;border:1px solid #93C5FD;color:#1D4ED8;'
+        f'font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;">'
+        f'🔄 {rate}</span>'
+        f'<span style="background:#F8FAFF;border:1px solid #BFDBFE;color:#64748B;'
+        f'font-size:12px;padding:4px 12px;border-radius:20px;">'
+        f'{v_count} total visits</span>'
+        f'</div></div>',
+        unsafe_allow_html=True)
+
+    # Build timeline bars
+    scored = [v for v in visits if sev_scores.get(v['severity']) is not None]
+    if not scored:
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
+
+    max_score = 3
+    timeline_html = '<div style="display:flex;gap:4px;align-items:flex-end;height:80px;padding:0 4px;">'
+
+    for v in visits[-20:]:  # show last 20 visits max
+        sev   = v['severity']
+        score = sev_scores.get(sev)
+        clr   = sev_colors.get(sev, '#94A3B8')
+        is_cur = v.get('is_current', False)
+
+        if score is None:
+            bar_h = 8; bar_clr = '#E2E8F0'; opacity = '0.4'
+        else:
+            bar_h   = max(12, int((score / max_score) * 64))
+            bar_clr = clr
+            opacity = '1.0'
+
+        border  = f'3px solid #1D4ED8' if is_cur else f'1px solid {clr}44'
+        tooltip = f"{v['date'][:7]}: {sev}"
+        if v.get('egfr'):    tooltip += f" | eGFR {v['egfr']}"
+        if v.get('glucose'): tooltip += f" | Gluc {v['glucose']}"
+
+        timeline_html += (
+            f'<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:8px;max-width:28px;">'
+            f'<div title="{tooltip}" style="width:100%;height:{bar_h}px;background:{bar_clr};'
+            f'border-radius:4px 4px 0 0;border:{border};opacity:{opacity};'
+            f'{"box-shadow:0 0 8px " + clr + "66;" if is_cur else ""}">'
+            f'</div>'
+            f'<div style="font-size:8px;color:#94A3B8;text-align:center;'
+            f'{"font-weight:800;color:#1D4ED8;" if is_cur else ""}">'
+            f'{v["date"][2:7] if len(v["date"])>=7 else ""}'
+            f'</div>'
+            f'</div>'
+        )
+
+    timeline_html += '</div>'
+
+    # Severity scale legend
+    scale_html = (
+        '<div style="display:flex;gap:12px;margin-top:8px;">'
+        + ''.join([
+            f'<span style="display:flex;align-items:center;gap:4px;">'
+            f'<span style="width:10px;height:10px;border-radius:2px;background:{clr};display:inline-block;"></span>'
+            f'<span style="font-size:11px;color:#64748B;">{sev}</span></span>'
+            for sev, clr in [('Normal','#059669'),('Mild','#D97706'),
+                              ('Moderate','#EA580C'),('Severe','#DC2626')]
+        ])
+        + '<span style="font-size:11px;color:#94A3B8;margin-left:auto;">◼ = current visit</span>'
+        + '</div>'
+    )
+
+    st.markdown(timeline_html + scale_html + '</div>', unsafe_allow_html=True)
+
+    # Key metrics row — show first vs current severity
+    if len(scored) >= 2:
+        first = scored[0]; curr = [v for v in visits if v.get('is_current')]
+        curr  = curr[0] if curr else scored[-1]
+        fc    = sev_colors.get(first['severity'],'#94A3B8')
+        cc    = sev_colors.get(curr['severity'],'#94A3B8')
+
+        m1,m2,m3 = st.columns(3)
+        with m1:
+            st.markdown(
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">First Visit</div>'
+                f'<div style="font-size:16px;font-weight:800;color:{fc};">{first["severity"]}</div>'
+                f'<div style="font-size:10px;color:#94A3B8;">{first["date"][:7]}</div>'
+                f'</div>', unsafe_allow_html=True)
+        with m2:
+            st.markdown(
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Current</div>'
+                f'<div style="font-size:16px;font-weight:800;color:{cc};">{curr["severity"]}</div>'
+                f'<div style="font-size:10px;color:#94A3B8;">{curr["date"][:7]}</div>'
+                f'</div>', unsafe_allow_html=True)
+        with m3:
+            avg_los = [v['los_hours'] for v in visits if v.get('los_hours')]
+            avg_los_val = f"{sum(avg_los)/len(avg_los):.1f}h" if avg_los else "N/A"
+            st.markdown(
+                f'<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:10px;text-align:center;">'
+                f'<div style="font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Avg Stay</div>'
+                f'<div style="font-size:16px;font-weight:800;color:#2563EB;">{avg_los_val}</div>'
+                f'<div style="font-size:10px;color:#94A3B8;">per admission</div>'
+                f'</div>', unsafe_allow_html=True)
+
+
 # ── PATIENT DETAIL ─────────────────────────────────────────────
 def render_patient(p, pid, doc_id):
     doc=DOCTORS[doc_id]
@@ -699,6 +846,9 @@ def render_patient(p, pid, doc_id):
         f'</div></div></div>',unsafe_allow_html=True)
 
     # ── Test Findings ──────────────────────────────────────────
+    # ── Patient Trend Chart ────────────────────────────
+    render_trend_chart(pid)
+
     st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;font-weight:800;font-size:13px;">🔬 Test Findings</div>', unsafe_allow_html=True)
     if mtype=='Lab Report':          render_lab(p,sev,clr)
     elif mtype=='CT Scan':           render_ct(p,sev,clr)
