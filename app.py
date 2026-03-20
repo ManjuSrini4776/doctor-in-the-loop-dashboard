@@ -565,7 +565,7 @@ def render_dashboard():
         f'border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;'
         f'box-shadow:0 4px 15px rgba(37,99,235,0.5);">🏥</div>'
         f'<div><div style="font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-0.5px;">MedAI</div>'
-        f'<div style="font-size:10px;color:#334155;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
+        f'<div style="font-size:10px;color:#0F172A;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">Clinical Intelligence System</div></div></div>'
         f'<div style="display:flex;align-items:center;gap:16px;">'
         f'<div style="background:rgba(37,99,235,0.15);border:1px solid #2563EB;border-radius:10px;padding:8px 16px;">'
         f'<div style="font-size:14px;font-weight:700;color:#FFFFFF;">{active["name"]}</div>'
