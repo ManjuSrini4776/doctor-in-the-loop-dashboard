@@ -410,8 +410,8 @@ def render_login():
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(238,244,255,0.85));"></div>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
             <div style="font-size:52px;margin-bottom:10px;filter:drop-shadow(0 0 20px rgba(37,99,235,0.8));">🏥</div>
-            <div style="font-size:36px;font-weight:800;color:#0F172A;letter-spacing:-1px;text-shadow:0 2px 20px rgba(37,99,235,0.8);">MedAI Clinical System</div>
-            <div style="font-size:15px;color:#60A5FA;margin-top:6px;font-weight:500;">AI-Powered · Doctor-in-the-Loop · Medical Intelligence</div>
+            <div style="font-size:36px;font-weight:800;color:#FFFFFF;letter-spacing:-1px;text-shadow:0 2px 20px rgba(37,99,235,0.8);">MedAI Clinical System</div>
+            <div style="font-size:15px;color:#FFFFFF;margin-top:6px;font-weight:500;">AI-Powered · Doctor-in-the-Loop · Medical Intelligence</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
