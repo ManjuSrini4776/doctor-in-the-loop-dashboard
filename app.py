@@ -398,23 +398,31 @@ def get_mm_rag(p):
 
 
 # ══════════════════════════════════════════════════════════════
-# MODULE 1 — APPOINTMENT SCHEDULING FOR SEVERE CASES
+# MODULE 1 — APPOINTMENT SCHEDULING (ALL PATIENTS)
 # ══════════════════════════════════════════════════════════════
+# SPECIALIST_MAP is built from the DOCTORS dict — no hardcoding.
+# Change doctor names/depts in DOCTORS above and it updates everywhere.
 
-SPECIALIST_MAP = {
-    'CKD':           {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Nephrology',      'room':'OPD Block A, Room 102'},
-    'Diabetes':      {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Endocrinology',   'room':'OPD Block A, Room 103'},
-    'Thyroid':       {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Endocrinology',   'room':'OPD Block A, Room 103'},
-    'glioma':        {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neuro-Oncology',  'room':'OPD Block B, Room 201'},
-    'meningioma':    {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurosurgery',    'room':'OPD Block B, Room 202'},
-    'pituitary':     {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurosurgery',    'room':'OPD Block B, Room 202'},
-    'notumor':       {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurology',       'room':'OPD Block B, Room 203'},
-    'Fetal brain':   {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Perinatology',    'room':'OPD Block C, Room 301'},
-    'Fetal thorax':  {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Fetal Medicine',  'room':'OPD Block C, Room 302'},
-    'Fetal abdomen': {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Obstetrics',      'room':'OPD Block C, Room 303'},
-    'Fetal femur':   {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Obstetrics',      'room':'OPD Block C, Room 303'},
-    'Multi-Disease': {'doctor':'Dr. Suresh Kumar',  'doctor_id':'DR004','dept':'General Medicine','room':'OPD Block D, Room 401'},
-}
+HELPDESK_PHONE = '{HELPDESK_PHONE}'   # ← change once, updates all languages
+
+def _build_specialist_map():
+    d = DOCTORS
+    return {
+        'CKD':           {'doctor_id':'DR001','doctor':d['DR001']['name'],'dept':'Nephrology',     'room':d['DR001']['dept']+' · Room 102'},
+        'Diabetes':      {'doctor_id':'DR001','doctor':d['DR001']['name'],'dept':'Endocrinology',  'room':d['DR001']['dept']+' · Room 103'},
+        'Thyroid':       {'doctor_id':'DR001','doctor':d['DR001']['name'],'dept':'Endocrinology',  'room':d['DR001']['dept']+' · Room 103'},
+        'glioma':        {'doctor_id':'DR002','doctor':d['DR002']['name'],'dept':'Neuro-Oncology', 'room':d['DR002']['dept']+' · Room 201'},
+        'meningioma':    {'doctor_id':'DR002','doctor':d['DR002']['name'],'dept':'Neurosurgery',   'room':d['DR002']['dept']+' · Room 202'},
+        'pituitary':     {'doctor_id':'DR002','doctor':d['DR002']['name'],'dept':'Neurosurgery',   'room':d['DR002']['dept']+' · Room 202'},
+        'notumor':       {'doctor_id':'DR002','doctor':d['DR002']['name'],'dept':d['DR002']['dept'],'room':d['DR002']['dept']+' · Room 203'},
+        'Fetal brain':   {'doctor_id':'DR003','doctor':d['DR003']['name'],'dept':'Perinatology',   'room':d['DR003']['dept']+' · Room 301'},
+        'Fetal thorax':  {'doctor_id':'DR003','doctor':d['DR003']['name'],'dept':'Fetal Medicine', 'room':d['DR003']['dept']+' · Room 302'},
+        'Fetal abdomen': {'doctor_id':'DR003','doctor':d['DR003']['name'],'dept':d['DR003']['dept'],'room':d['DR003']['dept']+' · Room 303'},
+        'Fetal femur':   {'doctor_id':'DR003','doctor':d['DR003']['name'],'dept':d['DR003']['dept'],'room':d['DR003']['dept']+' · Room 303'},
+        'Multi-Disease': {'doctor_id':'DR004','doctor':d['DR004']['name'],'dept':d['DR004']['dept'],'room':d['DR004']['dept']+' · Room 401'},
+    }
+
+SPECIALIST_MAP = _build_specialist_map()
 
 def appt_get_specialist(p):
     mtype   = p.get('modality_type','')
@@ -427,7 +435,14 @@ def appt_get_specialist(p):
         key = p.get('predicted_class','')
     else:
         key = 'Multi-Disease'
-    return SPECIALIST_MAP.get(key, SPECIALIST_MAP['Multi-Disease'])
+    doc_id   = p.get('doctor_id','DR001')
+    fallback = {
+        'doctor_id': doc_id,
+        'doctor':    DOCTORS.get(doc_id,{}).get('name','Your Doctor'),
+        'dept':      DOCTORS.get(doc_id,{}).get('dept','OPD'),
+        'room':      DOCTORS.get(doc_id,{}).get('dept','OPD') + ' · Consult front desk',
+    }
+    return SPECIALIST_MAP.get(key, fallback)
 
 def appt_extract_urgency(rag_summary):
     if not rag_summary or rag_summary == 'Summary unavailable':
@@ -439,9 +454,9 @@ def appt_extract_urgency(rag_summary):
     return 'ROUTINE'
 
 def appt_should_schedule(p, rag_summary):
-    sev     = p.get('_sev','').upper()
-    urgency = appt_extract_urgency(rag_summary)
-    return sev == 'SEVERE' or urgency in ('URGENT', 'SEMI-URGENT')
+    return True   # ALL patients get appointment scheduling
+
+
 
 def appt_generate_slots(severity):
     base  = datetime.now()
@@ -458,7 +473,7 @@ def appt_generate_slots(severity):
             })
     return slots
 
-def render_appointment_module(p, pid, rag_summary):
+def render_appointment_module(p, pid, rag_summary, doc_id='DR001'):
     if not appt_should_schedule(p, rag_summary):
         return
 
@@ -511,7 +526,7 @@ def render_appointment_module(p, pid, rag_summary):
     all_slots     = urgent_slots + routine_slots
 
     # Track selected slot index in session state
-    sel_key = f'appt_sel_idx_{pid}'
+    sel_key = f'appt_sel_idx_{doc_id}_{pid}'
     if sel_key not in st.session_state:
         st.session_state[sel_key] = 0
 
@@ -533,7 +548,7 @@ def render_appointment_module(p, pid, rag_summary):
                 btn_style = 'background:#FFFFFF;color:#1E293B;border:2px solid #BFDBFE;'
             with col:
                 label = slot['label'] + (' 🔴' if is_urgent else '')
-                if st.button(label, key=f'slot_btn_{pid}_{global_idx}',
+                if st.button(label, key=f'slot_btn_{doc_id}_{pid}_{global_idx}',
                              use_container_width=True,
                              type='primary' if is_sel else 'secondary'):
                     st.session_state[sel_key] = global_idx
@@ -597,27 +612,27 @@ MSG_TEMPLATES = {
             f"Dear Patient (ID: {pid}),\n\nYour appointment has been confirmed with {doc}.\n\n"
             f"📅 Date & Time : {slot}\n📍 Location    : {room}\n\n"
             f"Please bring all previous medical records and arrive 15 minutes early.\n"
-            f"For queries call: 044-2744-0000.\n\nRegards,\nMedAI Clinical System"),
+            f"For queries call: {HELPDESK_PHONE}.\n\nRegards,\nMedAI Clinical System"),
         'ta': lambda pid,doc,slot,room: (
             f"அன்புள்ள நோயாளி (ID: {pid}),\n\n{doc} அவர்களிடம் உங்கள் சந்திப்பு உறுதி செய்யப்பட்டது.\n\n"
             f"📅 தேதி மற்றும் நேரம் : {slot}\n📍 இடம் : {room}\n\n"
             f"அனைத்து மருத்துவ ஆவணங்களையும் கொண்டுவாருங்கள். 15 நிமிடம் முன்னதாக வாருங்கள்.\n"
-            f"கேள்விகளுக்கு: 044-2744-0000.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+            f"கேள்விகளுக்கு: {HELPDESK_PHONE}.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
         'hi': lambda pid,doc,slot,room: (
             f"प्रिय मरीज़ (ID: {pid}),\n\n{doc} के साथ आपकी अपॉइंटमेंट की पुष्टि हो गई है।\n\n"
             f"📅 तारीख और समय : {slot}\n📍 स्थान : {room}\n\n"
             f"कृपया सभी पुराने मेडिकल रिकॉर्ड लाएं और 15 मिनट पहले पहुँचें।\n"
-            f"प्रश्नों के लिए: 044-2744-0000.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+            f"प्रश्नों के लिए: {HELPDESK_PHONE}.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
         'te': lambda pid,doc,slot,room: (
             f"ప్రియమైన రోగి (ID: {pid}),\n\n{doc} తో మీ అపాయింట్‌మెంట్ నిర్ధారించబడింది.\n\n"
             f"📅 తేదీ మరియు సమయం : {slot}\n📍 స్థానం : {room}\n\n"
             f"మీ వైద్య రికార్డులన్నింటినీ తీసుకువచ్చి 15 నిమిషాల ముందు వెళ్ళండి.\n"
-            f"సందేహాలకు: 044-2744-0000.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
+            f"సందేహాలకు: {HELPDESK_PHONE}.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
         'ml': lambda pid,doc,slot,room: (
             f"പ്രിയ രോഗി (ID: {pid}),\n\n{doc} മായുള്ള അപ്പോയ്ന്റ്മെന്റ് സ്ഥിരീകരിച്ചു.\n\n"
             f"📅 തീയതിയും സമയവും : {slot}\n📍 സ്ഥലം : {room}\n\n"
             f"എല്ലാ മെഡിക്കൽ രേഖകളും കൊണ്ടുവരൂ, 15 മിനിറ്റ് നേരത്തേ എത്തുക.\n"
-            f"സഹായത്തിന്: 044-2744-0000.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
+            f"സഹായത്തിന്: {HELPDESK_PHONE}.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
     },
     'urgent': {
         'en': lambda pid,doc,slot,room: (
@@ -625,31 +640,31 @@ MSG_TEMPLATES = {
             f"Your recent clinical report requires IMMEDIATE attention.\n\n"
             f"An urgent appointment has been scheduled with {doc}.\n"
             f"📅 {slot}  |  📍 {room}\n\n"
-            f"Please attend WITHOUT DELAY. Need help? Call 044-2744-0000 immediately.\n\nMedAI Clinical System"),
+            f"Please attend WITHOUT DELAY. Need help? Call {HELPDESK_PHONE} immediately.\n\nMedAI Clinical System"),
         'ta': lambda pid,doc,slot,room: (
             f"⚠️ அவசரம் — நோயாளி ID: {pid}\n\n"
             f"உங்கள் மருத்துவ அறிக்கை உடனடி கவனிப்பு தேவைப்படுகிறது.\n\n"
             f"{doc} அவர்களிடம் அவசர சந்திப்பு திட்டமிடப்பட்டுள்ளது.\n"
             f"📅 {slot}  |  📍 {room}\n\n"
-            f"தாமதிக்காமல் வருகை கொடுங்கள். உதவிக்கு: 044-2744-0000.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+            f"தாமதிக்காமல் வருகை கொடுங்கள். உதவிக்கு: {HELPDESK_PHONE}.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
         'hi': lambda pid,doc,slot,room: (
             f"⚠️ अत्यावश्यक — मरीज़ ID: {pid}\n\n"
             f"आपकी नवीनतम रिपोर्ट को तत्काल ध्यान देने की आवश्यकता है।\n\n"
             f"{doc} के साथ अर्जेंट अपॉइंटमेंट निर्धारित की गई है।\n"
             f"📅 {slot}  |  📍 {room}\n\n"
-            f"बिना देरी किए उपस्थित हों। सहायता: 044-2744-0000.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+            f"बिना देरी किए उपस्थित हों। सहायता: {HELPDESK_PHONE}.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
         'te': lambda pid,doc,slot,room: (
             f"⚠️ అత్యవసరం — రోగి ID: {pid}\n\n"
             f"మీ తాజా నివేదిక తక్షణ శ్రద్ధ అవసరం.\n\n"
             f"{doc} తో అత్యవసర అపాయింట్‌మెంట్ నిర్ణయించబడింది.\n"
             f"📅 {slot}  |  📍 {room}\n\n"
-            f"ఆలస్యం చేయకుండా హాజరుకండి. సహాయం: 044-2744-0000.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
+            f"ఆలస్యం చేయకుండా హాజరుకండి. సహాయం: {HELPDESK_PHONE}.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
         'ml': lambda pid,doc,slot,room: (
             f"⚠️ അടിയന്തരം — രോഗി ID: {pid}\n\n"
             f"നിങ്ങളുടെ റിപ്പോർട്ടിന് ഉടൻ ശ്രദ്ധ ആവശ്യമാണ്.\n\n"
             f"{doc} മായി അടിയന്തര അപ്പോയ്ന്റ്മെന്റ് ക്രമീകരിച്ചു.\n"
             f"📅 {slot}  |  📍 {room}\n\n"
-            f"വൈകാതെ ഹാജരാകുക. സഹായത്തിന്: 044-2744-0000.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
+            f"വൈകാതെ ഹാജരാകുക. സഹായത്തിന്: {HELPDESK_PHONE}.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
     },
     'followup': {
         'en': lambda pid,doc,slot,room: (
@@ -727,6 +742,205 @@ def build_merged_patient_msg(p, pid, doc_name, notes=''):
     return clinical_part + appt_part + notes_part
 
 
+# ══════════════════════════════════════════════════════════════
+# PDF REPORT GENERATOR
+# Generates a downloadable patient report PDF on the fly.
+# No pre-existing PDF files needed — built from patient data.
+# ══════════════════════════════════════════════════════════════
+def generate_patient_pdf(p, pid, parsed, doc_name, notes, appt_slot, appt_room):
+    """
+    Generate a clean patient report PDF using fpdf2.
+    Returns bytes ready for st.download_button.
+    """
+    from fpdf import FPDF
+
+    sev     = p.get('_sev', 'Normal')
+    mtype   = p.get('modality_type', '')
+    disease = p.get('disease_type', '')
+    now_str = datetime.now().strftime('%d %b %Y  %H:%M')
+
+    sev_colors = {
+        'Normal':   (0, 200, 150),
+        'Mild':     (220, 170, 0),
+        'Moderate': (220, 100, 30),
+        'Severe':   (210, 40, 60),
+    }
+    sev_rgb = sev_colors.get(sev, (100, 116, 139))
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_margins(18, 15, 18)
+
+    # ── Header banner ──────────────────────────────────────────
+    pdf.set_fill_color(21, 56, 138)
+    pdf.rect(0, 0, 210, 28, 'F')
+    pdf.set_font('Helvetica', 'B', 18)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_xy(18, 7)
+    pdf.cell(0, 10, 'MedAI Clinical System', ln=False)
+    pdf.set_font('Helvetica', '', 9)
+    pdf.set_xy(18, 17)
+    pdf.cell(0, 6, 'AI-Powered  |  Doctor-in-the-Loop  |  Approved Medical Report', ln=True)
+    pdf.set_text_color(30, 41, 59)
+    pdf.ln(8)
+
+    # ── Severity badge ─────────────────────────────────────────
+    pdf.set_fill_color(*sev_rgb)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font('Helvetica', 'B', 11)
+    pdf.cell(40, 9, f'  {sev.upper()}  ', border=0, fill=True, ln=False)
+    pdf.set_text_color(30, 41, 59)
+    pdf.set_font('Helvetica', '', 10)
+    pdf.cell(10, 9, '', ln=False)
+    pdf.cell(0, 9, f'Patient ID: {pid}   |   {mtype}   |   {now_str}', ln=True)
+    pdf.ln(4)
+
+    # ── Divider ────────────────────────────────────────────────
+    pdf.set_draw_color(147, 197, 253)
+    pdf.set_line_width(0.5)
+    pdf.line(18, pdf.get_y(), 192, pdf.get_y())
+    pdf.ln(5)
+
+    def section_title(title):
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.set_text_color(29, 78, 216)
+        pdf.cell(0, 8, title, ln=True)
+        pdf.set_draw_color(147, 197, 253)
+        pdf.line(18, pdf.get_y(), 192, pdf.get_y())
+        pdf.ln(3)
+        pdf.set_text_color(30, 41, 59)
+
+    def body_text(text, indent=0):
+        pdf.set_font('Helvetica', '', 10)
+        pdf.set_text_color(51, 65, 85)
+        pdf.set_x(18 + indent)
+        pdf.multi_cell(174 - indent, 6, text)
+        pdf.ln(1)
+
+    def label_value(label, value):
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_text_color(30, 41, 59)
+        pdf.set_x(18)
+        pdf.cell(52, 7, label + ':', ln=False)
+        pdf.set_font('Helvetica', '', 10)
+        pdf.set_text_color(51, 65, 85)
+        pdf.cell(0, 7, str(value) if value else '—', ln=True)
+
+    # ── Patient Details ────────────────────────────────────────
+    section_title('Patient Details')
+    label_value('Patient ID',      pid)
+    label_value('Modality',        mtype)
+    label_value('Disease / Scan',  disease or p.get('ct_predicted_class','') or p.get('predicted_class',''))
+    label_value('Severity',        sev)
+    label_value('Approved By',     doc_name)
+    label_value('Report Date',     now_str)
+    pdf.ln(4)
+
+    # ── Lab Values (if applicable) ─────────────────────────────
+    egfr    = p.get('egfr')
+    glucose = p.get('glucose')
+    tsh     = p.get('tsh')
+    free_t4 = p.get('free_t4')
+    ckd     = p.get('ckd_severity','')
+    dia     = p.get('diabetes_severity_final','')
+    thy     = p.get('thyroid_severity_final','')
+    ct_cls  = p.get('ct_predicted_class','')
+    us_cls  = p.get('predicted_class','')
+    ct_conf = p.get('ct_confidence')
+    us_conf = p.get('confidence')
+
+    has_lab = any([egfr, glucose, tsh, ckd not in ['','Not tested',None], dia not in ['','Not tested',None]])
+    has_ct  = bool(ct_cls)
+    has_us  = bool(us_cls)
+
+    if has_lab or has_ct or has_us:
+        section_title('Investigation Results')
+        if egfr:    label_value('eGFR',         f'{round(float(egfr),1)} mL/min/1.73m²')
+        if ckd and ckd not in ['Not tested','']:  label_value('CKD Stage', ckd)
+        if glucose: label_value('Fasting Glucose', f'{round(float(glucose),1)} mg/dL')
+        if dia and dia not in ['Not tested','']: label_value('Diabetes Status', dia)
+        if tsh:     label_value('TSH',           f'{round(float(tsh),3)} mIU/L')
+        if free_t4: label_value('Free T4',       f'{round(float(free_t4),3)} ng/dL')
+        if thy and thy not in ['Not tested','']: label_value('Thyroid Status', thy)
+        if has_ct:
+            ct_name = {'notumor':'No Brain Tumour Detected','pituitary':'Pituitary Adenoma','meningioma':'Meningioma','glioma':'Glioma'}.get(ct_cls, ct_cls)
+            conf_str = f' (AI confidence: {round(float(ct_conf)*100,1)}%)' if ct_conf else ''
+            label_value('CT Brain Finding', ct_name + conf_str)
+        if has_us:
+            us_name = {'Fetal abdomen':'Fetal Abdomen','Fetal brain':'Fetal Brain','Fetal femur':'Fetal Femur','Fetal thorax':'Fetal Thorax'}.get(us_cls, us_cls)
+            conf_str = f' (AI confidence: {round(float(us_conf)*100,1)}%)' if us_conf else ''
+            label_value('Ultrasound Finding', us_name + conf_str)
+        pdf.ln(4)
+
+    # ── Clinical Summary ───────────────────────────────────────
+    if parsed.get('clinical_summary'):
+        section_title('AI Clinical Summary')
+        body_text(parsed['clinical_summary'])
+        pdf.ln(2)
+
+    # ── Key Findings ───────────────────────────────────────────
+    if parsed.get('key_findings'):
+        section_title('Key Findings')
+        for i, f in enumerate(parsed['key_findings'], 1):
+            pdf.set_font('Helvetica', 'B', 10)
+            pdf.set_text_color(124, 58, 237)
+            pdf.set_x(18)
+            pdf.cell(8, 6, f'F{i}', ln=False)
+            pdf.set_font('Helvetica', '', 10)
+            pdf.set_text_color(51, 65, 85)
+            pdf.multi_cell(166, 6, f)
+        pdf.ln(2)
+
+    # ── Recommendations ────────────────────────────────────────
+    if parsed.get('recommendations'):
+        section_title('Clinical Recommendations')
+        for i, r in enumerate(parsed['recommendations'], 1):
+            pdf.set_font('Helvetica', 'B', 10)
+            pdf.set_text_color(5, 150, 105)
+            pdf.set_x(18)
+            pdf.cell(8, 6, f'{i}.', ln=False)
+            pdf.set_font('Helvetica', '', 10)
+            pdf.set_text_color(51, 65, 85)
+            pdf.multi_cell(166, 6, r)
+        pdf.ln(2)
+
+    # ── Follow-up + Urgency ────────────────────────────────────
+    if parsed.get('followup') or parsed.get('urgency'):
+        section_title('Follow-up & Urgency')
+        if parsed.get('followup'):
+            label_value('Follow-up Plan', parsed['followup'])
+        if parsed.get('urgency'):
+            label_value('Clinical Urgency', parsed['urgency'].upper())
+        pdf.ln(2)
+
+    # ── Appointment ────────────────────────────────────────────
+    if appt_slot and appt_slot != 'To be scheduled':
+        section_title('Appointment Details')
+        label_value('Doctor',   doc_name)
+        label_value('Date & Time', appt_slot)
+        label_value('Location', appt_room)
+        pdf.ln(2)
+
+    # ── Doctor's Notes ─────────────────────────────────────────
+    if notes and notes.strip():
+        section_title("Doctor's Prescription & Notes")
+        body_text(notes.strip())
+        pdf.ln(2)
+
+    # ── Footer ─────────────────────────────────────────────────
+    pdf.set_y(-22)
+    pdf.set_draw_color(147, 197, 253)
+    pdf.line(18, pdf.get_y(), 192, pdf.get_y())
+    pdf.ln(3)
+    pdf.set_font('Helvetica', 'I', 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 5, f'This report was generated by MedAI Clinical System on {now_str} and approved by {doc_name}.', ln=True, align='C')
+    pdf.cell(0, 5, 'This is an AI-assisted report reviewed by a qualified doctor. For medical emergencies call 044-2744-0000.', ln=True, align='C')
+
+    return bytes(pdf.output())
+
+
 def render_messaging_module(p, pid, rag_summary):
     sev          = p.get('_sev','Normal')
     default_slot = st.session_state.get(f'appt_datetime_{pid}', 'To be scheduled')
@@ -799,82 +1013,6 @@ def render_messaging_module(p, pid, rag_summary):
         unsafe_allow_html=True)
     default_channels = ['SMS','WhatsApp'] if sev == 'Severe' else ['SMS']
     st.multiselect(
-        'Channels',
-        options=['SMS','WhatsApp','Email'],
-        default=default_channels,
-        key=f'msg_channels_{pid}',
-        label_visibility='collapsed'
-    )
-    if sev == 'Severe':
-        st.markdown(
-            '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">'
-            '🔴 Severe case — SMS + WhatsApp recommended for maximum reach.</div>',
-            unsafe_allow_html=True)
-
-    ph_col, em_col = st.columns(2)
-    ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
-    em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
-
-    sent_key = f'msg_sent_{pid}'
-    if st.session_state.get(sent_key):
-        info = st.session_state[sent_key]
-        st.markdown(
-            f'<div style="background:rgba(0,229,160,0.1);border:2px solid rgba(0,229,160,0.4);'
-            f'border-radius:12px;padding:14px 18px;margin-top:8px;">'
-            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent to Patient</div>'
-            f'<div style="font-size:13px;color:#334155;">🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  '
-            f'📡 {", ".join(info["channels"]) if info["channels"] else "Logged"}</div>'
-            f'</div>', unsafe_allow_html=True)
-
-    st.markdown(
-        '<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;'
-        'letter-spacing:0.1em;margin:24px 0 12px;font-size:13px;">🌐 Multilingual Patient Messaging</div>',
-        unsafe_allow_html=True)
-
-    m1, m2 = st.columns(2)
-    with m1:
-        lang_name = st.selectbox(
-            'Patient language',
-            options=list(MSG_LANGUAGES.keys()),
-            key=f'msg_lang_{pid}',
-            label_visibility='collapsed'
-        )
-        lang_code = MSG_LANGUAGES[lang_name]
-    with m2:
-        msg_options = {
-            'Appointment confirmation': 'appointment',
-            'Urgent care alert':        'urgent',
-            'Follow-up reminder':       'followup',
-            'Report ready':             'report_ready',
-        }
-        default_type = 'Urgent care alert' if sev == 'Severe' else 'Appointment confirmation'
-        msg_label = st.selectbox(
-            'Message type',
-            options=list(msg_options.keys()),
-            index=list(msg_options.keys()).index(default_type),
-            key=f'msg_type_{pid}',
-            label_visibility='collapsed'
-        )
-        msg_type = msg_options[msg_label]
-
-    # Build message preview
-    tmpl = MSG_TEMPLATES.get(msg_type, {}).get(lang_code) or MSG_TEMPLATES.get(msg_type, {}).get('en')
-    preview_text = tmpl(pid, default_doc, default_slot, default_room) if tmpl else 'Template not available.'
-
-    st.markdown(
-        f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:5px solid #7C3AED;'
-        f'border-radius:12px;padding:16px 20px;margin:8px 0 12px;">'
-        f'<div style="font-size:11px;font-weight:700;color:#7C3AED;text-transform:uppercase;'
-        f'letter-spacing:0.08em;margin-bottom:10px;">📨 Message Preview — {lang_name}</div>'
-        f'<div style="font-size:14px;color:#1E293B;line-height:1.9;white-space:pre-wrap;">{preview_text}</div>'
-        f'</div>', unsafe_allow_html=True)
-
-    # Channel selector
-    st.markdown(
-        '<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:8px;">Send via</div>',
-        unsafe_allow_html=True)
-    default_channels = ['SMS','WhatsApp'] if sev == 'Severe' else ['SMS']
-    channels = st.multiselect(
         'Channels',
         options=['SMS','WhatsApp','Email'],
         default=default_channels,
@@ -1454,10 +1592,10 @@ def render_patient(p, pid, doc_id):
     render_rag(parsed, cites)
 
     # ── Module 1: Appointment Scheduling (auto-triggers for Severe/Urgent) ──
-    render_appointment_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''))
+    render_appointment_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''), doc_id)
 
     # ── Module 2: Multilingual Patient Messaging ───────────────
-    render_messaging_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''))
+    render_messaging_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''), doc_id)
 
     # ── Doctor Decision Section ────────────────────────────────
     st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:24px 0 12px;font-weight:800;font-size:13px;">👨‍⚕️ Doctor Review & Decision</div>', unsafe_allow_html=True)
@@ -1487,6 +1625,31 @@ def render_patient(p, pid, doc_id):
 
         with st.expander('📱 View Patient Message Sent'):
             st.markdown(f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:20px;font-size:14px;color:#1E293B;white-space:pre-wrap;line-height:1.8;">{ap["message"]}</div>', unsafe_allow_html=True)
+
+        # ── PDF Report Download ────────────────────────────────
+        raw_for_pdf = RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),'')
+        parsed_pdf  = parse_rag(raw_for_pdf) if raw_for_pdf else {}
+        appt_slot   = st.session_state.get(f'appt_datetime_{pid}', '')
+        appt_room   = st.session_state.get(f'appt_room_{pid}', 'OPD — consult front desk')
+        try:
+            pdf_bytes = generate_patient_pdf(p, pid, parsed_pdf, ap['doctor'], ap.get('notes',''), appt_slot, appt_room)
+            st.markdown(
+                '<div style="background:rgba(37,99,235,0.06);border:2px solid #93C5FD;border-left:4px solid #2563EB;'
+                'border-radius:12px;padding:14px 20px;margin:12px 0 8px;">'
+                '<div style="font-size:13px;font-weight:700;color:#1D4ED8;margin-bottom:6px;">📄 Patient Report PDF</div>'
+                '<div style="font-size:12px;color:#334155;">Download and share this PDF with the patient via WhatsApp or Email. '
+                'Contains lab values, AI clinical summary, recommendations, and appointment details.</div>'
+                '</div>', unsafe_allow_html=True)
+            st.download_button(
+                label='⬇️ Download Patient Report PDF',
+                data=pdf_bytes,
+                file_name=f'MedAI_Report_{pid}_{datetime.now().strftime("%Y%m%d")}.pdf',
+                mime='application/pdf',
+                key=f'pdf_download_approved_{pid}',
+                use_container_width=True,
+            )
+        except Exception as e:
+            st.warning(f'PDF generation error: {e}')
 
         # ── REVOKE APPROVAL ───────────────────────────────────
         st.markdown("""
@@ -1664,6 +1827,31 @@ def render_patient(p, pid, doc_id):
                 f'<span style="flex:1"></span>{badge_appt}{badge_lang}</div>'
                 f'<div style="font-size:14px;color:#1E293B;line-height:1.8;white-space:pre-wrap;">{pat_msg}</div></div>',
                 unsafe_allow_html=True)
+
+        # ── PDF Preview Download (before approval) ─────────────
+        raw_for_pdf  = RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),'')
+        parsed_pdf   = parse_rag(raw_for_pdf) if raw_for_pdf else {}
+        appt_slot_v  = st.session_state.get(f'appt_datetime_{pid}', '')
+        appt_room_v  = st.session_state.get(f'appt_room_{pid}', 'OPD — consult front desk')
+        try:
+            pdf_bytes_prev = generate_patient_pdf(p, pid, parsed_pdf, doc['name'], notes, appt_slot_v, appt_room_v)
+            st.markdown(
+                '<div style="background:rgba(124,58,237,0.05);border:2px solid #C4B5FD;border-left:4px solid #7C3AED;'
+                'border-radius:12px;padding:12px 18px;margin:8px 0;">'
+                '<div style="font-size:13px;font-weight:700;color:#7C3AED;margin-bottom:4px;">📄 Preview Report PDF</div>'
+                '<div style="font-size:12px;color:#334155;">Download a preview of the PDF that will be sent to the patient. '
+                'Once you approve, share this PDF via WhatsApp or Email.</div>'
+                '</div>', unsafe_allow_html=True)
+            st.download_button(
+                label='⬇️ Preview & Download Report PDF',
+                data=pdf_bytes_prev,
+                file_name=f'MedAI_Report_PREVIEW_{pid}.pdf',
+                mime='application/pdf',
+                key=f'pdf_download_pending_{pid}',
+                use_container_width=False,
+            )
+        except Exception as e:
+            st.warning(f'PDF generation error: {e}')
 
         st.markdown('<br>', unsafe_allow_html=True)
         b1,b2,b3 = st.columns(3)
