@@ -5,7 +5,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 
-# ── LOGGING SETUP ────────────────────────────────────────────
+# ── LOGGING SETUP ─────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s | %(levelname)s | %(message)s',
@@ -1123,26 +1123,18 @@ def render_messaging_module(p, pid, rag_summary):
         f'This will be appended to the clinical report when doctor approves below.</div>'
         f'</div>', unsafe_allow_html=True)
 
-    st.markdown(
-        '<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:8px;">Send via (on approval)</div>',
-        unsafe_allow_html=True)
-    default_channels = ['SMS','WhatsApp'] if sev == 'Severe' else ['SMS']
-    st.multiselect(
-        'Channels',
-        options=['SMS','WhatsApp','Email'],
-        default=default_channels,
-        key=f'msg_channels_{pid}',
-        label_visibility='collapsed'
-    )
     if sev == 'Severe':
         st.markdown(
-            '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">'
-            '🔴 Severe case — SMS + WhatsApp recommended for maximum reach.</div>',
+            '<div style="background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.3);'
+            'border-radius:8px;padding:8px 14px;margin-top:8px;font-size:12px;color:#DC2626;">'
+            '🔴 Severe case — WhatsApp sent immediately on approval with urgent appointment details.</div>',
             unsafe_allow_html=True)
-
-    ph_col, em_col = st.columns(2)
-    ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
-    em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
+    else:
+        st.markdown(
+            '<div style="background:rgba(37,99,235,0.05);border:1px solid #93C5FD;'
+            'border-radius:8px;padding:8px 14px;margin-top:8px;font-size:12px;color:#1D4ED8;">'
+            '📱 WhatsApp message sent to patient\'s number configured in Streamlit secrets on approval.</div>',
+            unsafe_allow_html=True)
 
 
 # ── LOGIN PAGE ────────────────────────────────────────────────
@@ -1745,16 +1737,17 @@ def render_patient(p, pid, doc_id):
                 '<div style="background:rgba(37,99,235,0.06);border:2px solid #93C5FD;border-left:4px solid #2563EB;'
                 'border-radius:12px;padding:14px 20px;margin:12px 0 8px;">'
                 '<div style="font-size:13px;font-weight:700;color:#1D4ED8;margin-bottom:6px;">📄 Patient Report PDF</div>'
-                '<div style="font-size:12px;color:#334155;">Download and share this PDF with the patient via WhatsApp or Email. '
+                '<div style="font-size:12px;color:#334155;">Download and share this PDF with the patient via WhatsApp. '
                 'Contains lab values, AI clinical summary, recommendations, and appointment details.</div>'
                 '</div>', unsafe_allow_html=True)
             st.download_button(
-                label='⬇️ Download Patient Report PDF',
+                label='⬇️ Download & Share Patient Report PDF',
                 data=pdf_bytes,
                 file_name=f'MedAI_Report_{pid}_{datetime.now().strftime("%Y%m%d")}.pdf',
                 mime='application/pdf',
                 key=f'pdf_download_approved_{pid}',
                 use_container_width=True,
+                type='primary',
             )
         except Exception as e:
             st.warning(f'PDF generation error: {e}')
@@ -1906,14 +1899,6 @@ def render_patient(p, pid, doc_id):
             label_visibility='collapsed'
         )
 
-        # Rejection reason (shown inline)
-        reject_reason = st.text_input(
-            'Rejection reason (required for Reject)',
-            placeholder='State reason if rejecting — e.g. Insufficient data, wrong patient file, requires repeat scan...',
-            key='reject_reason_'+doc_id+'_'+pid,
-            label_visibility='collapsed'
-        )
-
         # Single merged message — clinical findings + appointment + prescription
         pat_msg = build_merged_patient_msg(p, pid, doc['name'], notes)
 
@@ -2003,14 +1988,37 @@ def render_patient(p, pid, doc_id):
                 st.rerun()
         with b3:
             if st.button('❌ Reject Report', key='rej_'+doc_id+'_'+pid, use_container_width=True):
-                st.session_state.decisions[pid] = {
-                    'status': 'REJECTED',
-                    'doctor': doc['name'],
-                    'time': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                    'reject_reason': reject_reason.strip()
-                }
-                add_log("REJECTED", f"Patient {pid} | Reason: {reject_reason.strip()[:50]} | By: {doc['name']}", "WARNING")
+                st.session_state[f'show_reject_{pid}'] = True
                 st.rerun()
+
+        # Rejection reason — only shown after clicking Reject
+        if st.session_state.get(f'show_reject_{pid}'):
+            st.markdown(
+                '<div style="background:rgba(255,59,92,0.06);border:2px solid rgba(255,59,92,0.3);'
+                'border-left:4px solid #FF3B5C;border-radius:12px;padding:16px 18px;margin-top:12px;">'
+                '<div style="font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;">❌ Reject — State Reason</div>'
+                '</div>', unsafe_allow_html=True)
+            reject_reason = st.text_input(
+                'Rejection reason',
+                placeholder='e.g. Insufficient data, wrong patient file, requires repeat scan...',
+                key='reject_reason_'+doc_id+'_'+pid,
+            )
+            rc1, rc2 = st.columns(2)
+            with rc1:
+                if st.button('Confirm Rejection', key='confirm_rej_'+doc_id+'_'+pid, type='primary', use_container_width=True):
+                    st.session_state.decisions[pid] = {
+                        'status': 'REJECTED',
+                        'doctor': doc['name'],
+                        'time': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                        'reject_reason': reject_reason.strip()
+                    }
+                    st.session_state.pop(f'show_reject_{pid}', None)
+                    add_log("REJECTED", f"Patient {pid} | Reason: {reject_reason.strip()[:50]} | By: {doc['name']}", "WARNING")
+                    st.rerun()
+            with rc2:
+                if st.button('Cancel', key='cancel_rej_'+doc_id+'_'+pid, use_container_width=True):
+                    st.session_state.pop(f'show_reject_{pid}', None)
+                    st.rerun()
 
 
 # ── FINDINGS ──────────────────────────────────────────────────
