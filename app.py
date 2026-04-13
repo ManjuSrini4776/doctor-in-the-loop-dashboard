@@ -941,6 +941,121 @@ def generate_patient_pdf(p, pid, parsed, doc_name, notes, appt_slot, appt_room):
     return bytes(pdf.output())
 
 
+# ══════════════════════════════════════════════════════════════
+# WHATSAPP SENDER — Twilio sandbox
+# ══════════════════════════════════════════════════════════════
+def send_whatsapp_message(body, pdf_bytes=None, pdf_filename='MedAI_Report.pdf'):
+    """
+    Send a WhatsApp message via Twilio sandbox.
+    Reads credentials from st.secrets.
+    Returns (success: bool, error_msg: str)
+    """
+    try:
+        from twilio.rest import Client
+        account_sid = st.secrets.get('TWILIO_ACCOUNT_SID','')
+        auth_token  = st.secrets.get('TWILIO_AUTH_TOKEN','')
+        from_num    = st.secrets.get('TWILIO_WHATSAPP_FROM','whatsapp:+14155238886')
+        to_num      = st.secrets.get('TWILIO_WHATSAPP_TO','')
+
+        if not all([account_sid, auth_token, to_num]):
+            return False, 'Twilio credentials missing in Streamlit secrets.'
+
+        client = Client(account_sid, auth_token)
+        client.messages.create(
+            body=body,
+            from_=from_num,
+            to=to_num,
+        )
+        return True, ''
+    except ImportError:
+        return False, 'twilio package not installed. Add twilio to requirements.txt'
+    except Exception as e:
+        return False, str(e)
+
+
+def build_whatsapp_msg(p, pid, doc_name, appt_slot, appt_room, notes):
+    """
+    Build a concise WhatsApp-friendly message based on severity.
+    Normal/Mild  → no revisit needed, report is clear.
+    Moderate     → follow-up recommended.
+    Severe       → urgent revisit with appointment details.
+    """
+    sev     = p.get('_sev', 'Normal')
+    mtype   = p.get('modality_type', '')
+    disease = p.get('disease_type', '')
+    egfr    = n(p.get('egfr'))
+    glucose = n(p.get('glucose'))
+    tsh     = n(p.get('tsh'))
+
+    # Build condition line
+    if mtype == 'Lab Report':
+        disease_lower = disease.lower()
+        if 'ckd' in disease_lower or 'kidney' in disease_lower:
+            val_str = f' (eGFR: {round(egfr,1)} mL/min)' if egfr else ''
+            condition = f'Chronic Kidney Disease{val_str}'
+        elif 'diabetes' in disease_lower:
+            val_str = f' (Glucose: {round(glucose,1)} mg/dL)' if glucose else ''
+            condition = f'Diabetes Mellitus{val_str}'
+        elif 'thyroid' in disease_lower:
+            val_str = f' (TSH: {round(tsh,3)} mIU/L)' if tsh else ''
+            condition = f'Thyroid Disorder{val_str}'
+        else:
+            condition = disease
+    elif mtype == 'CT Scan':
+        ct_cls = p.get('ct_predicted_class','')
+        condition = {'notumor':'No Brain Tumour Detected','pituitary':'Pituitary Adenoma',
+                     'meningioma':'Meningioma','glioma':'Glioma'}.get(ct_cls, ct_cls)
+    elif mtype == 'Ultrasound':
+        condition = p.get('predicted_class','Obstetric Ultrasound')
+    else:
+        condition = 'Multimodal Assessment'
+
+    now_str = datetime.now().strftime('%d %b %Y')
+
+    if sev in ('Normal', 'Mild'):
+        msg = (
+            f"✅ *MedAI Clinical System — Doctor Approved Report*\n\n"
+            f"Dear Patient (ID: {pid}),\n\n"
+            f"Your *{condition}* report has been reviewed and approved by *{doc_name}* on {now_str}.\n\n"
+            f"*Result: {sev} — No immediate revisit required.*\n\n"
+            f"{'✅ Your results are within acceptable range. Continue your current medication and follow a healthy lifestyle.' if sev == 'Normal' else '⚠️ Mild findings noted. Follow the prescribed diet and medication. Book a routine follow-up when convenient.'}\n\n"
+        )
+    elif sev == 'Moderate':
+        msg = (
+            f"⚠️ *MedAI Clinical System — Doctor Approved Report*\n\n"
+            f"Dear Patient (ID: {pid}),\n\n"
+            f"Your *{condition}* report has been reviewed and approved by *{doc_name}* on {now_str}.\n\n"
+            f"*Result: Moderate — Follow-up appointment recommended.*\n\n"
+            f"Please do not delay your follow-up visit. Contact the clinic to book your appointment soon.\n\n"
+        )
+    else:  # Severe
+        appt_line = (
+            f"📅 *Appointment:* {appt_slot}\n"
+            f"📍 *Location:* {appt_room}\n"
+            f"👨‍⚕️ *Doctor:* {doc_name}\n\n"
+        ) if appt_slot and appt_slot != 'To be scheduled' else \
+            "⚠️ Please contact the hospital immediately to book an urgent appointment.\n\n"
+
+        msg = (
+            f"🚨 *MedAI Clinical System — URGENT Doctor Approved Report*\n\n"
+            f"Dear Patient (ID: {pid}),\n\n"
+            f"Your *{condition}* report has been reviewed by *{doc_name}* on {now_str}.\n\n"
+            f"*Result: SEVERE — Immediate medical attention required.*\n\n"
+            f"{appt_line}"
+            f"Please attend your appointment WITHOUT DELAY.\n\n"
+        )
+
+    if notes and notes.strip():
+        msg += f"*Doctor's Instructions:*\n{notes.strip()}\n\n"
+
+    msg += (
+        f"📄 Your full medical report PDF is attached / available for download from the dashboard.\n\n"
+        f"For urgent help call: *044-2744-0000*\n"
+        f"_MedAI Clinical System — Doctor-in-the-Loop_"
+    )
+    return msg
+
+
 def render_messaging_module(p, pid, rag_summary):
     sev          = p.get('_sev','Normal')
     default_slot = st.session_state.get(f'appt_datetime_{pid}', 'To be scheduled')
@@ -1028,17 +1143,6 @@ def render_messaging_module(p, pid, rag_summary):
     ph_col, em_col = st.columns(2)
     ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
     em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
-
-    sent_key = f'msg_sent_{pid}'
-    if st.session_state.get(sent_key):
-        info = st.session_state[sent_key]
-        st.markdown(
-            f'<div style="background:rgba(0,229,160,0.1);border:2px solid rgba(0,229,160,0.4);'
-            f'border-radius:12px;padding:14px 18px;margin-top:8px;">'
-            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent to Patient</div>'
-            f'<div style="font-size:13px;color:#334155;">🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  '
-            f'📡 {", ".join(info["channels"]) if info["channels"] else "Logged"}</div>'
-            f'</div>', unsafe_allow_html=True)
 
 
 # ── LOGIN PAGE ────────────────────────────────────────────────
@@ -1605,6 +1709,13 @@ def render_patient(p, pid, doc_id):
     # ══════════════════════════════════════════════════════════
     if cur_dec == 'APPROVED':
         ap = st.session_state.decisions[pid]
+        wa_ok  = ap.get('wa_sent', False)
+        wa_err = ap.get('wa_error', '')
+        wa_status_html = (
+            '<div style="font-size:13px;color:#059669;font-weight:600;">📱 WhatsApp delivered to patient ✅</div>'
+            if wa_ok else
+            f'<div style="font-size:13px;color:#D97706;font-weight:600;">⚠️ WhatsApp not sent — {wa_err or "check Twilio secrets"}</div>'
+        )
         st.markdown(
             f'<div style="background:linear-gradient(135deg,rgba(0,229,160,0.15),rgba(0,229,160,0.05));'
             f'border:2px solid rgba(0,229,160,0.5);border-radius:14px;padding:20px 24px;margin-bottom:16px;">'
@@ -1612,19 +1723,16 @@ def render_patient(p, pid, doc_id):
             f'<div style="display:flex;gap:24px;flex-wrap:wrap;">'
             f'<div style="font-size:13px;color:#334155;">👨‍⚕️ Approved by: <b style="color:#0F172A;">{ap["doctor"]}</b></div>'
             f'<div style="font-size:13px;color:#334155;">🕐 Time: <b style="color:#0F172A;">{ap["time"]}</b></div>'
-            f'<div style="font-size:13px;color:#059669;font-weight:600;">📱 Patient message sent successfully</div>'
+            f'{wa_status_html}'
             f'</div></div>',unsafe_allow_html=True)
 
-        # Show doctor's additional notes if any
-        if ap.get('notes'):
-            st.markdown(
-                f'<div style="background:#EFF6FF;border:2px solid #93C5FD;border-left:4px solid #2563EB;border-radius:12px;padding:16px 20px;margin-bottom:16px;">'
-                f'<div style="font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📝 Doctor\'s Prescription / Notes Added</div>'
-                f'<div style="font-size:14px;color:#0F172A;line-height:1.7;white-space:pre-wrap;">{ap["notes"]}</div>'
-                f'</div>', unsafe_allow_html=True)
-
-        with st.expander('📱 View Patient Message Sent'):
-            st.markdown(f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:20px;font-size:14px;color:#1E293B;white-space:pre-wrap;line-height:1.8;">{ap["message"]}</div>', unsafe_allow_html=True)
+        # Show WhatsApp message that was sent
+        if ap.get('wa_msg'):
+            with st.expander('📱 View WhatsApp Message Sent to Patient'):
+                st.markdown(
+                    f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;'
+                    f'padding:20px;font-size:14px;color:#1E293B;white-space:pre-wrap;line-height:1.8;">'
+                    f'{ap["wa_msg"]}</div>', unsafe_allow_html=True)
 
         # ── PDF Report Download ────────────────────────────────
         raw_for_pdf = RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),'')
@@ -1857,24 +1965,31 @@ def render_patient(p, pid, doc_id):
         b1,b2,b3 = st.columns(3)
         with b1:
             if st.button('✅ Approve & Send', key='app_'+doc_id+'_'+pid, use_container_width=True, type='primary'):
+                # Build severity-based WhatsApp message
+                appt_slot_ws = st.session_state.get(f'appt_datetime_{pid}', '')
+                appt_room_ws = st.session_state.get(f'appt_room_{pid}', 'OPD — consult front desk')
+                wa_msg       = build_whatsapp_msg(p, pid, doc['name'], appt_slot_ws, appt_room_ws, notes)
+
+                # Send via Twilio WhatsApp
+                wa_ok, wa_err = send_whatsapp_message(wa_msg)
+
+                # Save decision
                 st.session_state.decisions[pid] = {
-                    'status': 'APPROVED',
-                    'doctor': doc['name'],
-                    'time': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                    'message': pat_msg,
-                    'notes': notes.strip()
+                    'status':   'APPROVED',
+                    'doctor':   doc['name'],
+                    'time':     datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'message':  pat_msg,
+                    'notes':    notes.strip(),
+                    'wa_sent':  wa_ok,
+                    'wa_error': wa_err,
+                    'wa_msg':   wa_msg,
                 }
-                # Log message dispatch
-                channels   = st.session_state.get(f'msg_channels_{pid}', ['SMS'])
-                lang_name  = st.session_state.get(f'msg_lang_{pid}', 'English')
-                st.session_state[f'msg_sent_{pid}'] = {
-                    'time': datetime.now().strftime('%d %b %Y  %H:%M'),
-                    'lang': lang_name,
-                    'type': 'Merged (Clinical + Appointment)',
-                    'channels': channels,
-                }
+                lang_name = st.session_state.get(f'msg_lang_{pid}', 'English')
                 add_log("APPROVED", f"Patient {pid} | {p.get('disease_type')} | {p.get('_sev')} | By: {doc['name']}", "SUCCESS")
-                add_log("MSG_SENT",  f"Patient {pid} | Merged message | {lang_name} | {', '.join(channels)}", "SUCCESS")
+                if wa_ok:
+                    add_log("WHATSAPP_SENT", f"Patient {pid} | Severity: {p.get('_sev')} | WhatsApp delivered", "SUCCESS")
+                else:
+                    add_log("WHATSAPP_FAIL", f"Patient {pid} | Error: {wa_err[:60]}", "WARNING")
                 st.rerun()
         with b2:
             if st.button('✏️ Approve with Edits', key='edit_'+doc_id+'_'+pid, use_container_width=True):
