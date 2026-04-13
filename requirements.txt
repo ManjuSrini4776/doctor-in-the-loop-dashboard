@@ -1,3 +1,10 @@
 streamlit
+openai
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
 pandas
 numpy
+matplotlib
+fpdf2
