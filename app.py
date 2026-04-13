@@ -509,17 +509,46 @@ def render_appointment_module(p, pid, rag_summary):
     urgent_slots  = [s for s in slots if s['urgent']]
     routine_slots = [s for s in slots if not s['urgent']]
     all_slots     = urgent_slots + routine_slots
-    slot_labels   = [s['label'] + (' 🔴' if s['urgent'] else '') for s in all_slots]
 
-    sel_idx = st.radio(
-        'Available slots',
-        options=range(len(slot_labels)),
-        format_func=lambda i: slot_labels[i],
-        key=f'appt_slot_radio_{pid}',
-        horizontal=True,
-        label_visibility='collapsed'
-    )
-    chosen_slot = all_slots[sel_idx]
+    # Track selected slot index in session state
+    sel_key = f'appt_sel_idx_{pid}'
+    if sel_key not in st.session_state:
+        st.session_state[sel_key] = 0
+
+    # Render slots as visible clickable buttons — 5 per row
+    rows = [all_slots[i:i+5] for i in range(0, len(all_slots), 5)]
+    for row in rows:
+        cols = st.columns(len(row))
+        for ci, (col, slot) in enumerate(zip(cols, row)):
+            global_idx = all_slots.index(slot)
+            is_sel     = st.session_state[sel_key] == global_idx
+            is_urgent  = slot['urgent']
+            if is_urgent and is_sel:
+                btn_style = 'background:linear-gradient(135deg,#FF3B5C,#FF7A35);color:#FFFFFF;border:2px solid #FF3B5C;'
+            elif is_urgent:
+                btn_style = 'background:#FFF1F2;color:#DC2626;border:2px solid #FF3B5C;'
+            elif is_sel:
+                btn_style = 'background:linear-gradient(135deg,#2563EB,#7C3AED);color:#FFFFFF;border:2px solid #2563EB;'
+            else:
+                btn_style = 'background:#FFFFFF;color:#1E293B;border:2px solid #BFDBFE;'
+            with col:
+                label = slot['label'] + (' 🔴' if is_urgent else '')
+                if st.button(label, key=f'slot_btn_{pid}_{global_idx}',
+                             use_container_width=True,
+                             type='primary' if is_sel else 'secondary'):
+                    st.session_state[sel_key] = global_idx
+                    st.rerun()
+
+    chosen_slot = all_slots[st.session_state[sel_key]]
+
+    # Show selected slot confirmation
+    slot_clr = '#DC2626' if chosen_slot['urgent'] else '#2563EB'
+    st.markdown(
+        f'<div style="background:#F8FAFF;border:2px solid {slot_clr}44;border-left:4px solid {slot_clr};'
+        f'border-radius:10px;padding:10px 16px;margin:8px 0 14px;">'
+        f'<span style="font-size:13px;font-weight:700;color:{slot_clr};">✓ Selected: {chosen_slot["datetime"]}'
+        f'{"  🔴 URGENT SLOT" if chosen_slot["urgent"] else ""}</span>'
+        f'</div>', unsafe_allow_html=True)
 
     # Doctor-in-the-loop approval
     st.markdown(
@@ -659,11 +688,143 @@ MSG_TEMPLATES = {
     },
 }
 
+def build_merged_patient_msg(p, pid, doc_name, notes=''):
+    """
+    Build ONE merged patient message that combines:
+      - Clinical condition + doctor approval (from get_msg)
+      - Appointment details (from appointment module session state)
+      - Doctor's prescription/notes (if any)
+    Language is picked from session state set by the messaging module.
+    Falls back to English if no language selected yet.
+    """
+    sev          = p.get('_sev','Normal')
+    lang_name    = st.session_state.get(f'msg_lang_{pid}', 'English')
+    lang_code    = MSG_LANGUAGES.get(lang_name, 'en')
+    appt_slot    = st.session_state.get(f'appt_datetime_{pid}', '')
+    appt_doc     = st.session_state.get(f'appt_doctor_{pid}',  doc_name)
+    appt_room    = st.session_state.get(f'appt_room_{pid}',    'OPD — consult front desk')
+    appt_booked  = bool(st.session_state.get(f'appt_approved_{pid}', False))
+
+    # ── Clinical summary part (uses existing get_msg logic) ──
+    clinical_part = get_msg(p)
+
+    # ── Appointment part (only if appointment was booked) ────
+    if appt_booked and appt_slot:
+        if sev == 'Severe':
+            # Use urgent appointment template
+            tmpl = MSG_TEMPLATES.get('urgent', {}).get(lang_code) or MSG_TEMPLATES['urgent']['en']
+        else:
+            tmpl = MSG_TEMPLATES.get('appointment', {}).get(lang_code) or MSG_TEMPLATES['appointment']['en']
+        appt_part = '\n\n──────────────────────────\n' + tmpl(pid, appt_doc, appt_slot, appt_room)
+    else:
+        appt_part = ''
+
+    # ── Doctor's prescription notes ──────────────────────────
+    notes_part = ''
+    if notes.strip():
+        notes_part = '\n\n──────────────────────────\nDOCTOR\'S PRESCRIPTION & INSTRUCTIONS:\n' + notes.strip()
+
+    return clinical_part + appt_part + notes_part
+
+
 def render_messaging_module(p, pid, rag_summary):
-    sev         = p.get('_sev','Normal')
+    sev          = p.get('_sev','Normal')
     default_slot = st.session_state.get(f'appt_datetime_{pid}', 'To be scheduled')
     default_doc  = st.session_state.get(f'appt_doctor_{pid}',   p.get('doctor_name','Your Doctor'))
     default_room = st.session_state.get(f'appt_room_{pid}',     'OPD — consult front desk')
+    appt_booked  = bool(st.session_state.get(f'appt_approved_{pid}', False))
+
+    st.markdown(
+        '<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;'
+        'letter-spacing:0.1em;margin:24px 0 12px;font-size:13px;">🌐 Multilingual Patient Messaging</div>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="background:rgba(37,99,235,0.06);border:2px solid #93C5FD;border-left:4px solid #2563EB;'
+        'border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#1D4ED8;">'
+        '💡 <b>Single message to patient</b> — Language and appointment details here are merged into the '
+        'doctor\'s approval message. Only <b>one message</b> is sent when you click <b>Approve &amp; Send</b> below.</div>',
+        unsafe_allow_html=True)
+
+    m1, m2 = st.columns(2)
+    with m1:
+        lang_name = st.selectbox(
+            'Patient language',
+            options=list(MSG_LANGUAGES.keys()),
+            key=f'msg_lang_{pid}',
+            label_visibility='collapsed'
+        )
+        lang_code = MSG_LANGUAGES[lang_name]
+    with m2:
+        msg_options = {
+            'Appointment confirmation': 'appointment',
+            'Urgent care alert':        'urgent',
+            'Follow-up reminder':       'followup',
+            'Report ready':             'report_ready',
+        }
+        default_type = 'Urgent care alert' if sev == 'Severe' else 'Appointment confirmation'
+        msg_label = st.selectbox(
+            'Appointment message type',
+            options=list(msg_options.keys()),
+            index=list(msg_options.keys()).index(default_type),
+            key=f'msg_type_{pid}',
+            label_visibility='collapsed'
+        )
+        msg_type = msg_options[msg_label]
+
+    tmpl         = MSG_TEMPLATES.get(msg_type, {}).get(lang_code) or MSG_TEMPLATES.get(msg_type, {}).get('en')
+    preview_text = tmpl(pid, default_doc, default_slot, default_room) if tmpl else 'Template not available.'
+
+    appt_badge = (
+        '<span style="background:rgba(0,229,160,0.15);color:#059669;font-size:11px;font-weight:700;'
+        'padding:3px 10px;border-radius:10px;">✅ Appointment booked</span>'
+        if appt_booked else
+        '<span style="background:rgba(255,208,0,0.15);color:#D97706;font-size:11px;font-weight:700;'
+        'padding:3px 10px;border-radius:10px;">⏳ Book appointment above first</span>'
+    )
+    st.markdown(
+        f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:5px solid #7C3AED;'
+        f'border-radius:12px;padding:16px 20px;margin:8px 0 12px;">'
+        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+        f'<span style="font-size:11px;font-weight:700;color:#7C3AED;text-transform:uppercase;'
+        f'letter-spacing:0.08em;">📨 Appointment section preview — {lang_name}</span>'
+        f'<span style="flex:1"></span>{appt_badge}</div>'
+        f'<div style="font-size:14px;color:#1E293B;line-height:1.9;white-space:pre-wrap;">{preview_text}</div>'
+        f'<div style="font-size:12px;color:#94A3B8;margin-top:10px;font-style:italic;">'
+        f'This will be appended to the clinical report when doctor approves below.</div>'
+        f'</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:8px;">Send via (on approval)</div>',
+        unsafe_allow_html=True)
+    default_channels = ['SMS','WhatsApp'] if sev == 'Severe' else ['SMS']
+    st.multiselect(
+        'Channels',
+        options=['SMS','WhatsApp','Email'],
+        default=default_channels,
+        key=f'msg_channels_{pid}',
+        label_visibility='collapsed'
+    )
+    if sev == 'Severe':
+        st.markdown(
+            '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">'
+            '🔴 Severe case — SMS + WhatsApp recommended for maximum reach.</div>',
+            unsafe_allow_html=True)
+
+    ph_col, em_col = st.columns(2)
+    ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
+    em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
+
+    sent_key = f'msg_sent_{pid}'
+    if st.session_state.get(sent_key):
+        info = st.session_state[sent_key]
+        st.markdown(
+            f'<div style="background:rgba(0,229,160,0.1);border:2px solid rgba(0,229,160,0.4);'
+            f'border-radius:12px;padding:14px 18px;margin-top:8px;">'
+            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent to Patient</div>'
+            f'<div style="font-size:13px;color:#334155;">🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  '
+            f'📡 {", ".join(info["channels"]) if info["channels"] else "Logged"}</div>'
+            f'</div>', unsafe_allow_html=True)
 
     st.markdown(
         '<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;'
@@ -727,39 +888,17 @@ def render_messaging_module(p, pid, rag_summary):
             unsafe_allow_html=True)
 
     ph_col, em_col = st.columns(2)
-    phone = ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
-    email = em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
+    ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
+    em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
 
     sent_key = f'msg_sent_{pid}'
-    if st.button('📤 Send Message to Patient', key=f'msg_send_{pid}', type='primary'):
-        if not phone and not email:
-            st.warning('⚠️ Enter at least one phone number or email address.')
-        else:
-            # Twilio / SendGrid stubs — replace with real credentials in Streamlit secrets
-            dispatched = []
-            if 'SMS' in channels and phone:
-                dispatched.append('SMS')
-            if 'WhatsApp' in channels and phone:
-                dispatched.append('WhatsApp')
-            if 'Email' in channels and email:
-                dispatched.append('Email')
-            st.session_state[sent_key] = {
-                'time': datetime.now().strftime('%d %b %Y  %H:%M'),
-                'lang': lang_name,
-                'type': msg_label,
-                'channels': dispatched,
-            }
-            add_log('MSG_SENT', f'Patient {pid} | {msg_label} | {lang_name} | Channels: {", ".join(dispatched)}', 'SUCCESS')
-            st.rerun()
-
     if st.session_state.get(sent_key):
         info = st.session_state[sent_key]
         st.markdown(
             f'<div style="background:rgba(0,229,160,0.1);border:2px solid rgba(0,229,160,0.4);'
             f'border-radius:12px;padding:14px 18px;margin-top:8px;">'
-            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent</div>'
-            f'<div style="font-size:13px;color:#334155;">'
-            f'🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  📋 {info["type"]}  ·  '
+            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent to Patient</div>'
+            f'<div style="font-size:13px;color:#334155;">🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  '
             f'📡 {", ".join(info["channels"]) if info["channels"] else "Logged"}</div>'
             f'</div>', unsafe_allow_html=True)
 
@@ -1504,14 +1643,25 @@ def render_patient(p, pid, doc_id):
             label_visibility='collapsed'
         )
 
-        pat_msg = get_msg(p)
-        if notes.strip():
-            pat_msg += '\n\n──────────────────────────\nDOCTOR\'S PRESCRIPTION & INSTRUCTIONS:\n' + notes.strip()
+        # Single merged message — clinical findings + appointment + prescription
+        pat_msg = build_merged_patient_msg(p, pid, doc['name'], notes)
 
-        with st.expander('📱 Preview Patient Message'):
+        with st.expander('📱 Preview Patient Message (Final — includes appointment if booked)'):
+            appt_booked = bool(st.session_state.get(f'appt_approved_{pid}', False))
+            lang_name   = st.session_state.get(f'msg_lang_{pid}', 'English')
+            badge_appt  = (f'<span style="background:rgba(0,229,160,0.15);color:#059669;font-size:11px;'
+                           f'font-weight:700;padding:3px 10px;border-radius:10px;margin-right:8px;">'
+                           f'✅ Appointment included</span>' if appt_booked else
+                           f'<span style="background:rgba(255,208,0,0.15);color:#D97706;font-size:11px;'
+                           f'font-weight:700;padding:3px 10px;border-radius:10px;margin-right:8px;">'
+                           f'⏳ No appointment booked yet</span>')
+            badge_lang  = (f'<span style="background:rgba(124,58,237,0.12);color:#7C3AED;font-size:11px;'
+                           f'font-weight:700;padding:3px 10px;border-radius:10px;">🌐 {lang_name}</span>')
             st.markdown(
                 f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-radius:12px;padding:18px 22px;">'
-                f'<div style="font-size:12px;font-weight:700;color:#059669;margin-bottom:10px;letter-spacing:0.08em;">📨 MESSAGE TO PATIENT</div>'
+                f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">'
+                f'<span style="font-size:12px;font-weight:700;color:#059669;letter-spacing:0.08em;">📨 FINAL MESSAGE TO PATIENT</span>'
+                f'<span style="flex:1"></span>{badge_appt}{badge_lang}</div>'
                 f'<div style="font-size:14px;color:#1E293B;line-height:1.8;white-space:pre-wrap;">{pat_msg}</div></div>',
                 unsafe_allow_html=True)
 
@@ -1526,7 +1676,17 @@ def render_patient(p, pid, doc_id):
                     'message': pat_msg,
                     'notes': notes.strip()
                 }
+                # Log message dispatch
+                channels   = st.session_state.get(f'msg_channels_{pid}', ['SMS'])
+                lang_name  = st.session_state.get(f'msg_lang_{pid}', 'English')
+                st.session_state[f'msg_sent_{pid}'] = {
+                    'time': datetime.now().strftime('%d %b %Y  %H:%M'),
+                    'lang': lang_name,
+                    'type': 'Merged (Clinical + Appointment)',
+                    'channels': channels,
+                }
                 add_log("APPROVED", f"Patient {pid} | {p.get('disease_type')} | {p.get('_sev')} | By: {doc['name']}", "SUCCESS")
+                add_log("MSG_SENT",  f"Patient {pid} | Merged message | {lang_name} | {', '.join(channels)}", "SUCCESS")
                 st.rerun()
         with b2:
             if st.button('✏️ Approve with Edits', key='edit_'+doc_id+'_'+pid, use_container_width=True):
