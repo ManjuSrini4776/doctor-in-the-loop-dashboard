@@ -947,7 +947,7 @@ def generate_patient_pdf(p, pid, parsed, doc_name, notes, appt_slot, appt_room):
 def send_whatsapp_message(body, pdf_bytes=None, pdf_filename='MedAI_Report.pdf'):
     """
     Send a WhatsApp message via Twilio sandbox.
-    Reads credentials from st.secrets.
+    If pdf_bytes provided, uploads to tmpfiles.org and sends as media attachment.
     Returns (success: bool, error_msg: str)
     """
     try:
@@ -961,12 +961,34 @@ def send_whatsapp_message(body, pdf_bytes=None, pdf_filename='MedAI_Report.pdf')
             return False, 'Twilio credentials missing in Streamlit secrets.'
 
         client = Client(account_sid, auth_token)
-        client.messages.create(
-            body=body,
-            from_=from_num,
-            to=to_num,
-        )
-        return True, ''
+
+        # Try to upload PDF and send as media attachment
+        media_url = None
+        if pdf_bytes:
+            try:
+                import requests
+                resp = requests.post(
+                    'https://tmpfiles.org/api/v1/upload',
+                    files={'file': (pdf_filename, pdf_bytes, 'application/pdf')},
+                    timeout=15
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    # tmpfiles.org returns URL like https://tmpfiles.org/12345/file.pdf
+                    # Convert to direct download link
+                    url = data.get('data', {}).get('url', '')
+                    if url:
+                        # Replace /12345/ with /dl/12345/ for direct download
+                        media_url = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+            except Exception:
+                media_url = None  # Silently fall back to no attachment
+
+        msg_params = dict(body=body, from_=from_num, to=to_num)
+        if media_url:
+            msg_params['media_url'] = [media_url]
+
+        client.messages.create(**msg_params)
+        return True, media_url or ''
     except ImportError:
         return False, 'twilio package not installed. Add twilio to requirements.txt'
     except Exception as e:
@@ -1049,7 +1071,8 @@ def build_whatsapp_msg(p, pid, doc_name, appt_slot, appt_room, notes):
         msg += f"*Doctor's Instructions:*\n{notes.strip()}\n\n"
 
     msg += (
-        f"📄 Your full medical report PDF is attached / available for download from the dashboard.\n\n"
+        f"📎 *Your full medical report PDF will be attached to this message.*\n"
+        f"If not received, ask the clinic for a copy.\n\n"
         f"For urgent help call: *044-2744-0000*\n"
         f"_MedAI Clinical System — Doctor-in-the-Loop_"
     )
@@ -1704,7 +1727,7 @@ def render_patient(p, pid, doc_id):
         wa_ok  = ap.get('wa_sent', False)
         wa_err = ap.get('wa_error', '')
         wa_status_html = (
-            '<div style="font-size:13px;color:#059669;font-weight:600;">📱 WhatsApp delivered to patient ✅</div>'
+            f'<div style="font-size:13px;color:#059669;font-weight:600;">📱 WhatsApp delivered ✅{"  ·  📎 PDF attached" if ap.get("pdf_url") else "  ·  📄 PDF not attached (upload failed)"}</div>'
             if wa_ok else
             f'<div style="font-size:13px;color:#D97706;font-weight:600;">⚠️ WhatsApp not sent — {wa_err or "check Twilio secrets"}</div>'
         )
@@ -1950,15 +1973,24 @@ def render_patient(p, pid, doc_id):
         b1,b2,b3 = st.columns(3)
         with b1:
             if st.button('✅ Approve & Send', key='app_'+doc_id+'_'+pid, use_container_width=True, type='primary'):
-                # Build severity-based WhatsApp message
                 appt_slot_ws = st.session_state.get(f'appt_datetime_{pid}', '')
                 appt_room_ws = st.session_state.get(f'appt_room_{pid}', 'OPD — consult front desk')
                 wa_msg       = build_whatsapp_msg(p, pid, doc['name'], appt_slot_ws, appt_room_ws, notes)
 
-                # Send via Twilio WhatsApp
-                wa_ok, wa_err = send_whatsapp_message(wa_msg)
+                # Generate PDF to attach to WhatsApp
+                raw_pdf   = RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),'')
+                parsed_p  = parse_rag(raw_pdf) if raw_pdf else {}
+                pdf_fname = f'MedAI_Report_{pid}_{datetime.now().strftime("%Y%m%d")}.pdf'
+                try:
+                    pdf_b = generate_patient_pdf(p, pid, parsed_p, doc['name'], notes, appt_slot_ws, appt_room_ws)
+                except Exception:
+                    pdf_b = None
 
-                # Save decision
+                # Send via Twilio WhatsApp with PDF attachment
+                wa_ok, wa_result = send_whatsapp_message(wa_msg, pdf_bytes=pdf_b, pdf_filename=pdf_fname)
+                wa_err  = wa_result if not wa_ok else ''
+                pdf_url = wa_result if wa_ok and wa_result.startswith('http') else ''
+
                 st.session_state.decisions[pid] = {
                     'status':   'APPROVED',
                     'doctor':   doc['name'],
@@ -1968,13 +2000,13 @@ def render_patient(p, pid, doc_id):
                     'wa_sent':  wa_ok,
                     'wa_error': wa_err,
                     'wa_msg':   wa_msg,
+                    'pdf_url':  pdf_url,
                 }
-                lang_name = st.session_state.get(f'msg_lang_{pid}', 'English')
                 add_log("APPROVED", f"Patient {pid} | {p.get('disease_type')} | {p.get('_sev')} | By: {doc['name']}", "SUCCESS")
                 if wa_ok:
-                    add_log("WHATSAPP_SENT", f"Patient {pid} | Severity: {p.get('_sev')} | WhatsApp delivered", "SUCCESS")
+                    add_log("WHATSAPP_SENT", f"Patient {pid} | Severity: {p.get('_sev')} | {'PDF attached' if pdf_url else 'Text only'}", "SUCCESS")
                 else:
-                    add_log("WHATSAPP_FAIL", f"Patient {pid} | Error: {wa_err[:60]}", "WARNING")
+                    add_log("WHATSAPP_FAIL", f"Patient {pid} | {wa_err[:60]}", "WARNING")
                 st.rerun()
         with b2:
             if st.button('✏️ Approve with Edits', key='edit_'+doc_id+'_'+pid, use_container_width=True):
