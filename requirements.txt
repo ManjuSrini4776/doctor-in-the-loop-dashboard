@@ -8,3 +8,4 @@ pandas
 numpy
 matplotlib
 fpdf2
+twilio
