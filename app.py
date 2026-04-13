@@ -2,7 +2,8 @@ import streamlit as st
 import json
 import os
 import logging
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 
 # ── LOGGING SETUP ─────────────────────────────────────────────
 logging.basicConfig(
@@ -394,6 +395,373 @@ def get_mm_rag(p):
                f"({US_NAMES.get(us_cls,us_cls)} — {us_sev}). Combined MAX-fusion severity is {fus_sev}.")
     followup = {'Normal':'Routine review in 3 months.','Mild':'Follow-up within 4 weeks.','Moderate':'Specialist review within 7 days.','Severe':'Immediate specialist referral required.'}.get(fus_sev,'Follow-up as clinically indicated.')
     return {'clinical_summary':summary,'key_findings':findings,'recommendations':list(dict.fromkeys(recs)),'followup':followup,'urgency':urgency_map.get(fus_sev,'Routine'),'citations':list(dict.fromkeys(cites))}
+
+
+# ══════════════════════════════════════════════════════════════
+# MODULE 1 — APPOINTMENT SCHEDULING FOR SEVERE CASES
+# ══════════════════════════════════════════════════════════════
+
+SPECIALIST_MAP = {
+    'CKD':           {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Nephrology',      'room':'OPD Block A, Room 102'},
+    'Diabetes':      {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Endocrinology',   'room':'OPD Block A, Room 103'},
+    'Thyroid':       {'doctor':'Dr. Priya Sharma',  'doctor_id':'DR001','dept':'Endocrinology',   'room':'OPD Block A, Room 103'},
+    'glioma':        {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neuro-Oncology',  'room':'OPD Block B, Room 201'},
+    'meningioma':    {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurosurgery',    'room':'OPD Block B, Room 202'},
+    'pituitary':     {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurosurgery',    'room':'OPD Block B, Room 202'},
+    'notumor':       {'doctor':'Dr. Arjun Mehta',   'doctor_id':'DR002','dept':'Neurology',       'room':'OPD Block B, Room 203'},
+    'Fetal brain':   {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Perinatology',    'room':'OPD Block C, Room 301'},
+    'Fetal thorax':  {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Fetal Medicine',  'room':'OPD Block C, Room 302'},
+    'Fetal abdomen': {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Obstetrics',      'room':'OPD Block C, Room 303'},
+    'Fetal femur':   {'doctor':'Dr. Kavitha Rajan', 'doctor_id':'DR003','dept':'Obstetrics',      'room':'OPD Block C, Room 303'},
+    'Multi-Disease': {'doctor':'Dr. Suresh Kumar',  'doctor_id':'DR004','dept':'General Medicine','room':'OPD Block D, Room 401'},
+}
+
+def appt_get_specialist(p):
+    mtype   = p.get('modality_type','')
+    disease = p.get('disease_type','')
+    if mtype == 'Lab Report':
+        key = disease
+    elif mtype == 'CT Scan':
+        key = p.get('ct_predicted_class','')
+    elif mtype == 'Ultrasound':
+        key = p.get('predicted_class','')
+    else:
+        key = 'Multi-Disease'
+    return SPECIALIST_MAP.get(key, SPECIALIST_MAP['Multi-Disease'])
+
+def appt_extract_urgency(rag_summary):
+    if not rag_summary or rag_summary == 'Summary unavailable':
+        return 'ROUTINE'
+    m = re.search(r'URGENCY\s*[:\-]\s*(\S+)', str(rag_summary), re.IGNORECASE)
+    raw = m.group(1).strip().upper() if m else 'ROUTINE'
+    if 'URGENT' in raw and 'SEMI' not in raw: return 'URGENT'
+    if 'SEMI' in raw: return 'SEMI-URGENT'
+    return 'ROUTINE'
+
+def appt_should_schedule(p, rag_summary):
+    sev     = p.get('_sev','').upper()
+    urgency = appt_extract_urgency(rag_summary)
+    return sev == 'SEVERE' or urgency in ('URGENT', 'SEMI-URGENT')
+
+def appt_generate_slots(severity):
+    base  = datetime.now()
+    times = ['09:00 AM','11:00 AM','02:00 PM','04:00 PM','05:30 PM']
+    slots = []
+    for day in range(4):
+        dt    = base + timedelta(days=day)
+        label = 'Today' if day==0 else 'Tomorrow' if day==1 else dt.strftime('%A')
+        for t in times:
+            slots.append({
+                'label':    f'{label}  {t}',
+                'datetime': dt.strftime(f'%d %b %Y  {t}'),
+                'urgent':   severity == 'Severe' and day <= 1,
+            })
+    return slots
+
+def render_appointment_module(p, pid, rag_summary):
+    if not appt_should_schedule(p, rag_summary):
+        return
+
+    sev     = p.get('_sev','Normal')
+    urgency = appt_extract_urgency(rag_summary)
+    spec    = appt_get_specialist(p)
+    slots   = appt_generate_slots(sev)
+
+    st.markdown(
+        '<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;'
+        'letter-spacing:0.1em;margin:24px 0 12px;font-size:13px;">📅 Appointment Scheduling</div>',
+        unsafe_allow_html=True)
+
+    # Severity alert banner
+    alert_clr = '#FF3B5C' if sev=='Severe' or urgency=='URGENT' else '#FF7A35'
+    alert_bg  = 'rgba(255,59,92,0.1)' if sev=='Severe' or urgency=='URGENT' else 'rgba(255,122,53,0.1)'
+    alert_ico = '🚨' if sev=='Severe' or urgency=='URGENT' else '⚠️'
+    st.markdown(
+        f'<div style="background:{alert_bg};border:2px solid {alert_clr}55;border-left:5px solid {alert_clr};'
+        f'border-radius:14px;padding:16px 22px;margin-bottom:16px;">'
+        f'<div style="font-size:15px;font-weight:800;color:{alert_clr};margin-bottom:4px;">'
+        f'{alert_ico} Severity: {sev}  ·  Urgency: {urgency}</div>'
+        f'<div style="font-size:13px;color:#334155;">Immediate specialist consultation is recommended for this patient.</div>'
+        f'</div>',
+        unsafe_allow_html=True)
+
+    # Specialist card
+    sc1, sc2, sc3 = st.columns(3)
+    for col, lbl, val in [(sc1,'Specialist',spec['doctor']),(sc2,'Department',spec['dept']),(sc3,'Location',spec['room'])]:
+        with col:
+            st.markdown(
+                f'<div style="background:#FFFFFF;border:2px solid #BFDBFE;border-radius:12px;padding:14px;margin-bottom:14px;">'
+                f'<div style="font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">{lbl}</div>'
+                f'<div style="font-size:14px;font-weight:700;color:#0F172A;">{val}</div>'
+                f'</div>', unsafe_allow_html=True)
+
+    # Slot picker
+    st.markdown(
+        '<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:8px;">Select Appointment Slot</div>',
+        unsafe_allow_html=True)
+    if sev == 'Severe':
+        st.markdown(
+            '<div style="background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.3);'
+            'border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#DC2626;">'
+            '🔴 Slots within 24 hours are auto-prioritised for Severe cases.</div>',
+            unsafe_allow_html=True)
+
+    urgent_slots  = [s for s in slots if s['urgent']]
+    routine_slots = [s for s in slots if not s['urgent']]
+    all_slots     = urgent_slots + routine_slots
+    slot_labels   = [s['label'] + (' 🔴' if s['urgent'] else '') for s in all_slots]
+
+    sel_idx = st.radio(
+        'Available slots',
+        options=range(len(slot_labels)),
+        format_func=lambda i: slot_labels[i],
+        key=f'appt_slot_radio_{pid}',
+        horizontal=True,
+        label_visibility='collapsed'
+    )
+    chosen_slot = all_slots[sel_idx]
+
+    # Doctor-in-the-loop approval
+    st.markdown(
+        '<div style="background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(124,58,237,0.05));'
+        'border:2px solid #93C5FD;border-radius:12px;padding:14px 18px;margin:12px 0 10px;">'
+        '<div style="font-size:13px;font-weight:700;color:#60A5FA;margin-bottom:4px;">👨‍⚕️ Doctor-in-the-Loop Approval</div>'
+        '<div style="font-size:12px;color:#334155;">The patient will only be notified after you confirm this appointment.</div>'
+        '</div>',
+        unsafe_allow_html=True)
+
+    approved_key = f'appt_approved_{pid}'
+    if not st.session_state.get(approved_key):
+        if st.button('✅ Confirm Appointment & Notify Patient', key=f'appt_confirm_{pid}', type='primary'):
+            st.session_state[approved_key]         = True
+            st.session_state[f'appt_datetime_{pid}'] = chosen_slot['datetime']
+            st.session_state[f'appt_doctor_{pid}']   = spec['doctor']
+            st.session_state[f'appt_dept_{pid}']     = spec['dept']
+            st.session_state[f'appt_room_{pid}']     = spec['room']
+            add_log('APPT_BOOKED', f'Patient {pid} | {spec["doctor"]} | {chosen_slot["datetime"]}', 'SUCCESS')
+            st.rerun()
+    else:
+        booked_dt  = st.session_state.get(f'appt_datetime_{pid}','')
+        booked_doc = st.session_state.get(f'appt_doctor_{pid}','')
+        st.markdown(
+            f'<div style="background:rgba(0,229,160,0.12);border:2px solid rgba(0,229,160,0.5);'
+            f'border-radius:12px;padding:16px 20px;margin-bottom:8px;">'
+            f'<div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:6px;">✅ Appointment Confirmed</div>'
+            f'<div style="font-size:13px;color:#334155;">👨‍⚕️ {booked_doc}  ·  📅 {booked_dt}</div>'
+            f'<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">'
+            f'Patient notification sent — see Multilingual Messaging below.</div>'
+            f'</div>', unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# MODULE 2 — MULTILINGUAL PATIENT MESSAGING
+# ══════════════════════════════════════════════════════════════
+
+MSG_LANGUAGES = {
+    'English':'en','Tamil — தமிழ்':'ta',
+    'Hindi — हिन्दी':'hi','Telugu — తెలుగు':'te','Malayalam — മലയാളം':'ml',
+}
+
+MSG_TEMPLATES = {
+    'appointment': {
+        'en': lambda pid,doc,slot,room: (
+            f"Dear Patient (ID: {pid}),\n\nYour appointment has been confirmed with {doc}.\n\n"
+            f"📅 Date & Time : {slot}\n📍 Location    : {room}\n\n"
+            f"Please bring all previous medical records and arrive 15 minutes early.\n"
+            f"For queries call: 044-2744-0000.\n\nRegards,\nMedAI Clinical System"),
+        'ta': lambda pid,doc,slot,room: (
+            f"அன்புள்ள நோயாளி (ID: {pid}),\n\n{doc} அவர்களிடம் உங்கள் சந்திப்பு உறுதி செய்யப்பட்டது.\n\n"
+            f"📅 தேதி மற்றும் நேரம் : {slot}\n📍 இடம் : {room}\n\n"
+            f"அனைத்து மருத்துவ ஆவணங்களையும் கொண்டுவாருங்கள். 15 நிமிடம் முன்னதாக வாருங்கள்.\n"
+            f"கேள்விகளுக்கு: 044-2744-0000.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+        'hi': lambda pid,doc,slot,room: (
+            f"प्रिय मरीज़ (ID: {pid}),\n\n{doc} के साथ आपकी अपॉइंटमेंट की पुष्टि हो गई है।\n\n"
+            f"📅 तारीख और समय : {slot}\n📍 स्थान : {room}\n\n"
+            f"कृपया सभी पुराने मेडिकल रिकॉर्ड लाएं और 15 मिनट पहले पहुँचें।\n"
+            f"प्रश्नों के लिए: 044-2744-0000.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+        'te': lambda pid,doc,slot,room: (
+            f"ప్రియమైన రోగి (ID: {pid}),\n\n{doc} తో మీ అపాయింట్‌మెంట్ నిర్ధారించబడింది.\n\n"
+            f"📅 తేదీ మరియు సమయం : {slot}\n📍 స్థానం : {room}\n\n"
+            f"మీ వైద్య రికార్డులన్నింటినీ తీసుకువచ్చి 15 నిమిషాల ముందు వెళ్ళండి.\n"
+            f"సందేహాలకు: 044-2744-0000.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
+        'ml': lambda pid,doc,slot,room: (
+            f"പ്രിയ രോഗി (ID: {pid}),\n\n{doc} മായുള്ള അപ്പോയ്ന്റ്മെന്റ് സ്ഥിരീകരിച്ചു.\n\n"
+            f"📅 തീയതിയും സമയവും : {slot}\n📍 സ്ഥലം : {room}\n\n"
+            f"എല്ലാ മെഡിക്കൽ രേഖകളും കൊണ്ടുവരൂ, 15 മിനിറ്റ് നേരത്തേ എത്തുക.\n"
+            f"സഹായത്തിന്: 044-2744-0000.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
+    },
+    'urgent': {
+        'en': lambda pid,doc,slot,room: (
+            f"⚠️ URGENT — Patient ID: {pid}\n\n"
+            f"Your recent clinical report requires IMMEDIATE attention.\n\n"
+            f"An urgent appointment has been scheduled with {doc}.\n"
+            f"📅 {slot}  |  📍 {room}\n\n"
+            f"Please attend WITHOUT DELAY. Need help? Call 044-2744-0000 immediately.\n\nMedAI Clinical System"),
+        'ta': lambda pid,doc,slot,room: (
+            f"⚠️ அவசரம் — நோயாளி ID: {pid}\n\n"
+            f"உங்கள் மருத்துவ அறிக்கை உடனடி கவனிப்பு தேவைப்படுகிறது.\n\n"
+            f"{doc} அவர்களிடம் அவசர சந்திப்பு திட்டமிடப்பட்டுள்ளது.\n"
+            f"📅 {slot}  |  📍 {room}\n\n"
+            f"தாமதிக்காமல் வருகை கொடுங்கள். உதவிக்கு: 044-2744-0000.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+        'hi': lambda pid,doc,slot,room: (
+            f"⚠️ अत्यावश्यक — मरीज़ ID: {pid}\n\n"
+            f"आपकी नवीनतम रिपोर्ट को तत्काल ध्यान देने की आवश्यकता है।\n\n"
+            f"{doc} के साथ अर्जेंट अपॉइंटमेंट निर्धारित की गई है।\n"
+            f"📅 {slot}  |  📍 {room}\n\n"
+            f"बिना देरी किए उपस्थित हों। सहायता: 044-2744-0000.\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+        'te': lambda pid,doc,slot,room: (
+            f"⚠️ అత్యవసరం — రోగి ID: {pid}\n\n"
+            f"మీ తాజా నివేదిక తక్షణ శ్రద్ధ అవసరం.\n\n"
+            f"{doc} తో అత్యవసర అపాయింట్‌మెంట్ నిర్ణయించబడింది.\n"
+            f"📅 {slot}  |  📍 {room}\n\n"
+            f"ఆలస్యం చేయకుండా హాజరుకండి. సహాయం: 044-2744-0000.\n\nడాక్టర్-ఇన్-ది-లూప్ ఆరోగ్య వ్యవస్థ"),
+        'ml': lambda pid,doc,slot,room: (
+            f"⚠️ അടിയന്തരം — രോഗി ID: {pid}\n\n"
+            f"നിങ്ങളുടെ റിപ്പോർട്ടിന് ഉടൻ ശ്രദ്ധ ആവശ്യമാണ്.\n\n"
+            f"{doc} മായി അടിയന്തര അപ്പോയ്ന്റ്മെന്റ് ക്രമീകരിച്ചു.\n"
+            f"📅 {slot}  |  📍 {room}\n\n"
+            f"വൈകാതെ ഹാജരാകുക. സഹായത്തിന്: 044-2744-0000.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ് ആരോഗ്യ സംവിധാനം"),
+    },
+    'followup': {
+        'en': lambda pid,doc,slot,room: (
+            f"Dear Patient (ID: {pid}),\n\nThis is a reminder for your follow-up with {doc} on {slot}.\n"
+            f"📍 {room}\n\nPlease complete all prescribed tests before the visit.\n\nMedAI Clinical System"),
+        'ta': lambda pid,doc,slot,room: (
+            f"அன்புள்ள நோயாளி (ID: {pid}),\n\n{slot} அன்று {doc} அவர்களிடம் மறுவருகை நினைவூட்டல்.\n"
+            f"📍 {room}\n\nவருகை முன் பரிந்துரைக்கப்பட்ட சோதனைகளை முடிக்கவும்.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+        'hi': lambda pid,doc,slot,room: (
+            f"प्रिय मरीज़ (ID: {pid}),\n\n{slot} को {doc} के साथ फॉलो-अप की याद दिलाना।\n"
+            f"📍 {room}\n\nकृपया सभी परीक्षण पहले पूरे करें।\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+        'te': lambda pid,doc,slot,room: (
+            f"ప్రియమైన రోగి (ID: {pid}),\n\n{slot} న {doc} తో ఫాలో-అప్ జ్ఞాపకం.\n"
+            f"📍 {room}\n\nసందర్శన ముందు అన్ని పరీక్షలు పూర్తి చేయండి.\n\nడాక్టర్-ఇన్-ది-లూప్"),
+        'ml': lambda pid,doc,slot,room: (
+            f"പ്രിയ രോഗി (ID: {pid}),\n\n{slot} ന് {doc} മായി ഫോളോ-അപ്പ്.\n"
+            f"📍 {room}\n\nദയവായി പരിശോധനകൾ മുൻകൂട്ടി പൂർത്തിയാക്കുക.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ്"),
+    },
+    'report_ready': {
+        'en': lambda pid,doc,slot,room: (
+            f"Dear Patient (ID: {pid}),\n\nYour AI-assisted medical report is ready and has been reviewed by {doc}.\n\n"
+            f"Please attend your consultation on {slot} at {room}.\n"
+            f"The doctor will walk you through the findings in detail.\n\nMedAI Clinical System"),
+        'ta': lambda pid,doc,slot,room: (
+            f"அன்புள்ள நோயாளி (ID: {pid}),\n\nAI-உதவி மருத்துவ அறிக்கை தயாராகி {doc} சரிபார்த்தது.\n\n"
+            f"{slot} அன்று {room} இல் ஆலோசனைக்கு வாருங்கள்.\n\nமருத்துவர்-நிரல் சுகாதார அமைப்பு"),
+        'hi': lambda pid,doc,slot,room: (
+            f"प्रिय मरीज़ (ID: {pid}),\n\nआपकी AI रिपोर्ट तैयार है और {doc} ने समीक्षा की है।\n\n"
+            f"{slot} को {room} पर परामर्श के लिए आएं।\n\nडॉक्टर-इन-द-लूप स्वास्थ्य प्रणाली"),
+        'te': lambda pid,doc,slot,room: (
+            f"ప్రియమైన రోగి (ID: {pid}),\n\nAI నివేదిక సిద్ధంగా ఉంది, {doc} సమీక్షించారు.\n\n"
+            f"{slot} న {room} వద్ద సంప్రదింపులకు రండి.\n\nడాక్టర్-ఇన్-ది-లూప్"),
+        'ml': lambda pid,doc,slot,room: (
+            f"പ്രിയ രോഗി (ID: {pid}),\n\nAI റിപ്പോർട്ട് തയ്യാറായി {doc} അവലോകനം ചെയ്തു.\n\n"
+            f"{slot} ന് {room} ൽ കൺസൾട്ടേഷനായി വരൂ.\n\nഡോക്ടർ-ഇൻ-ദ-ലൂപ്പ്"),
+    },
+}
+
+def render_messaging_module(p, pid, rag_summary):
+    sev         = p.get('_sev','Normal')
+    default_slot = st.session_state.get(f'appt_datetime_{pid}', 'To be scheduled')
+    default_doc  = st.session_state.get(f'appt_doctor_{pid}',   p.get('doctor_name','Your Doctor'))
+    default_room = st.session_state.get(f'appt_room_{pid}',     'OPD — consult front desk')
+
+    st.markdown(
+        '<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;'
+        'letter-spacing:0.1em;margin:24px 0 12px;font-size:13px;">🌐 Multilingual Patient Messaging</div>',
+        unsafe_allow_html=True)
+
+    m1, m2 = st.columns(2)
+    with m1:
+        lang_name = st.selectbox(
+            'Patient language',
+            options=list(MSG_LANGUAGES.keys()),
+            key=f'msg_lang_{pid}',
+            label_visibility='collapsed'
+        )
+        lang_code = MSG_LANGUAGES[lang_name]
+    with m2:
+        msg_options = {
+            'Appointment confirmation': 'appointment',
+            'Urgent care alert':        'urgent',
+            'Follow-up reminder':       'followup',
+            'Report ready':             'report_ready',
+        }
+        default_type = 'Urgent care alert' if sev == 'Severe' else 'Appointment confirmation'
+        msg_label = st.selectbox(
+            'Message type',
+            options=list(msg_options.keys()),
+            index=list(msg_options.keys()).index(default_type),
+            key=f'msg_type_{pid}',
+            label_visibility='collapsed'
+        )
+        msg_type = msg_options[msg_label]
+
+    # Build message preview
+    tmpl = MSG_TEMPLATES.get(msg_type, {}).get(lang_code) or MSG_TEMPLATES.get(msg_type, {}).get('en')
+    preview_text = tmpl(pid, default_doc, default_slot, default_room) if tmpl else 'Template not available.'
+
+    st.markdown(
+        f'<div style="background:#FFFFFF;border:2px solid #93C5FD;border-left:5px solid #7C3AED;'
+        f'border-radius:12px;padding:16px 20px;margin:8px 0 12px;">'
+        f'<div style="font-size:11px;font-weight:700;color:#7C3AED;text-transform:uppercase;'
+        f'letter-spacing:0.08em;margin-bottom:10px;">📨 Message Preview — {lang_name}</div>'
+        f'<div style="font-size:14px;color:#1E293B;line-height:1.9;white-space:pre-wrap;">{preview_text}</div>'
+        f'</div>', unsafe_allow_html=True)
+
+    # Channel selector
+    st.markdown(
+        '<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:8px;">Send via</div>',
+        unsafe_allow_html=True)
+    default_channels = ['SMS','WhatsApp'] if sev == 'Severe' else ['SMS']
+    channels = st.multiselect(
+        'Channels',
+        options=['SMS','WhatsApp','Email'],
+        default=default_channels,
+        key=f'msg_channels_{pid}',
+        label_visibility='collapsed'
+    )
+    if sev == 'Severe':
+        st.markdown(
+            '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">'
+            '🔴 Severe case — SMS + WhatsApp recommended for maximum reach.</div>',
+            unsafe_allow_html=True)
+
+    ph_col, em_col = st.columns(2)
+    phone = ph_col.text_input('Phone (+91...)', key=f'msg_phone_{pid}', placeholder='+91 9876543210')
+    email = em_col.text_input('Email address',  key=f'msg_email_{pid}', placeholder='patient@email.com')
+
+    sent_key = f'msg_sent_{pid}'
+    if st.button('📤 Send Message to Patient', key=f'msg_send_{pid}', type='primary'):
+        if not phone and not email:
+            st.warning('⚠️ Enter at least one phone number or email address.')
+        else:
+            # Twilio / SendGrid stubs — replace with real credentials in Streamlit secrets
+            dispatched = []
+            if 'SMS' in channels and phone:
+                dispatched.append('SMS')
+            if 'WhatsApp' in channels and phone:
+                dispatched.append('WhatsApp')
+            if 'Email' in channels and email:
+                dispatched.append('Email')
+            st.session_state[sent_key] = {
+                'time': datetime.now().strftime('%d %b %Y  %H:%M'),
+                'lang': lang_name,
+                'type': msg_label,
+                'channels': dispatched,
+            }
+            add_log('MSG_SENT', f'Patient {pid} | {msg_label} | {lang_name} | Channels: {", ".join(dispatched)}', 'SUCCESS')
+            st.rerun()
+
+    if st.session_state.get(sent_key):
+        info = st.session_state[sent_key]
+        st.markdown(
+            f'<div style="background:rgba(0,229,160,0.1);border:2px solid rgba(0,229,160,0.4);'
+            f'border-radius:12px;padding:14px 18px;margin-top:8px;">'
+            f'<div style="font-size:14px;font-weight:800;color:#059669;margin-bottom:4px;">✅ Message Sent</div>'
+            f'<div style="font-size:13px;color:#334155;">'
+            f'🕐 {info["time"]}  ·  🌐 {info["lang"]}  ·  📋 {info["type"]}  ·  '
+            f'📡 {", ".join(info["channels"]) if info["channels"] else "Logged"}</div>'
+            f'</div>', unsafe_allow_html=True)
 
 
 # ── LOGIN PAGE ────────────────────────────────────────────────
@@ -945,6 +1313,12 @@ def render_patient(p, pid, doc_id):
             parsed = {}
 
     render_rag(parsed, cites)
+
+    # ── Module 1: Appointment Scheduling (auto-triggers for Severe/Urgent) ──
+    render_appointment_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''))
+
+    # ── Module 2: Multilingual Patient Messaging ───────────────
+    render_messaging_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''))
 
     # ── Doctor Decision Section ────────────────────────────────
     st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:24px 0 12px;font-weight:800;font-size:13px;">👨‍⚕️ Doctor Review & Decision</div>', unsafe_allow_html=True)
