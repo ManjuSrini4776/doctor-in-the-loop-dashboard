@@ -1595,7 +1595,7 @@ def render_patient(p, pid, doc_id):
     render_appointment_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''), doc_id)
 
     # ── Module 2: Multilingual Patient Messaging ───────────────
-    render_messaging_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''), doc_id)
+    render_messaging_module(p, pid, RAG_DATA.get(pid,'') or RAG_DATA.get(p.get('rag_class_key',''),''))
 
     # ── Doctor Decision Section ────────────────────────────────
     st.markdown('<div style="font-size:12px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.1em;margin:24px 0 12px;font-weight:800;font-size:13px;">👨‍⚕️ Doctor Review & Decision</div>', unsafe_allow_html=True)
